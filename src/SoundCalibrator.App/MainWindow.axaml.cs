@@ -12,6 +12,8 @@ using SoundCalibrator.Core.Analysis;
 using Avalonia.Platform.Storage;
 using SoundCalibrator.Core.Calibration;
 using SoundCalibrator.Core.Serialization;
+using Avalonia;
+using Avalonia.Media.Imaging;
 
 namespace SoundCalibrator.App;
 
@@ -188,6 +190,33 @@ public partial class MainWindow : Window
             TraceManagerBorder.IsVisible = false;
         };
 
+        SnapshotBtn.Click += async (s, e) =>
+        {
+            var topLevel = TopLevel.GetTopLevel(this);
+            if (topLevel == null) return;
+
+            int w = Math.Max(800, (int)GraphControl.Bounds.Width);
+            int h = Math.Max(500, (int)GraphControl.Bounds.Height);
+
+            var file = await topLevel.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
+            {
+                Title = "Export Acoustic Measurement Snapshot (PNG)",
+                DefaultExtension = "png",
+                SuggestedFileName = $"SoundCalibrator_Report_{DateTime.Now:yyyyMMdd_HHmmss}.png"
+            });
+
+            if (file != null)
+            {
+                using var rtb = new RenderTargetBitmap(new PixelSize(w, h), new Vector(96, 96));
+                rtb.Render(GraphControl);
+                await using var stream = await file.OpenWriteAsync();
+#pragma warning disable CS0618
+                rtb.Save(stream);
+#pragma warning restore CS0618
+                StatusDeviceText.Text = $"Snapshot Saved: {file.Name}";
+            }
+        };
+
         ImportTraceBtn.Click += async (s, e) =>
         {
             var topLevel = TopLevel.GetTopLevel(this);
@@ -271,6 +300,10 @@ public partial class MainWindow : Window
                 break;
             case Avalonia.Input.Key.T:
                 TraceManagerBorder.IsVisible = !TraceManagerBorder.IsVisible;
+                e.Handled = true;
+                break;
+            case Avalonia.Input.Key.S:
+                SnapshotBtn.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
                 e.Handled = true;
                 break;
             case Avalonia.Input.Key.D1 or Avalonia.Input.Key.NumPad1:

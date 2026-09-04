@@ -136,7 +136,8 @@
                     <Button x:Name="ClearTracesBtn" Content="CLEAR" Background="#37474F" Foreground="#B0BEC5" Width="48" Margin="0,0,3,0" Padding="3,3" FontSize="10"/>
                     <Button x:Name="ExportTraceBtn" Content="EXPORT" Background="#00695C" Foreground="White" Width="52" Margin="0,0,3,0" Padding="3,3" FontSize="10"/>
                     <Button x:Name="ImportTraceBtn" Content="IMPORT" Background="#2E7D32" Foreground="White" Width="52" Margin="0,0,3,0" Padding="3,3" FontSize="10"/>
-                    <Button x:Name="ToggleTracesPanelBtn" Content="PANEL (T)" Background="#4527A0" Foreground="White" Width="66" Margin="0,0,6,0" Padding="3,3" FontSize="10"/>
+                    <Button x:Name="ToggleTracesPanelBtn" Content="PANEL (T)" Background="#4527A0" Foreground="White" Width="66" Margin="0,0,3,0" Padding="3,3" FontSize="10"/>
+                    <Button x:Name="SnapshotBtn" Content="SNAP (S)" Background="#00838F" Foreground="White" Width="60" Margin="0,0,6,0" Padding="3,3" FontSize="10"/>
                 </StackPanel>
 
                 <!-- BOTONES DE CONTROL -->
