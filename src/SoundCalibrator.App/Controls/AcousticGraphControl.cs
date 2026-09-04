@@ -17,6 +17,7 @@ public sealed class AcousticGraphControl : Control
 
     public List<AcousticTrace> StoredTraces { get; } = [];
     public float CoherenceThreshold { get; set; } = 0.0f;
+    public TargetCurve? ActiveTargetCurve { get; set; }
 
     // Paleta de diseño
     private static readonly Color BgColor = Color.Parse("#101318");
@@ -93,6 +94,11 @@ public sealed class AcousticGraphControl : Control
             {
                 DrawDataCurves(context, w, mainH, cohTop, cohH, _currentSnapshot);
             }
+        }
+
+        if (ActiveTargetCurve != null && ActiveTargetCurve.Points.Count > 0)
+        {
+            DrawTargetCurve(context, w, mainH, ActiveTargetCurve);
         }
 
         if (_mousePosition.HasValue && _currentSnapshot != null)
@@ -206,6 +212,50 @@ public sealed class AcousticGraphControl : Control
         if (started)
         {
             context.DrawGeometry(null, magPen, magGeometry);
+        }
+    }
+
+    private void DrawTargetCurve(DrawingContext context, double w, double mainH, TargetCurve target)
+    {
+        var targetGeom = new StreamGeometry();
+        bool started = false;
+        var pen = new Pen(new SolidColorBrush(Color.Parse("#FFC107")), 1.5, DashStyle.Dash);
+
+        using (var ctx = targetGeom.Open())
+        {
+            const int steps = 120;
+            for (int i = 0; i <= steps; i++)
+            {
+                float logF = MathF.Log10(20f) + (i / (float)steps) * (MathF.Log10(20000f) - MathF.Log10(20f));
+                float f = MathF.Pow(10f, logF);
+                float db = target.Evaluate(f);
+
+                double x = FreqToX(f, w);
+                double y = DbToY(db, mainH);
+
+                if (!started)
+                {
+                    ctx.BeginFigure(new Point(x, y), false);
+                    started = true;
+                }
+                else
+                {
+                    ctx.LineTo(new Point(x, y));
+                }
+            }
+        }
+
+        if (started)
+        {
+            context.DrawGeometry(null, pen, targetGeom);
+            var label = new FormattedText(
+                $"Target: {target.Name}",
+                CultureInfo.InvariantCulture,
+                FlowDirection.LeftToRight,
+                LabelFont,
+                11,
+                new SolidColorBrush(Color.Parse("#FFC107")));
+            context.DrawText(label, new Point(w - 200, 10));
         }
     }
 
