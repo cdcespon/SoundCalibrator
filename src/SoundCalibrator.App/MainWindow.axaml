@@ -20,9 +20,10 @@
                 <!-- MODO DE MEDICION (TF vs RTA) -->
                 <StackPanel Orientation="Horizontal" Margin="0,0,8,0" VerticalAlignment="Center">
                     <TextBlock Text="Mode:" Foreground="#7E8B9B" VerticalAlignment="Center" Margin="0,0,3,0" FontSize="11"/>
-                    <ComboBox x:Name="ModeCombo" Width="135" SelectedIndex="0">
+                    <ComboBox x:Name="ModeCombo" Width="140" SelectedIndex="0">
                         <ComboBoxItem Content="Transfer Function"/>
                         <ComboBoxItem Content="RTA Spectrum"/>
+                        <ComboBoxItem Content="Spectrogram"/>
                     </ComboBox>
                 </StackPanel>
 

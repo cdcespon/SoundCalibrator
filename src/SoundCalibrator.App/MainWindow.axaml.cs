@@ -275,12 +275,19 @@ public partial class MainWindow : Window
 
     private void OnModeChanged(object? sender, SelectionChangedEventArgs e)
     {
-        bool isRta = ModeCombo.SelectedIndex == 1;
-        _engine.IsRtaMode = isRta;
+        int mode = ModeCombo.SelectedIndex;
+        bool isTf = mode == 0;
+        bool isRta = mode == 1;
+        bool isSpectro = mode == 2;
 
-        BlankingPanel.IsVisible = !isRta;
-        DelayPanel.IsVisible = !isRta;
-        AutoDelayBorder.IsVisible = !isRta;
+        _engine.IsRtaMode = !isTf;
+        GraphControl.IsSpectrogramMode = isSpectro;
+
+        BlankingPanel.IsVisible = isTf;
+        DelayPanel.IsVisible = isTf;
+        AutoDelayBorder.IsVisible = isTf;
+        DeltaBtn.IsVisible = isTf;
+        InvertPolarityBtn.IsVisible = isTf;
 
         GraphControl.InvalidateVisual();
     }
