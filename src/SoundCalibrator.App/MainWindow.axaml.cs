@@ -26,6 +26,7 @@ public partial class MainWindow : Window
     private float _lastDetectedDelayMs;
     private bool _isAligned;
     private MeasurementSnapshot? _lastSnapshot;
+    private AlignmentSuggestion? _lastAlignmentSuggestion;
 
     private static readonly string[] TraceColors = ["#E040FB", "#76FF03", "#FFD600", "#FF4081", "#00E676", "#448AFF"];
 
@@ -188,6 +189,52 @@ public partial class MainWindow : Window
         CloseTracePanelBtn.Click += (s, e) =>
         {
             TraceManagerBorder.IsVisible = false;
+        };
+
+        CalculateAlignmentBtn.Click += (s, e) =>
+        {
+            if (GraphControl.StoredTraces.Count < 2)
+            {
+                AlignmentResultText.Text = "Please capture at least 2 traces\n(Trace 1 = Sub, Trace 2 = Main)";
+                AlignmentResultText.Foreground = Avalonia.Media.SolidColorBrush.Parse("#FF8A80");
+                ApplyAlignmentBtn.IsVisible = false;
+                return;
+            }
+
+            var sub = GraphControl.StoredTraces[0];
+            var main = GraphControl.StoredTraces[1];
+
+            float fc = CrossoverFreqCombo.SelectedIndex switch
+            {
+                0 => 60f,
+                1 => 80f,
+                2 => 100f,
+                3 => 120f,
+                _ => 80f
+            };
+
+            var suggestion = CrossoverAlignmentAnalyzer.Analyze(sub, main, fc);
+            _lastAlignmentSuggestion = suggestion;
+
+            AlignmentResultText.Text = $"Δθ: {suggestion.PhaseDeltaDeg:+0.0;-0.0;0.0}° | Fc: {fc:0}Hz\nDelay: {suggestion.RecommendedDelayMs:+0.00;-0.00;0.00} ms ({suggestion.RecommendedDistanceMeters:+0.00;-0.00;0.00}m)\nPolarity: {(suggestion.RecommendPolarityInversion ? "INVERT Ø" : "NORMAL Ø")}\nSum Gain: {suggestion.PredictedSummationGainDb:+0.0;-0.0;0.0} dB";
+            AlignmentResultText.Foreground = Avalonia.Media.SolidColorBrush.Parse("#00E5FF");
+            ApplyAlignmentBtn.IsVisible = true;
+        };
+
+        ApplyAlignmentBtn.Click += (s, e) =>
+        {
+            if (_lastAlignmentSuggestion.HasValue && GraphControl.StoredTraces.Count > 0)
+            {
+                var sub = GraphControl.StoredTraces[0];
+                sub.OffsetDelayMs = _lastAlignmentSuggestion.Value.RecommendedDelayMs;
+                if (_lastAlignmentSuggestion.Value.RecommendPolarityInversion)
+                {
+                    sub.InvertPolarity = !sub.InvertPolarity;
+                }
+                RefreshTraceManagerUI();
+                GraphControl.InvalidateVisual();
+                StatusDeviceText.Text = $"Aligned {sub.Name}: {sub.OffsetDelayMs:+0.00}ms, Polarity: {(sub.InvertPolarity ? "INV" : "NOR")}";
+            }
         };
 
         SnapshotBtn.Click += async (s, e) =>
