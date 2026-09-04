@@ -27,6 +27,7 @@ public sealed class AcousticGraphControl : Control
     public IReadOnlyList<PeqFilterSuggestion>? ActivePeqFilters { get; set; }
     public bool IsSpectrogramMode { get; set; } = false;
     public bool ShowGroupDelay { get; set; } = false;
+    public bool RtaBarMode { get; set; } = false;
     private SpectrogramBuffer? _spectrogramBuffer;
     private WriteableBitmap? _spectrogramBmp;
 
@@ -110,7 +111,14 @@ public sealed class AcousticGraphControl : Control
 
             if (_currentSnapshot != null)
             {
-                DrawRtaCurves(context, w, mainH, _currentSnapshot);
+                if (RtaBarMode)
+                {
+                    DrawRtaBars(context, w, mainH, _currentSnapshot);
+                }
+                else
+                {
+                    DrawRtaCurves(context, w, mainH, _currentSnapshot);
+                }
             }
         }
         else
@@ -222,6 +230,44 @@ public sealed class AcousticGraphControl : Control
         if (rtaStarted)
         {
             context.DrawGeometry(null, new Pen(new SolidColorBrush(RtaLiveColor), 2.2), rtaGeom);
+        }
+    }
+
+    private void DrawRtaBars(DrawingContext context, double w, double mainH, MeasurementSnapshot snap)
+    {
+        Span<float> bandLevels = stackalloc float[31];
+        int bands = OctaveBandRtaCalculator.CalculateBands(snap.Frequencies, snap.MagnitudeDb, OctaveBandResolution.ThirdOctave, bandLevels);
+        if (bands == 0) return;
+
+        double slotWidth = w / bands;
+        double barWidth = Math.Max(2.0, slotWidth - 3.0);
+        var barBrush = new SolidColorBrush(Color.Parse("#FFD600"));
+        var barPen = new Pen(new SolidColorBrush(Color.Parse("#FFA000")), 1);
+
+        for (int b = 0; b < bands; b++)
+        {
+            float db = bandLevels[b];
+            double y = RtaDbToY(db, mainH);
+            double x = b * slotWidth + 1.5;
+            double barHeight = Math.Max(0.0, mainH - y);
+
+            var rect = new Rect(x, y, barWidth, barHeight);
+            context.FillRectangle(barBrush, rect);
+            context.DrawRectangle(barPen, rect);
+
+            if (bands <= 10 || b % 3 == 0)
+            {
+                float fc = OctaveBandRtaCalculator.ThirdOctaveCenters[b];
+                string labelStr = fc >= 1000f ? $"{fc / 1000f:0.#}k" : $"{fc:0}";
+                var label = new FormattedText(
+                    labelStr,
+                    CultureInfo.InvariantCulture,
+                    FlowDirection.LeftToRight,
+                    LabelFont,
+                    8,
+                    new SolidColorBrush(TextColor));
+                context.DrawText(label, new Point(x, mainH + 2));
+            }
         }
     }
 

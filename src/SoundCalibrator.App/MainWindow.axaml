@@ -145,6 +145,7 @@
                     <Button x:Name="ReportBtn" Content="REPORT" Background="#283593" Foreground="White" Width="62" Margin="0,0,6,0" Padding="3,3" FontSize="10"/>
                     <Button x:Name="SuggestEqBtn" Content="PEQ (E)" Background="#00796B" Foreground="White" Width="55" Margin="0,0,6,0" Padding="3,3" FontSize="10"/>
                     <Button x:Name="CalibrateSplBtn" Content="CAL 94dB" Background="#33691E" Foreground="White" Width="62" Margin="0,0,6,0" Padding="3,3" FontSize="10"/>
+                    <Button x:Name="ToggleRtaBarsBtn" Content="BARS" Background="#37474F" Foreground="#E0E6ED" Width="48" Margin="0,0,6,0" Padding="3,3" FontSize="10" IsVisible="False"/>
                 </StackPanel>
 
                 <!-- BOTONES DE CONTROL -->
