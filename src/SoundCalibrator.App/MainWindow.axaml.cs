@@ -8,6 +8,7 @@ using SoundCalibrator.Audio.Generators;
 using SoundCalibrator.Core.Averaging;
 using SoundCalibrator.Core.Models;
 using SoundCalibrator.Core.Smoothing;
+using SoundCalibrator.Core.Analysis;
 using Avalonia.Platform.Storage;
 using SoundCalibrator.Core.Calibration;
 using SoundCalibrator.Core.Serialization;
@@ -327,6 +328,27 @@ public partial class MainWindow : Window
             GraphControl.UpdateSnapshot(snapshot);
             StatusAvgText.Text = $"Averages: {snapshot.AverageCount}";
             DetectedDelayText.Text = $"{snapshot.Delay.DelayMs:0.00} ms";
+
+            if (snapshot.IsRtaMode)
+            {
+                var thd = ThdCalculator.Calculate(snapshot.Frequencies, snapshot.RtaDb);
+                if (thd.FundamentalDb > -60f)
+                {
+                    ThdText.Text = $"{thd.ThdPercent:0.00}% ({thd.ThdDb:0.0} dB) @ {thd.FundamentalFreqHz:0} Hz";
+                    ThdText.Foreground = thd.ThdPercent < 1.0f 
+                        ? Avalonia.Media.SolidColorBrush.Parse("#00E676") 
+                        : Avalonia.Media.SolidColorBrush.Parse("#FF5252");
+                    ThdBadge.IsVisible = true;
+                }
+                else
+                {
+                    ThdBadge.IsVisible = false;
+                }
+            }
+            else
+            {
+                ThdBadge.IsVisible = false;
+            }
         });
     }
 
