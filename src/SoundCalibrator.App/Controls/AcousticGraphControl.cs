@@ -7,6 +7,9 @@ using Avalonia.Input;
 using Avalonia.Media;
 using SoundCalibrator.Audio.Engine;
 using SoundCalibrator.Core.Models;
+using SoundCalibrator.Core.DSP;
+using Avalonia.Media.Imaging;
+using Avalonia.Platform;
 
 namespace SoundCalibrator.App.Controls;
 
@@ -19,6 +22,9 @@ public sealed class AcousticGraphControl : Control
     public float CoherenceThreshold { get; set; } = 0.0f;
     public TargetCurve? ActiveTargetCurve { get; set; }
     public bool ShowDeltaCurve { get; set; } = false;
+    public bool IsSpectrogramMode { get; set; } = false;
+    private SpectrogramBuffer? _spectrogramBuffer;
+    private WriteableBitmap? _spectrogramBmp;
 
     // Paleta de diseño
     private static readonly Color BgColor = Color.Parse("#101318");
@@ -36,6 +42,11 @@ public sealed class AcousticGraphControl : Control
     public void UpdateSnapshot(MeasurementSnapshot snapshot)
     {
         _currentSnapshot = snapshot;
+        if (_spectrogramBuffer == null || _spectrogramBuffer.BinCount != snapshot.BinCount)
+        {
+            _spectrogramBuffer = new SpectrogramBuffer(capacity: 100, binCount: snapshot.BinCount);
+        }
+        _spectrogramBuffer.PushFrame(snapshot.MagnitudeDb);
         InvalidateVisual();
     }
 
@@ -61,6 +72,17 @@ public sealed class AcousticGraphControl : Control
         if (w <= 10 || h <= 10) return;
 
         context.FillRectangle(new SolidColorBrush(BgColor), bounds);
+
+        if (IsSpectrogramMode && _spectrogramBuffer != null && _currentSnapshot != null)
+        {
+            DrawSpectrogram(context, w, h, _spectrogramBuffer, _currentSnapshot.Frequencies);
+            DrawFrequencyGrid(context, w, h * 0.95, h * 0.95, 0);
+            if (_mousePosition.HasValue)
+            {
+                DrawCrosshairAndReadout(context, w, h * 0.95, h * 0.95, 0, _mousePosition.Value, _currentSnapshot, true);
+            }
+            return;
+        }
 
         bool isRta = _currentSnapshot?.IsRtaMode ?? false;
 
@@ -219,6 +241,107 @@ public sealed class AcousticGraphControl : Control
         {
             context.DrawGeometry(null, magPen, magGeometry);
         }
+    }
+
+    private static uint DbToColorUint(float db)
+    {
+        float norm = Math.Clamp((db + 84f) / 84f, 0f, 1f);
+
+        byte r, g, b;
+        if (norm < 0.25f)
+        {
+            float t = norm / 0.25f;
+            r = (byte)(15 + t * 40);
+            g = (byte)(15 + t * 20);
+            b = (byte)(30 + t * 150);
+        }
+        else if (norm < 0.5f)
+        {
+            float t = (norm - 0.25f) / 0.25f;
+            r = (byte)(55 - t * 45);
+            g = (byte)(35 + t * 180);
+            b = (byte)(180 + t * 50);
+        }
+        else if (norm < 0.75f)
+        {
+            float t = (norm - 0.5f) / 0.25f;
+            r = (byte)(10 + t * 245);
+            g = (byte)(215 + t * 40);
+            b = (byte)(230 - t * 230);
+        }
+        else
+        {
+            float t = (norm - 0.75f) / 0.25f;
+            r = 255;
+            g = (byte)(255 - t * 180);
+            b = (byte)(t * 60);
+        }
+
+        return 0xFF000000u | ((uint)r << 16) | ((uint)g << 8) | b;
+    }
+
+    private static int FreqToBin(float targetFreq, float[] frequencies)
+    {
+        int low = 0;
+        int high = frequencies.Length - 1;
+        while (low <= high)
+        {
+            int mid = (low + high) / 2;
+            if (frequencies[mid] < targetFreq) low = mid + 1;
+            else high = mid - 1;
+        }
+        return Math.Clamp(low, 0, frequencies.Length - 1);
+    }
+
+    private void DrawSpectrogram(DrawingContext context, double w, double h, SpectrogramBuffer buffer, float[] frequencies)
+    {
+        int frameCount = buffer.Count;
+        if (frameCount == 0) return;
+
+        const int bmpW = 240;
+        int bmpH = 100;
+
+        if (_spectrogramBmp == null || _spectrogramBmp.PixelSize.Width != bmpW || _spectrogramBmp.PixelSize.Height != bmpH)
+        {
+            _spectrogramBmp?.Dispose();
+            _spectrogramBmp = new WriteableBitmap(new PixelSize(bmpW, bmpH), new Vector(96, 96), PixelFormat.Bgra8888, AlphaFormat.Opaque);
+        }
+
+        using (var fb = _spectrogramBmp.Lock())
+        {
+            unsafe
+            {
+                uint* ptr = (uint*)fb.Address;
+                int stride = fb.RowBytes / 4;
+
+                for (int row = 0; row < frameCount; row++)
+                {
+                    var frame = buffer.GetFrame(row);
+                    uint* rowPtr = ptr + (row * stride);
+
+                    for (int col = 0; col < bmpW; col++)
+                    {
+                        float logF = MathF.Log10(20f) + (col / (float)bmpW) * (MathF.Log10(20000f) - MathF.Log10(20f));
+                        float f = MathF.Pow(10f, logF);
+                        int bin = FreqToBin(f, frequencies);
+                        float db = bin < frame.Length ? frame[bin] : -96f;
+
+                        rowPtr[col] = DbToColorUint(db);
+                    }
+                }
+            }
+        }
+
+        context.DrawImage(_spectrogramBmp, new Rect(0, 0, w, h * 0.95));
+
+        var label = new FormattedText(
+            "Spectrogram / Waterfall (Time vs Frequency)",
+            CultureInfo.InvariantCulture,
+            FlowDirection.LeftToRight,
+            LabelFont,
+            12,
+            new SolidColorBrush(Color.Parse("#00E5FF")));
+        context.DrawText(label, new Point(10, 10));
     }
 
     private void DrawTargetCurve(DrawingContext context, double w, double mainH, TargetCurve target)
