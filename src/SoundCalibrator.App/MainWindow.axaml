@@ -30,10 +30,12 @@
                 <!-- FUENTE DE AUDIO -->
                 <StackPanel Orientation="Horizontal" Margin="0,0,8,0" VerticalAlignment="Center">
                     <TextBlock Text="Source:" Foreground="#7E8B9B" VerticalAlignment="Center" Margin="0,0,3,0" FontSize="11"/>
-                    <ComboBox x:Name="SourceCombo" Width="150" SelectedIndex="0">
-                        <ComboBoxItem Content="Pink Noise (Synthetic)"/>
-                        <ComboBoxItem Content="Sine 1kHz (Synthetic)"/>
-                        <ComboBoxItem Content="Sine Sweep (Synthetic)"/>
+                    <ComboBox x:Name="SourceCombo" Width="170" SelectedIndex="0">
+                        <ComboBoxItem Content="Pink Noise (Continuous)"/>
+                        <ComboBoxItem Content="Sine 1kHz (Pure Tone)"/>
+                        <ComboBoxItem Content="Sine Sweep (20Hz-20k)"/>
+                        <ComboBoxItem Content="Gated Pink Noise (Burst)"/>
+                        <ComboBoxItem Content="IEC 60268-1 Program Noise"/>
                         <ComboBoxItem Content="WASAPI Audio Device"/>
                     </ComboBox>
                 </StackPanel>
