@@ -3,6 +3,7 @@ using System.Threading;
 using SoundCalibrator.Audio.Buffers;
 using SoundCalibrator.Audio.Interfaces;
 using SoundCalibrator.Core.Averaging;
+using SoundCalibrator.Core.Calibration;
 using SoundCalibrator.Core.DSP;
 using SoundCalibrator.Core.Models;
 using SoundCalibrator.Core.Smoothing;
@@ -69,6 +70,7 @@ public sealed class AcousticMeasurementEngine : IDisposable
         set => _averager.Mode = value;
     }
 
+    public MicrophoneCalibration Calibration { get; } = new();
     public float DelayCompensationMs { get; set; } = 0f;
 
     public event Action<MeasurementSnapshot>? SnapshotReady;
@@ -168,8 +170,16 @@ public sealed class AcousticMeasurementEngine : IDisposable
                 Array.Copy(_rawResult.PhaseDegrees, snapshot.PhaseDegrees, _rawResult.BinCount);
                 Array.Copy(_rawResult.Coherence, snapshot.Coherence, _rawResult.BinCount);
 
+                // Aplicar calibración de micrófono si está cargada
+                if (!Calibration.IsEmpty)
+                {
+                    Calibration.ApplyCorrection(snapshot.Frequencies, snapshot.MagnitudeDb, snapshot.PhaseDegrees);
+                }
+
+                // Calcular Respuesta al Impulso y retardo acústico automático
                 _irCalculator.CalculateImpulseResponse(snapshot.MagnitudeDb, snapshot.PhaseDegrees, _irBuffer, SampleRate, snapshot.Delay);
 
+                // Aplicar compensación de retardo si está configurada
                 if (MathF.Abs(DelayCompensationMs) > 0.001f)
                 {
                     float compSeconds = DelayCompensationMs / 1000f;
