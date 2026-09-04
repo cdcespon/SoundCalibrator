@@ -301,6 +301,25 @@ public partial class MainWindow : Window
             }
         };
 
+        SpatialAvgBtn.Click += (s, e) =>
+        {
+            var visibleTraces = System.Linq.Enumerable.ToList(System.Linq.Enumerable.Where(GraphControl.StoredTraces, t => t.IsVisible));
+            if (visibleTraces.Count >= 2)
+            {
+                var avgTrace = SpatialAverager.CalculateSpatialAverage(
+                    visibleTraces, 
+                    SpatialAverageMode.CoherenceWeightedPower, 
+                    $"Spatial Avg ({visibleTraces.Count} mics)", 
+                    "#00E5FF");
+
+                if (avgTrace != null)
+                {
+                    GraphControl.StoredTraces.Add(avgTrace);
+                    RefreshTraceManagerUI();
+                }
+            }
+        };
+
         SuggestEqBtn.Click += (s, e) =>
         {
             if (_lastSnapshot == null || GraphControl.ActiveTargetCurve == null)
