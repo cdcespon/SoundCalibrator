@@ -120,6 +120,18 @@ public partial class MainWindow : Window
         SmoothingCombo.SelectionChanged += OnSmoothingChanged;
         BlankingCombo.SelectionChanged += OnBlankingChanged;
 
+        DeltaBtn.Click += (s, e) =>
+        {
+            GraphControl.ShowDeltaCurve = !GraphControl.ShowDeltaCurve;
+            DeltaBtn.Background = GraphControl.ShowDeltaCurve
+                ? Avalonia.Media.SolidColorBrush.Parse("#8E24AA")
+                : Avalonia.Media.SolidColorBrush.Parse("#263238");
+            DeltaBtn.Foreground = GraphControl.ShowDeltaCurve
+                ? Avalonia.Media.SolidColorBrush.Parse("#FFFFFF")
+                : Avalonia.Media.SolidColorBrush.Parse("#B0BEC5");
+            GraphControl.InvalidateVisual();
+        };
+
         TargetCombo.SelectionChanged += (s, e) =>
         {
             var preset = TargetCombo.SelectedIndex switch
@@ -236,6 +248,10 @@ public partial class MainWindow : Window
                 break;
             case Avalonia.Input.Key.P:
                 InvertPolarityBtn.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+                e.Handled = true;
+                break;
+            case Avalonia.Input.Key.D:
+                DeltaBtn.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
                 e.Handled = true;
                 break;
             case Avalonia.Input.Key.D1 or Avalonia.Input.Key.NumPad1:
