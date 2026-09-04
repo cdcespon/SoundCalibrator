@@ -527,15 +527,21 @@ public partial class MainWindow : Window
                 {
                     Rt60Text.Text = $"RT60: {rt60.T20Seconds:0.00}s";
                     Rt60Text.IsVisible = true;
+
+                    var sti = SpeechIntelligibilityCalculator.CalculateFromRt60AndSnr(rt60.T20Seconds, snrDb: 30f);
+                    StiText.Text = $"STI: {sti.Sti:0.00} ({sti.Rating})";
+                    StiText.IsVisible = true;
                 }
                 else
                 {
                     Rt60Text.IsVisible = false;
+                    StiText.IsVisible = false;
                 }
             }
             else
             {
                 Rt60Text.IsVisible = false;
+                StiText.IsVisible = false;
             }
             if (snapshot.IsRtaMode)
             {
