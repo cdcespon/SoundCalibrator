@@ -15,9 +15,7 @@ using SoundCalibrator.Core.Serialization;
 using SoundCalibrator.Core.Reporting;
 using Avalonia;
 using Avalonia.Media.Imaging;
-
 namespace SoundCalibrator.App;
-
 public partial class MainWindow : Window
 {
     private readonly AcousticMeasurementEngine _engine;
@@ -30,24 +28,18 @@ public partial class MainWindow : Window
     private MeasurementSnapshot? _lastSnapshot;
     private AlignmentSuggestion? _lastAlignmentSuggestion;
     private System.Collections.Generic.IReadOnlyList<PeqFilterSuggestion>? _lastPeqSuggestions;
-
     private static readonly string[] TraceColors = ["#E040FB", "#76FF03", "#FFD600", "#FF4081", "#00E676", "#448AFF"];
-
     public MainWindow()
     {
         InitializeComponent();
-
         _engine = new AcousticMeasurementEngine(1024);
         _syntheticGen = new SyntheticAudioGenerator(sampleRate: 48000, blockSize: 512);
-
         _engine.AttachDevice(_syntheticGen);
         _engine.SnapshotReady += OnSnapshotReady;
-
         SetupEventHandlers();
         RefreshTraceManagerUI();
         _engine.Start();
     }
-
     private void SetupEventHandlers()
     {
         StartStopBtn.Click += OnStartStopClick;
@@ -59,7 +51,6 @@ public partial class MainWindow : Window
             AutoAlignBtn.Content = "ALIGN";
             AutoAlignBtn.Background = Avalonia.Media.SolidColorBrush.Parse("#E65100");
         };
-
         AutoAlignBtn.Click += (s, e) =>
         {
             if (!_isAligned)
@@ -77,7 +68,6 @@ public partial class MainWindow : Window
                 AutoAlignBtn.Background = Avalonia.Media.SolidColorBrush.Parse("#E65100");
             }
         };
-
         CaptureTraceBtn.Click += (s, e) =>
         {
             if (_lastSnapshot != null)
@@ -92,7 +82,6 @@ public partial class MainWindow : Window
                 RefreshTraceManagerUI();
             }
         };
-
         ClearTracesBtn.Click += (s, e) =>
         {
             GraphControl.StoredTraces.Clear();
@@ -100,7 +89,6 @@ public partial class MainWindow : Window
             GraphControl.InvalidateVisual();
             RefreshTraceManagerUI();
         };
-
         DelaySlider.PropertyChanged += (s, e) =>
         {
             if (e.Property.Name == nameof(Slider.Value) && _syntheticGen != null)
@@ -110,7 +98,6 @@ public partial class MainWindow : Window
                 DelayText.Text = $"{val:0.0} ms";
             }
         };
-
         InvertPolarityBtn.Click += (s, e) =>
         {
             _engine.InvertPolarity = !_engine.InvertPolarity;
@@ -121,7 +108,6 @@ public partial class MainWindow : Window
                 ? Avalonia.Media.SolidColorBrush.Parse("#FFFFFF")
                 : Avalonia.Media.SolidColorBrush.Parse("#B0BEC5");
         };
-
         ModeCombo.SelectionChanged += OnModeChanged;
         SourceCombo.SelectionChanged += OnSourceChanged;
         FftCombo.SelectionChanged += OnFftOrWindowChanged;
@@ -129,7 +115,6 @@ public partial class MainWindow : Window
         AveragingCombo.SelectionChanged += OnAveragingChanged;
         SmoothingCombo.SelectionChanged += OnSmoothingChanged;
         BlankingCombo.SelectionChanged += OnBlankingChanged;
-
         DeltaBtn.Click += (s, e) =>
         {
             GraphControl.ShowDeltaCurve = !GraphControl.ShowDeltaCurve;
@@ -141,7 +126,6 @@ public partial class MainWindow : Window
                 : Avalonia.Media.SolidColorBrush.Parse("#B0BEC5");
             GraphControl.InvalidateVisual();
         };
-
         TargetCombo.SelectionChanged += (s, e) =>
         {
             var preset = TargetCombo.SelectedIndex switch
@@ -155,15 +139,12 @@ public partial class MainWindow : Window
             GraphControl.ActiveTargetCurve = preset == TargetCurvePreset.None ? null : TargetCurve.CreatePreset(preset);
             GraphControl.InvalidateVisual();
         };
-
         ExportTraceBtn.Click += async (s, e) =>
         {
             if (GraphControl.StoredTraces.Count == 0 && _lastSnapshot == null) return;
-
             var traceToExport = GraphControl.StoredTraces.Count > 0
                 ? GraphControl.StoredTraces[^1]
                 : new AcousticTrace("Measurement", "#00E5FF", _lastSnapshot!.Frequencies, _lastSnapshot.MagnitudeDb, _lastSnapshot.PhaseDegrees, _lastSnapshot.Coherence);
-
             var topLevel = TopLevel.GetTopLevel(this);
             if (topLevel != null)
             {
@@ -173,7 +154,6 @@ public partial class MainWindow : Window
                     DefaultExtension = "csv",
                     SuggestedFileName = $"{traceToExport.Name.Replace(' ', '_')}.csv"
                 });
-
                 if (file != null)
                 {
                     string csv = TraceSerializer.ExportToCsv(traceToExport);
@@ -183,17 +163,14 @@ public partial class MainWindow : Window
                 }
             }
         };
-
         ToggleTracesPanelBtn.Click += (s, e) =>
         {
             TraceManagerBorder.IsVisible = !TraceManagerBorder.IsVisible;
         };
-
         CloseTracePanelBtn.Click += (s, e) =>
         {
             TraceManagerBorder.IsVisible = false;
         };
-
         CalculateAlignmentBtn.Click += (s, e) =>
         {
             if (GraphControl.StoredTraces.Count < 2)
@@ -203,10 +180,8 @@ public partial class MainWindow : Window
                 ApplyAlignmentBtn.IsVisible = false;
                 return;
             }
-
             var sub = GraphControl.StoredTraces[0];
             var main = GraphControl.StoredTraces[1];
-
             float fc = CrossoverFreqCombo.SelectedIndex switch
             {
                 0 => 60f,
@@ -215,15 +190,12 @@ public partial class MainWindow : Window
                 3 => 120f,
                 _ => 80f
             };
-
             var suggestion = CrossoverAlignmentAnalyzer.Analyze(sub, main, fc);
             _lastAlignmentSuggestion = suggestion;
-
             AlignmentResultText.Text = $"Δθ: {suggestion.PhaseDeltaDeg:+0.0;-0.0;0.0}° | Fc: {fc:0}Hz\nDelay: {suggestion.RecommendedDelayMs:+0.00;-0.00;0.00} ms ({suggestion.RecommendedDistanceMeters:+0.00;-0.00;0.00}m)\nPolarity: {(suggestion.RecommendPolarityInversion ? "INVERT Ø" : "NORMAL Ø")}\nSum Gain: {suggestion.PredictedSummationGainDb:+0.0;-0.0;0.0} dB";
             AlignmentResultText.Foreground = Avalonia.Media.SolidColorBrush.Parse("#00E5FF");
             ApplyAlignmentBtn.IsVisible = true;
         };
-
         ApplyAlignmentBtn.Click += (s, e) =>
         {
             if (_lastAlignmentSuggestion.HasValue && GraphControl.StoredTraces.Count > 0)
@@ -239,19 +211,16 @@ public partial class MainWindow : Window
                 StatusDeviceText.Text = $"Aligned {sub.Name}: {sub.OffsetDelayMs:+0.00}ms, Polarity: {(sub.InvertPolarity ? "INV" : "NOR")}";
             }
         };
-
         ReportBtn.Click += async (s, e) =>
         {
             var topLevel = TopLevel.GetTopLevel(this);
             if (topLevel == null) return;
-
             var file = await topLevel.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
             {
                 Title = "Export Acoustic Calibration Technical Report",
                 DefaultExtension = "md",
                 SuggestedFileName = $"Calibration_Report_{DateTime.Now:yyyyMMdd_HHmmss}.md"
             });
-
             if (file != null)
             {
                 var reportData = new CalibrationReportData
@@ -274,17 +243,14 @@ public partial class MainWindow : Window
                     PeqFilters = _lastPeqSuggestions,
                     Traces = GraphControl.StoredTraces
                 };
-
                 bool isHtml = file.Name.EndsWith(".html", StringComparison.OrdinalIgnoreCase);
                 string text = isHtml ? ReportGenerator.GenerateHtml(reportData) : ReportGenerator.GenerateMarkdown(reportData);
-
                 await using var stream = await file.OpenWriteAsync();
                 await using var writer = new System.IO.StreamWriter(stream);
                 await writer.WriteAsync(text);
                 StatusDeviceText.Text = $"Report Saved: {file.Name}";
             }
         };
-
         CalibrateSplBtn.Click += (s, e) =>
         {
             if (_lastSnapshot != null && _lastSnapshot.IsRtaMode)
@@ -300,7 +266,6 @@ public partial class MainWindow : Window
                 StatusDeviceText.Text = "To calibrate SPL: switch to RTA mode, apply 94dB 1kHz calibrator to mic and click CAL 94dB.";
             }
         };
-
         SpatialAvgBtn.Click += (s, e) =>
         {
             var visibleTraces = System.Linq.Enumerable.ToList(System.Linq.Enumerable.Where(GraphControl.StoredTraces, t => t.IsVisible));
@@ -311,7 +276,6 @@ public partial class MainWindow : Window
                     SpatialAverageMode.CoherenceWeightedPower, 
                     $"Spatial Avg ({visibleTraces.Count} mics)", 
                     "#00E5FF");
-
                 if (avgTrace != null)
                 {
                     GraphControl.StoredTraces.Add(avgTrace);
@@ -319,7 +283,6 @@ public partial class MainWindow : Window
                 }
             }
         };
-
         SuggestEqBtn.Click += (s, e) =>
         {
             if (_lastSnapshot == null || GraphControl.ActiveTargetCurve == null)
@@ -327,7 +290,6 @@ public partial class MainWindow : Window
                 StatusDeviceText.Text = "Please select a Target Curve (e.g. Harman) to compute PEQ correction.";
                 return;
             }
-
             int count = _lastSnapshot.BinCount;
             float[] delta = new float[count];
             for (int i = 0; i < count; i++)
@@ -336,9 +298,7 @@ public partial class MainWindow : Window
                 float target = GraphControl.ActiveTargetCurve.Evaluate(f);
                 delta[i] = _lastSnapshot.MagnitudeDb[i] - target;
             }
-
             _lastPeqSuggestions = PeqSuggester.SuggestFilters(_lastSnapshot.Frequencies, delta, maxFilters: 5);
-
             if (_lastPeqSuggestions.Count == 0)
             {
                 StatusDeviceText.Text = "PEQ: System within +/-2dB of target curve. No filters needed.";
@@ -353,22 +313,18 @@ public partial class MainWindow : Window
             }
             GraphControl.InvalidateVisual();
         };
-
         SnapshotBtn.Click += async (s, e) =>
         {
             var topLevel = TopLevel.GetTopLevel(this);
             if (topLevel == null) return;
-
             int w = Math.Max(800, (int)GraphControl.Bounds.Width);
             int h = Math.Max(500, (int)GraphControl.Bounds.Height);
-
             var file = await topLevel.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
             {
                 Title = "Export Acoustic Measurement Snapshot (PNG)",
                 DefaultExtension = "png",
                 SuggestedFileName = $"SoundCalibrator_Report_{DateTime.Now:yyyyMMdd_HHmmss}.png"
             });
-
             if (file != null)
             {
                 using var rtb = new RenderTargetBitmap(new PixelSize(w, h), new Vector(96, 96));
@@ -380,7 +336,6 @@ public partial class MainWindow : Window
                 StatusDeviceText.Text = $"Snapshot Saved: {file.Name}";
             }
         };
-
         ImportTraceBtn.Click += async (s, e) =>
         {
             var topLevel = TopLevel.GetTopLevel(this);
@@ -391,14 +346,12 @@ public partial class MainWindow : Window
                     Title = "Import Trace (.csv) or Mic Calibration (.cal, .txt)",
                     AllowMultiple = false
                 });
-
                 if (files.Count > 0)
                 {
                     var file = files[0];
                     await using var stream = await file.OpenReadAsync();
                     using var reader = new System.IO.StreamReader(stream);
                     string text = await reader.ReadToEndAsync();
-
                     if (file.Name.EndsWith(".cal", System.StringComparison.OrdinalIgnoreCase) ||
                         file.Name.EndsWith(".txt", System.StringComparison.OrdinalIgnoreCase))
                     {
@@ -424,11 +377,9 @@ public partial class MainWindow : Window
             }
         };
     }
-
     protected override void OnKeyDown(Avalonia.Input.KeyEventArgs e)
     {
         base.OnKeyDown(e);
-
         switch (e.Key)
         {
             case Avalonia.Input.Key.Space:
@@ -492,30 +443,29 @@ public partial class MainWindow : Window
                 break;
         }
     }
-
     private void OnModeChanged(object? sender, SelectionChangedEventArgs e)
     {
         int mode = ModeCombo.SelectedIndex;
         bool isTf = mode == 0;
         bool isRta = mode == 1;
         bool isSpectro = mode == 2;
+        bool isGroupDelay = mode == 3;
 
-        _engine.IsRtaMode = !isTf;
+        _engine.IsRtaMode = isRta;
         GraphControl.IsSpectrogramMode = isSpectro;
+        GraphControl.ShowGroupDelay = isGroupDelay;
 
-        BlankingPanel.IsVisible = isTf;
-        DelayPanel.IsVisible = isTf;
-        AutoDelayBorder.IsVisible = isTf;
-        DeltaBtn.IsVisible = isTf;
-        InvertPolarityBtn.IsVisible = isTf;
-
+        bool showControls = isTf || isGroupDelay;
+        BlankingPanel.IsVisible = showControls;
+        DelayPanel.IsVisible = showControls;
+        AutoDelayBorder.IsVisible = showControls;
+        DeltaBtn.IsVisible = showControls;
+        InvertPolarityBtn.IsVisible = showControls;
         GraphControl.InvalidateVisual();
     }
-
     private void OnFftOrWindowChanged(object? sender, SelectionChangedEventArgs e)
     {
         if (_engine == null || FftCombo == null || WindowCombo == null) return;
-
         int fftSize = FftCombo.SelectedIndex switch
         {
             0 => 512,
@@ -524,7 +474,6 @@ public partial class MainWindow : Window
             3 => 4096,
             _ => 1024
         };
-
         WindowType winType = WindowCombo.SelectedIndex switch
         {
             0 => WindowType.Hann,
@@ -532,22 +481,18 @@ public partial class MainWindow : Window
             2 => WindowType.Rectangular,
             _ => WindowType.Hann
         };
-
         _engine.ReconfigureFft(fftSize, winType);
         UpdateStatusDeviceText();
     }
-
     private void OnSnapshotReady(MeasurementSnapshot snapshot)
     {
         _lastSnapshot = snapshot;
         _lastDetectedDelayMs = snapshot.Delay.DelayMs;
-
         Dispatcher.UIThread.Post(() =>
         {
             GraphControl.UpdateSnapshot(snapshot);
             StatusAvgText.Text = $"Averages: {snapshot.AverageCount}";
             DetectedDelayText.Text = $"{snapshot.Delay.DelayMs:0.00} ms";
-
             if (!snapshot.IsRtaMode && snapshot.ImpulseResponse.Length > 0)
             {
                 var rt60 = ReverberationTimeCalculator.Calculate(snapshot.ImpulseResponse, (int)snapshot.SampleRate);
@@ -565,7 +510,6 @@ public partial class MainWindow : Window
             {
                 Rt60Text.IsVisible = false;
             }
-
             if (snapshot.IsRtaMode)
             {
                 var thd = ThdCalculator.Calculate(snapshot.Frequencies, snapshot.RtaDb);
@@ -581,11 +525,9 @@ public partial class MainWindow : Window
                 {
                     ThdBadge.IsVisible = false;
                 }
-
                 var spl = _splMeter.CalculateSpl(snapshot.Frequencies, snapshot.RtaDb);
                 SplText.Text = $"{spl.DbA:0.0} dBA | {spl.DbC:0.0} dBC";
                 SplBadge.IsVisible = true;
-
                 var feedbacks = FeedbackHunter.Detect(snapshot.Frequencies, snapshot.RtaDb);
                 if (feedbacks.Count > 0)
                 {
@@ -606,7 +548,6 @@ public partial class MainWindow : Window
             }
         });
     }
-
     private void OnStartStopClick(object? sender, RoutedEventArgs e)
     {
         if (_isPaused)
@@ -624,7 +565,6 @@ public partial class MainWindow : Window
             _isPaused = true;
         }
     }
-
     private void OnSourceChanged(object? sender, SelectionChangedEventArgs e)
     {
         int idx = SourceCombo.SelectedIndex;
@@ -700,7 +640,6 @@ public partial class MainWindow : Window
             }
         }
     }
-
     private void UpdateStatusDeviceText()
     {
         string srcName = SourceCombo.SelectedIndex switch
@@ -714,7 +653,6 @@ public partial class MainWindow : Window
         };
         StatusDeviceText.Text = $"Synthetic: {srcName} ({_engine.SampleRate} Hz, FFT: {_engine.FftSize})";
     }
-
     private void OnAveragingChanged(object? sender, SelectionChangedEventArgs e)
     {
         _engine.Averaging = AveragingCombo.SelectedIndex switch
@@ -727,7 +665,6 @@ public partial class MainWindow : Window
             _ => AveragingType.ExponentialFast
         };
     }
-
     private void OnSmoothingChanged(object? sender, SelectionChangedEventArgs e)
     {
         _engine.Smoothing = SmoothingCombo.SelectedIndex switch
@@ -740,7 +677,6 @@ public partial class MainWindow : Window
             _ => OctaveSmoothingType.None
         };
     }
-
     private void OnBlankingChanged(object? sender, SelectionChangedEventArgs e)
     {
         GraphControl.CoherenceThreshold = BlankingCombo.SelectedIndex switch
@@ -753,7 +689,6 @@ public partial class MainWindow : Window
         };
         GraphControl.InvalidateVisual();
     }
-
     protected override void OnClosed(EventArgs e)
     {
         base.OnClosed(e);
@@ -761,11 +696,9 @@ public partial class MainWindow : Window
         _syntheticGen?.Dispose();
         _wasapiDevice?.Dispose();
     }
-
     private void RefreshTraceManagerUI()
     {
         TraceListStack.Children.Clear();
-
         if (GraphControl.StoredTraces.Count == 0)
         {
             TraceListStack.Children.Add(new TextBlock
@@ -779,7 +712,6 @@ public partial class MainWindow : Window
             });
             return;
         }
-
         foreach (var trace in GraphControl.StoredTraces)
         {
             var itemBorder = new Border
@@ -791,14 +723,11 @@ public partial class MainWindow : Window
                 BorderBrush = Avalonia.Media.SolidColorBrush.Parse(trace.HexColor),
                 BorderThickness = new Avalonia.Thickness(2, 0, 0, 0)
             };
-
             var mainStack = new StackPanel();
-
             var headerGrid = new Grid
             {
                 ColumnDefinitions = new ColumnDefinitions("Auto,*,Auto")
             };
-
             var chk = new CheckBox
             {
                 IsChecked = trace.IsVisible,
@@ -812,7 +741,6 @@ public partial class MainWindow : Window
             };
             Grid.SetColumn(chk, 0);
             headerGrid.Children.Add(chk);
-
             var nameText = new TextBlock
             {
                 Text = trace.Name,
@@ -824,7 +752,6 @@ public partial class MainWindow : Window
             };
             Grid.SetColumn(nameText, 1);
             headerGrid.Children.Add(nameText);
-
             var delBtn = new Button
             {
                 Content = "✕",
@@ -842,33 +769,27 @@ public partial class MainWindow : Window
             };
             Grid.SetColumn(delBtn, 2);
             headerGrid.Children.Add(delBtn);
-
             mainStack.Children.Add(headerGrid);
-
             var ctrlStack = new StackPanel
             {
                 Orientation = Avalonia.Layout.Orientation.Horizontal,
                 Margin = new Avalonia.Thickness(24, 3, 0, 0)
             };
-
             var gainDown = new Button { Content = "-1dB", Background = Avalonia.Media.SolidColorBrush.Parse("#263238"), Foreground = Avalonia.Media.Brushes.White, FontSize = 9, Padding = new Avalonia.Thickness(3, 1), Margin = new Avalonia.Thickness(0, 0, 3, 0) };
             var gainUp = new Button { Content = "+1dB", Background = Avalonia.Media.SolidColorBrush.Parse("#263238"), Foreground = Avalonia.Media.Brushes.White, FontSize = 9, Padding = new Avalonia.Thickness(3, 1), Margin = new Avalonia.Thickness(0, 0, 4, 0) };
             var gainLabel = new TextBlock { Text = $"{trace.OffsetDb:+0;-0;0}dB", Foreground = Avalonia.Media.SolidColorBrush.Parse("#8C9BAE"), FontSize = 9, VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center, Margin = new Avalonia.Thickness(0, 0, 6, 0) };
-
             gainDown.Click += (s, e) =>
             {
                 trace.OffsetDb -= 1f;
                 gainLabel.Text = $"{trace.OffsetDb:+0;-0;0}dB";
                 GraphControl.InvalidateVisual();
             };
-
             gainUp.Click += (s, e) =>
             {
                 trace.OffsetDb += 1f;
                 gainLabel.Text = $"{trace.OffsetDb:+0;-0;0}dB";
                 GraphControl.InvalidateVisual();
             };
-
             var polBtn = new Button
             {
                 Content = trace.InvertPolarity ? "Ø INV" : "Ø NOR",
@@ -884,16 +805,13 @@ public partial class MainWindow : Window
                 polBtn.Background = trace.InvertPolarity ? Avalonia.Media.SolidColorBrush.Parse("#D32F2F") : Avalonia.Media.SolidColorBrush.Parse("#263238");
                 GraphControl.InvalidateVisual();
             };
-
             ctrlStack.Children.Add(gainDown);
             ctrlStack.Children.Add(gainLabel);
             ctrlStack.Children.Add(gainUp);
             ctrlStack.Children.Add(polBtn);
-
             mainStack.Children.Add(ctrlStack);
             itemBorder.Child = mainStack;
             TraceListStack.Children.Add(itemBorder);
         }
     }
-
 }
