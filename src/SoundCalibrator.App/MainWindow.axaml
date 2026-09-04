@@ -225,6 +225,13 @@
                             <TextBlock x:Name="SplText" Text="-- dBA" Foreground="#00E676" FontSize="11" FontWeight="Bold"/>
                         </StackPanel>
                     </Border>
+
+                    <Border x:Name="FeedbackBadge" Background="#3D1212" CornerRadius="3" Padding="5,1" Margin="0,0,14,0" VerticalAlignment="Center" IsVisible="False">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="FEEDBACK: " Foreground="#FF8A80" FontSize="11" FontWeight="SemiBold"/>
+                            <TextBlock x:Name="FeedbackText" Text="-- Hz" Foreground="#FF1744" FontSize="11" FontWeight="Bold"/>
+                        </StackPanel>
+                    </Border>
                 </StackPanel>
 
                 <StackPanel Grid.Column="1" HorizontalAlignment="Center">
