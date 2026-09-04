@@ -20,6 +20,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\SoundCalibrator.Core\SoundCalibrator.Core.csproj" />
+    <ProjectReference Include="..\..\src\SoundCalibrator.Audio\SoundCalibrator.Audio.csproj" />
   </ItemGroup>
 
 </Project>
