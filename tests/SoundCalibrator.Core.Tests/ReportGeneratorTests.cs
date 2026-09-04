@@ -68,4 +68,36 @@ public class ReportGeneratorTests
         Assert.Contains("Studio Control Room", html);
         Assert.Contains("</html>", html);
     }
+
+    [Fact]
+    public void GenerateMarkdown_WithStiAndDelayMatrix_RendersNewSections()
+    {
+        var alignments = new AcousticZoneAlignment[]
+        {
+            new("Main PA", 50.0f, 0.0f, 0.0f, 0.0f),
+            new("Delay Tower", 18.0f, 32.0f, 10.98f, 36.0f)
+        };
+        var delayMatrix = new DelayMatrixReport("Main PA", 20.0f, 343.2f, alignments);
+
+        var data = new CalibrationReportData
+        {
+            ProjectName = "Stadium Sound Tuning",
+            EngineerName = "Carlos Cespon",
+            Timestamp = DateTime.UtcNow,
+            Rt60 = new ReverberationTimeResult(true, 1.2f, 1.35f, 1.40f, 10f, 48f),
+            Sti = new StiResult(0.68f, 4.3f, "Good"),
+            DelayMatrix = delayMatrix
+        };
+
+        string md = ReportGenerator.GenerateMarkdown(data);
+
+        Assert.Contains("**STI**", md);
+        Assert.Contains("0.68 (Good)", md);
+        Assert.Contains("%ALCons", md);
+        Assert.Contains("4.3%", md);
+        Assert.Contains("## 6. Multi-Zone Delay Matrix Alignment", md);
+        Assert.Contains("Main PA", md);
+        Assert.Contains("Delay Tower", md);
+        Assert.Contains("+32.00 ms", md);
+    }
 }

@@ -28,6 +28,8 @@ public partial class MainWindow : Window
     private MeasurementSnapshot? _lastSnapshot;
     private AlignmentSuggestion? _lastAlignmentSuggestion;
     private System.Collections.Generic.IReadOnlyList<PeqFilterSuggestion>? _lastPeqSuggestions;
+    private StiResult? _lastSti;
+    private DelayMatrixReport? _lastDelayMatrixReport;
     private static readonly string[] TraceColors = ["#E040FB", "#76FF03", "#FFD600", "#FF4081", "#00E676", "#448AFF"];
     public MainWindow()
     {
@@ -184,6 +186,7 @@ public partial class MainWindow : Window
 
             var zones = System.Linq.Enumerable.ToList(System.Linq.Enumerable.Select(visibleTraces, t => (t.Name, t.DetectedDelayMs)));
             var report = AcousticDelayMatrix.CalculateAlignmentMatrix(zones, anchorIndex: 0, temperatureCelsius: 20.0f);
+            _lastDelayMatrixReport = report;
 
             var sb = new System.Text.StringBuilder();
             sb.AppendLine($"Anchor: {report.AnchorZoneName} (c={report.SpeedOfSoundMps:0} m/s)");
@@ -266,7 +269,9 @@ public partial class MainWindow : Window
                     Thd = _lastSnapshot != null && _lastSnapshot.IsRtaMode 
                         ? ThdCalculator.Calculate(_lastSnapshot.Frequencies, _lastSnapshot.RtaDb) 
                         : null,
+                    Sti = _lastSti,
                     Alignment = _lastAlignmentSuggestion,
+                    DelayMatrix = _lastDelayMatrixReport,
                     PeqFilters = _lastPeqSuggestions,
                     Traces = GraphControl.StoredTraces
                 };
@@ -529,6 +534,7 @@ public partial class MainWindow : Window
                     Rt60Text.IsVisible = true;
 
                     var sti = SpeechIntelligibilityCalculator.CalculateFromRt60AndSnr(rt60.T20Seconds, snrDb: 30f);
+                    _lastSti = sti;
                     StiText.Text = $"STI: {sti.Sti:0.00} ({sti.Rating})";
                     StiText.IsVisible = true;
                 }
