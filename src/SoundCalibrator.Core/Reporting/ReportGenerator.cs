@@ -22,6 +22,7 @@ public sealed class CalibrationReportData
     public ThdResult? Thd { get; set; }
     public AlignmentSuggestion? Alignment { get; set; }
     public IReadOnlyList<AcousticTrace> Traces { get; set; } = [];
+    public IReadOnlyList<PeqFilterSuggestion>? PeqFilters { get; set; }
 }
 
 public static class ReportGenerator
@@ -81,7 +82,20 @@ public static class ReportGenerator
             sb.AppendLine();
         }
 
-        sb.AppendLine("## 5. Stored Traces");
+        if (data.PeqFilters != null && data.PeqFilters.Count > 0)
+        {
+            sb.AppendLine("## 5. Recommended Parametric EQ Filters (Auto PEQ)");
+            sb.AppendLine("| Band | Center Frequency | Correction Gain | Q Factor | Bandwidth |");
+            sb.AppendLine("| :-: | :--- | :--- | :--- | :--- |");
+            for (int i = 0; i < data.PeqFilters.Count; i++)
+            {
+                var f = data.PeqFilters[i];
+                sb.AppendLine($"| {i + 1} | {f.FrequencyHz:0.#} Hz | {f.GainDb:+0.00;-0.00;0.00} dB | {f.Q:0.00} | {f.BandwidthOctaves:0.00} oct |");
+            }
+            sb.AppendLine();
+        }
+
+        sb.AppendLine("## 6. Stored Traces");
         if (data.Traces.Count == 0)
         {
             sb.AppendLine("*No individual traces stored in this session.*");
