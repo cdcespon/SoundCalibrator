@@ -81,6 +81,8 @@ public sealed class AcousticMeasurementEngine : IDisposable
 
     public MicrophoneCalibration Calibration { get; } = new();
     public float DelayCompensationMs { get; set; } = 0f;
+    public float DisplayOffsetDb { get; set; } = 0f;
+    public bool InvertPolarity { get; set; } = false;
     public bool IsRtaMode { get; set; } = false;
 
     public event Action<MeasurementSnapshot>? SnapshotReady;
@@ -209,15 +211,20 @@ public sealed class AcousticMeasurementEngine : IDisposable
 
                     if (IsRtaMode)
                     {
-                        // Modo RTA de 1 canal sobre la señal medida
                         _rtaCalculator.Calculate(_measChunk, snapshot.RtaDb, snapshot.RtaMaxHoldDb);
-                        
-                        // Aplicar suavizado de octava opcional al espectro RTA
                         OctaveSmoother.Smooth(snapshot.RtaDb, snapshot.MagnitudeDb, Smoothing, SampleRate, fft);
+
+                        if (MathF.Abs(DisplayOffsetDb) > 0.001f)
+                        {
+                            for (int k = 0; k < snapshot.BinCount; k++)
+                            {
+                                snapshot.MagnitudeDb[k] += DisplayOffsetDb;
+                                snapshot.RtaMaxHoldDb[k] += DisplayOffsetDb;
+                            }
+                        }
                     }
                     else
                     {
-                        // Modo Transfer Function Dual-Channel
                         _calculator.Calculate(_refChunk, _measChunk, _averager, _rawResult);
                         OctaveSmoother.Smooth(_rawResult.MagnitudeDb, snapshot.MagnitudeDb, Smoothing, SampleRate, fft);
 
@@ -231,15 +238,31 @@ public sealed class AcousticMeasurementEngine : IDisposable
 
                         _irCalculator.CalculateImpulseResponse(snapshot.MagnitudeDb, snapshot.PhaseDegrees, _irBuffer, SampleRate, snapshot.Delay);
 
-                        if (MathF.Abs(DelayCompensationMs) > 0.001f)
+                        // Compensación de retardo, polaridad y ganancia
+                        float compSeconds = DelayCompensationMs / 1000f;
+                        bool hasDelayComp = MathF.Abs(DelayCompensationMs) > 0.001f;
+                        bool hasOffset = MathF.Abs(DisplayOffsetDb) > 0.001f;
+
+                        for (int k = 0; k < snapshot.BinCount; k++)
                         {
-                            float compSeconds = DelayCompensationMs / 1000f;
-                            for (int k = 0; k < snapshot.BinCount; k++)
+                            if (hasOffset)
+                            {
+                                snapshot.MagnitudeDb[k] += DisplayOffsetDb;
+                            }
+
+                            float p = snapshot.PhaseDegrees[k];
+                            if (hasDelayComp)
                             {
                                 float f = snapshot.Frequencies[k];
-                                float compensated = snapshot.PhaseDegrees[k] + (360f * f * compSeconds);
-                                snapshot.PhaseDegrees[k] = ((compensated + 180f) % 360f + 360f) % 360f - 180f;
+                                p += 360f * f * compSeconds;
                             }
+
+                            if (InvertPolarity)
+                            {
+                                p += 180f;
+                            }
+
+                            snapshot.PhaseDegrees[k] = ((p + 180f) % 360f + 360f) % 360f - 180f;
                         }
                     }
 
