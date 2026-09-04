@@ -211,35 +211,54 @@ public sealed class AcousticGraphControl : Control
     {
         Color traceColor = Color.Parse(trace.HexColor);
         var magPen = new Pen(new SolidColorBrush(traceColor), 1.6, DashStyle.Dash);
+        var phasePen = new Pen(new SolidColorBrush(Color.FromArgb(170, traceColor.R, traceColor.G, traceColor.B)), 1.2, DashStyle.Dot);
         var magGeometry = new StreamGeometry();
-        bool started = false;
+        var phaseGeometry = new StreamGeometry();
+        bool magStarted = false;
+        bool phaseStarted = false;
 
         using (var magCtx = magGeometry.Open())
+        using (var phaseCtx = phaseGeometry.Open())
         {
             for (int i = 1; i < trace.Frequencies.Length; i++)
             {
                 float freq = trace.Frequencies[i];
                 if (freq < 20f || freq > 20000f) continue;
 
-                trace.GetDisplayValues(i, out float mag, out _, out _);
+                trace.GetDisplayValues(i, out float mag, out float phase, out _);
                 double x = FreqToX(freq, w);
                 double yMag = DbToY(mag, mainH);
+                double yPhase = PhaseToY(phase, mainH);
 
-                if (!started)
+                if (!magStarted)
                 {
                     magCtx.BeginFigure(new Point(x, yMag), false);
-                    started = true;
+                    magStarted = true;
                 }
                 else
                 {
                     magCtx.LineTo(new Point(x, yMag));
                 }
+
+                if (!phaseStarted)
+                {
+                    phaseCtx.BeginFigure(new Point(x, yPhase), false);
+                    phaseStarted = true;
+                }
+                else
+                {
+                    phaseCtx.LineTo(new Point(x, yPhase));
+                }
             }
         }
 
-        if (started)
+        if (magStarted)
         {
             context.DrawGeometry(null, magPen, magGeometry);
+        }
+        if (phaseStarted)
+        {
+            context.DrawGeometry(null, phasePen, phaseGeometry);
         }
     }
 

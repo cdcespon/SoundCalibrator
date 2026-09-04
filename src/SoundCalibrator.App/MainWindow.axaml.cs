@@ -38,6 +38,7 @@ public partial class MainWindow : Window
         _engine.SnapshotReady += OnSnapshotReady;
 
         SetupEventHandlers();
+        RefreshTraceManagerUI();
         _engine.Start();
     }
 
@@ -82,6 +83,7 @@ public partial class MainWindow : Window
                 GraphControl.StoredTraces.Add(trace);
                 TracesCountText.Text = $"Captured Traces: {GraphControl.StoredTraces.Count}";
                 GraphControl.InvalidateVisual();
+                RefreshTraceManagerUI();
             }
         };
 
@@ -90,6 +92,7 @@ public partial class MainWindow : Window
             GraphControl.StoredTraces.Clear();
             TracesCountText.Text = "Captured Traces: 0";
             GraphControl.InvalidateVisual();
+            RefreshTraceManagerUI();
         };
 
         DelaySlider.PropertyChanged += (s, e) =>
@@ -175,6 +178,16 @@ public partial class MainWindow : Window
             }
         };
 
+        ToggleTracesPanelBtn.Click += (s, e) =>
+        {
+            TraceManagerBorder.IsVisible = !TraceManagerBorder.IsVisible;
+        };
+
+        CloseTracePanelBtn.Click += (s, e) =>
+        {
+            TraceManagerBorder.IsVisible = false;
+        };
+
         ImportTraceBtn.Click += async (s, e) =>
         {
             var topLevel = TopLevel.GetTopLevel(this);
@@ -207,6 +220,7 @@ public partial class MainWindow : Window
                             GraphControl.StoredTraces.Add(trace);
                             TracesCountText.Text = $"Captured Traces: {GraphControl.StoredTraces.Count}";
                             GraphControl.InvalidateVisual();
+                            RefreshTraceManagerUI();
                         }
                         catch
                         {
@@ -253,6 +267,10 @@ public partial class MainWindow : Window
                 break;
             case Avalonia.Input.Key.D:
                 DeltaBtn.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+                e.Handled = true;
+                break;
+            case Avalonia.Input.Key.T:
+                TraceManagerBorder.IsVisible = !TraceManagerBorder.IsVisible;
                 e.Handled = true;
                 break;
             case Avalonia.Input.Key.D1 or Avalonia.Input.Key.NumPad1:
@@ -488,4 +506,139 @@ public partial class MainWindow : Window
         _syntheticGen?.Dispose();
         _wasapiDevice?.Dispose();
     }
+
+    private void RefreshTraceManagerUI()
+    {
+        TraceListStack.Children.Clear();
+
+        if (GraphControl.StoredTraces.Count == 0)
+        {
+            TraceListStack.Children.Add(new TextBlock
+            {
+                Text = "No stored traces yet.\nPress [C] or 'CAPTURE' to freeze a curve.",
+                Foreground = Avalonia.Media.SolidColorBrush.Parse("#556677"),
+                FontSize = 11,
+                Margin = new Avalonia.Thickness(6, 16, 6, 8),
+                TextWrapping = Avalonia.Media.TextWrapping.Wrap,
+                TextAlignment = Avalonia.Media.TextAlignment.Center
+            });
+            return;
+        }
+
+        foreach (var trace in GraphControl.StoredTraces)
+        {
+            var itemBorder = new Border
+            {
+                Background = Avalonia.Media.SolidColorBrush.Parse("#1A202C"),
+                CornerRadius = new Avalonia.CornerRadius(4),
+                Padding = new Avalonia.Thickness(6, 5),
+                Margin = new Avalonia.Thickness(0, 0, 0, 6),
+                BorderBrush = Avalonia.Media.SolidColorBrush.Parse(trace.HexColor),
+                BorderThickness = new Avalonia.Thickness(2, 0, 0, 0)
+            };
+
+            var mainStack = new StackPanel();
+
+            var headerGrid = new Grid
+            {
+                ColumnDefinitions = new ColumnDefinitions("Auto,*,Auto")
+            };
+
+            var chk = new CheckBox
+            {
+                IsChecked = trace.IsVisible,
+                Margin = new Avalonia.Thickness(0, 0, 4, 0),
+                VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center
+            };
+            chk.IsCheckedChanged += (s, e) =>
+            {
+                trace.IsVisible = chk.IsChecked ?? true;
+                GraphControl.InvalidateVisual();
+            };
+            Grid.SetColumn(chk, 0);
+            headerGrid.Children.Add(chk);
+
+            var nameText = new TextBlock
+            {
+                Text = trace.Name,
+                Foreground = Avalonia.Media.SolidColorBrush.Parse(trace.HexColor),
+                FontWeight = Avalonia.Media.FontWeight.SemiBold,
+                FontSize = 11,
+                VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
+                TextTrimming = Avalonia.Media.TextTrimming.CharacterEllipsis
+            };
+            Grid.SetColumn(nameText, 1);
+            headerGrid.Children.Add(nameText);
+
+            var delBtn = new Button
+            {
+                Content = "✕",
+                Background = Avalonia.Media.Brushes.Transparent,
+                Foreground = Avalonia.Media.SolidColorBrush.Parse("#7E8B9B"),
+                Padding = new Avalonia.Thickness(4, 1),
+                FontSize = 10
+            };
+            delBtn.Click += (s, e) =>
+            {
+                GraphControl.StoredTraces.Remove(trace);
+                TracesCountText.Text = $"Captured Traces: {GraphControl.StoredTraces.Count}";
+                GraphControl.InvalidateVisual();
+                RefreshTraceManagerUI();
+            };
+            Grid.SetColumn(delBtn, 2);
+            headerGrid.Children.Add(delBtn);
+
+            mainStack.Children.Add(headerGrid);
+
+            var ctrlStack = new StackPanel
+            {
+                Orientation = Avalonia.Layout.Orientation.Horizontal,
+                Margin = new Avalonia.Thickness(24, 3, 0, 0)
+            };
+
+            var gainDown = new Button { Content = "-1dB", Background = Avalonia.Media.SolidColorBrush.Parse("#263238"), Foreground = Avalonia.Media.Brushes.White, FontSize = 9, Padding = new Avalonia.Thickness(3, 1), Margin = new Avalonia.Thickness(0, 0, 3, 0) };
+            var gainUp = new Button { Content = "+1dB", Background = Avalonia.Media.SolidColorBrush.Parse("#263238"), Foreground = Avalonia.Media.Brushes.White, FontSize = 9, Padding = new Avalonia.Thickness(3, 1), Margin = new Avalonia.Thickness(0, 0, 4, 0) };
+            var gainLabel = new TextBlock { Text = $"{trace.OffsetDb:+0;-0;0}dB", Foreground = Avalonia.Media.SolidColorBrush.Parse("#8C9BAE"), FontSize = 9, VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center, Margin = new Avalonia.Thickness(0, 0, 6, 0) };
+
+            gainDown.Click += (s, e) =>
+            {
+                trace.OffsetDb -= 1f;
+                gainLabel.Text = $"{trace.OffsetDb:+0;-0;0}dB";
+                GraphControl.InvalidateVisual();
+            };
+
+            gainUp.Click += (s, e) =>
+            {
+                trace.OffsetDb += 1f;
+                gainLabel.Text = $"{trace.OffsetDb:+0;-0;0}dB";
+                GraphControl.InvalidateVisual();
+            };
+
+            var polBtn = new Button
+            {
+                Content = trace.InvertPolarity ? "Ø INV" : "Ø NOR",
+                Background = trace.InvertPolarity ? Avalonia.Media.SolidColorBrush.Parse("#D32F2F") : Avalonia.Media.SolidColorBrush.Parse("#263238"),
+                Foreground = Avalonia.Media.Brushes.White,
+                FontSize = 9,
+                Padding = new Avalonia.Thickness(3, 1)
+            };
+            polBtn.Click += (s, e) =>
+            {
+                trace.InvertPolarity = !trace.InvertPolarity;
+                polBtn.Content = trace.InvertPolarity ? "Ø INV" : "Ø NOR";
+                polBtn.Background = trace.InvertPolarity ? Avalonia.Media.SolidColorBrush.Parse("#D32F2F") : Avalonia.Media.SolidColorBrush.Parse("#263238");
+                GraphControl.InvalidateVisual();
+            };
+
+            ctrlStack.Children.Add(gainDown);
+            ctrlStack.Children.Add(gainLabel);
+            ctrlStack.Children.Add(gainUp);
+            ctrlStack.Children.Add(polBtn);
+
+            mainStack.Children.Add(ctrlStack);
+            itemBorder.Child = mainStack;
+            TraceListStack.Children.Add(itemBorder);
+        }
+    }
+
 }
