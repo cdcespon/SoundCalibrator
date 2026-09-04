@@ -1,10 +1,12 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Globalization;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Media;
 using SoundCalibrator.Audio.Engine;
+using SoundCalibrator.Core.Models;
 
 namespace SoundCalibrator.App.Controls;
 
@@ -12,6 +14,9 @@ public sealed class AcousticGraphControl : Control
 {
     private MeasurementSnapshot? _currentSnapshot;
     private Point? _mousePosition;
+
+    public List<AcousticTrace> StoredTraces { get; } = [];
+    public float CoherenceThreshold { get; set; } = 0.0f; // 0.0 = off
 
     // Colores inspirados en Open Sound Meter (Dark Tech Aesthetics)
     private static readonly Color BgColor = Color.Parse("#101318");
@@ -51,35 +56,71 @@ public sealed class AcousticGraphControl : Control
         double h = bounds.Height;
         if (w <= 10 || h <= 10) return;
 
-        // 1. Fondo
         context.FillRectangle(new SolidColorBrush(BgColor), bounds);
 
-        // Subdivisión de pantalla:
-        // Top: Magnitud (dB) y Fase (grados) (75% del alto)
-        // Bottom: Coherencia (0 - 100%) (25% del alto)
         double mainH = h * 0.75;
         double cohH = h * 0.25;
         double cohTop = mainH;
 
-        // 2. Grilla Logarítmica de Frecuencia (20 Hz a 20 kHz)
         DrawFrequencyGrid(context, w, mainH, cohTop, cohH);
-
-        // 3. Grilla de Magnitud (-36 dB a +18 dB) y Fase (-180 a +180)
         DrawMagnitudeAndPhaseGrid(context, w, mainH);
-
-        // 4. Grilla de Coherencia (0% a 100%)
         DrawCoherenceGrid(context, w, cohTop, cohH);
 
-        // 5. Curvas acústicas
+        // Dibujar trazas guardadas (congeladas)
+        foreach (var trace in StoredTraces)
+        {
+            if (trace.IsVisible)
+            {
+                DrawStoredTrace(context, w, mainH, cohTop, cohH, trace);
+            }
+        }
+
+        // Curvas en vivo
         if (_currentSnapshot != null)
         {
             DrawDataCurves(context, w, mainH, cohTop, cohH, _currentSnapshot);
         }
 
-        // 6. Crosshair y Readout numérico interactivo
+        // Crosshair interactivo
         if (_mousePosition.HasValue && _currentSnapshot != null)
         {
             DrawCrosshairAndReadout(context, w, mainH, cohTop, cohH, _mousePosition.Value, _currentSnapshot);
+        }
+    }
+
+    private void DrawStoredTrace(DrawingContext context, double w, double mainH, double cohTop, double cohH, AcousticTrace trace)
+    {
+        Color traceColor = Color.Parse(trace.HexColor);
+        var magPen = new Pen(new SolidColorBrush(traceColor), 1.6, DashStyle.Dash);
+        var magGeometry = new StreamGeometry();
+        bool started = false;
+
+        using (var magCtx = magGeometry.Open())
+        {
+            for (int i = 1; i < trace.Frequencies.Length; i++)
+            {
+                float freq = trace.Frequencies[i];
+                if (freq < 20f || freq > 20000f) continue;
+
+                trace.GetDisplayValues(i, out float mag, out _, out _);
+                double x = FreqToX(freq, w);
+                double yMag = DbToY(mag, mainH);
+
+                if (!started)
+                {
+                    magCtx.BeginFigure(new Point(x, yMag), false);
+                    started = true;
+                }
+                else
+                {
+                    magCtx.LineTo(new Point(x, yMag));
+                }
+            }
+        }
+
+        if (started)
+        {
+            context.DrawGeometry(null, magPen, magGeometry);
         }
     }
 
@@ -112,7 +153,6 @@ public sealed class AcousticGraphControl : Control
     {
         var gridPen = new Pen(new SolidColorBrush(GridColor), 1, DashStyle.Dash);
 
-        // Magnitud: +18 dB a -36 dB (paso 6 dB)
         for (float db = -36f; db <= 18f; db += 6f)
         {
             double y = DbToY(db, mainH);
@@ -128,7 +168,6 @@ public sealed class AcousticGraphControl : Control
             context.DrawText(label, new Point(5, y - 12));
         }
 
-        // Fase: +180, +90, 0, -90, -180
         float[] phaseTicks = [180f, 90f, 0f, -90f, -180f];
         foreach (float deg in phaseTicks)
         {
@@ -149,7 +188,6 @@ public sealed class AcousticGraphControl : Control
         var gridPen = new Pen(new SolidColorBrush(GridColor), 1);
         context.DrawLine(new Pen(new SolidColorBrush(Color.Parse("#2C3440")), 1.5), new Point(0, cohTop), new Point(w, cohTop));
 
-        // 50% y 100%
         double y100 = cohTop;
         double y50 = cohTop + cohH * 0.5;
 
@@ -196,20 +234,9 @@ public sealed class AcousticGraphControl : Control
                     magCtx.LineTo(new Point(x, yMag));
                 }
 
-                // Fase
-                double yPhase = PhaseToY(snap.PhaseDegrees[i], mainH);
-                if (!phaseStarted)
-                {
-                    phaseCtx.BeginFigure(new Point(x, yPhase), false);
-                    phaseStarted = true;
-                }
-                else
-                {
-                    phaseCtx.LineTo(new Point(x, yPhase));
-                }
-
                 // Coherencia
-                double yCoh = cohTop + cohH * (1.0 - Math.Clamp(snap.Coherence[i], 0f, 1f));
+                float coh = Math.Clamp(snap.Coherence[i], 0f, 1f);
+                double yCoh = cohTop + cohH * (1.0 - coh);
                 if (!cohStarted)
                 {
                     cohCtx.BeginFigure(new Point(x, yCoh), false);
@@ -219,10 +246,29 @@ public sealed class AcousticGraphControl : Control
                 {
                     cohCtx.LineTo(new Point(x, yCoh));
                 }
+
+                // Fase con Coherence Blanking opcional
+                if (CoherenceThreshold > 0.001f && coh < CoherenceThreshold)
+                {
+                    // Si cae por debajo del umbral de coherencia, se interrumpe el trazado de fase
+                    phaseStarted = false;
+                }
+                else
+                {
+                    double yPhase = PhaseToY(snap.PhaseDegrees[i], mainH);
+                    if (!phaseStarted)
+                    {
+                        phaseCtx.BeginFigure(new Point(x, yPhase), false);
+                        phaseStarted = true;
+                    }
+                    else
+                    {
+                        phaseCtx.LineTo(new Point(x, yPhase));
+                    }
+                }
             }
         }
 
-        // Trazar curvas con grosores diferenciados
         if (magStarted)
         {
             context.DrawGeometry(null, new Pen(new SolidColorBrush(MagLineColor), 2.2), magGeometry);

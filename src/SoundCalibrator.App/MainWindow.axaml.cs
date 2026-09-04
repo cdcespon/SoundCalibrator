@@ -6,6 +6,7 @@ using SoundCalibrator.Audio.Devices;
 using SoundCalibrator.Audio.Engine;
 using SoundCalibrator.Audio.Generators;
 using SoundCalibrator.Core.Averaging;
+using SoundCalibrator.Core.Models;
 using SoundCalibrator.Core.Smoothing;
 
 namespace SoundCalibrator.App;
@@ -18,6 +19,9 @@ public partial class MainWindow : Window
     private bool _isPaused;
     private float _lastDetectedDelayMs;
     private bool _isAligned;
+    private MeasurementSnapshot? _lastSnapshot;
+
+    private static readonly string[] TraceColors = ["#E040FB", "#76FF03", "#FFD600", "#FF4081", "#00E676", "#448AFF"];
 
     public MainWindow()
     {
@@ -41,7 +45,7 @@ public partial class MainWindow : Window
             _engine.Reset();
             _engine.DelayCompensationMs = 0f;
             _isAligned = false;
-            AutoAlignBtn.Content = "ALIGN PHASE";
+            AutoAlignBtn.Content = "ALIGN";
             AutoAlignBtn.Background = Avalonia.Media.SolidColorBrush.Parse("#E65100");
         };
 
@@ -58,9 +62,30 @@ public partial class MainWindow : Window
             {
                 _engine.DelayCompensationMs = 0f;
                 _isAligned = false;
-                AutoAlignBtn.Content = "ALIGN PHASE";
+                AutoAlignBtn.Content = "ALIGN";
                 AutoAlignBtn.Background = Avalonia.Media.SolidColorBrush.Parse("#E65100");
             }
+        };
+
+        CaptureTraceBtn.Click += (s, e) =>
+        {
+            if (_lastSnapshot != null)
+            {
+                int idx = GraphControl.StoredTraces.Count;
+                string color = TraceColors[idx % TraceColors.Length];
+                string name = $"Trace {idx + 1}";
+                var trace = new AcousticTrace(name, color, _lastSnapshot.Frequencies, _lastSnapshot.MagnitudeDb, _lastSnapshot.PhaseDegrees, _lastSnapshot.Coherence);
+                GraphControl.StoredTraces.Add(trace);
+                TracesCountText.Text = $"Captured Traces: {GraphControl.StoredTraces.Count}";
+                GraphControl.InvalidateVisual();
+            }
+        };
+
+        ClearTracesBtn.Click += (s, e) =>
+        {
+            GraphControl.StoredTraces.Clear();
+            TracesCountText.Text = "Captured Traces: 0";
+            GraphControl.InvalidateVisual();
         };
 
         DelaySlider.PropertyChanged += (s, e) =>
@@ -73,30 +98,22 @@ public partial class MainWindow : Window
             }
         };
 
-        GainSlider.PropertyChanged += (s, e) =>
-        {
-            if (e.Property.Name == nameof(Slider.Value) && _syntheticGen != null)
-            {
-                float val = (float)GainSlider.Value;
-                _syntheticGen.GainDb = val;
-                GainText.Text = $"{val:+0;-0;0} dB";
-            }
-        };
-
         SourceCombo.SelectionChanged += OnSourceChanged;
         AveragingCombo.SelectionChanged += OnAveragingChanged;
         SmoothingCombo.SelectionChanged += OnSmoothingChanged;
+        BlankingCombo.SelectionChanged += OnBlankingChanged;
     }
 
     private void OnSnapshotReady(MeasurementSnapshot snapshot)
     {
+        _lastSnapshot = snapshot;
         _lastDetectedDelayMs = snapshot.Delay.DelayMs;
 
         Dispatcher.UIThread.Post(() =>
         {
             GraphControl.UpdateSnapshot(snapshot);
             StatusAvgText.Text = $"Averages: {snapshot.AverageCount}";
-            DetectedDelayText.Text = $"{snapshot.Delay.DelayMs:0.00} ms ({snapshot.Delay.DistanceMeters:0.00} m)";
+            DetectedDelayText.Text = $"{snapshot.Delay.DelayMs:0.00} ms";
         });
     }
 
@@ -194,6 +211,19 @@ public partial class MainWindow : Window
             4 => OctaveSmoothingType.Octave1_24,
             _ => OctaveSmoothingType.None
         };
+    }
+
+    private void OnBlankingChanged(object? sender, SelectionChangedEventArgs e)
+    {
+        GraphControl.CoherenceThreshold = BlankingCombo.SelectedIndex switch
+        {
+            0 => 0.0f,
+            1 => 0.3f,
+            2 => 0.5f,
+            3 => 0.7f,
+            _ => 0.0f
+        };
+        GraphControl.InvalidateVisual();
     }
 
     protected override void OnClosed(EventArgs e)
