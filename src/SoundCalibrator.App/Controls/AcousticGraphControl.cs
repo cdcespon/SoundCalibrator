@@ -16,15 +16,17 @@ public sealed class AcousticGraphControl : Control
     private Point? _mousePosition;
 
     public List<AcousticTrace> StoredTraces { get; } = [];
-    public float CoherenceThreshold { get; set; } = 0.0f; // 0.0 = off
+    public float CoherenceThreshold { get; set; } = 0.0f;
 
-    // Colores inspirados en Open Sound Meter (Dark Tech Aesthetics)
+    // Paleta de diseño
     private static readonly Color BgColor = Color.Parse("#101318");
     private static readonly Color GridColor = Color.Parse("#1F2530");
     private static readonly Color TextColor = Color.Parse("#7E8B9B");
-    private static readonly Color MagLineColor = Color.Parse("#00E5FF"); // Cyan brillante
-    private static readonly Color PhaseLineColor = Color.Parse("#FF9100"); // Naranja neón
+    private static readonly Color MagLineColor = Color.Parse("#00E5FF"); // Cyan
+    private static readonly Color PhaseLineColor = Color.Parse("#FF9100"); // Naranja
     private static readonly Color CohLineColor = Color.Parse("#00E676"); // Verde esmeralda
+    private static readonly Color RtaLiveColor = Color.Parse("#FFD600"); // Amarillo dorado
+    private static readonly Color RtaMaxColor = Color.Parse("#FF3D00"); // Rojo coral
     private static readonly Color CrosshairColor = Color.Parse("#50FFFFFF");
 
     private static readonly Typeface LabelFont = new("Segoe UI", FontStyle.Normal, FontWeight.SemiBold);
@@ -58,33 +60,116 @@ public sealed class AcousticGraphControl : Control
 
         context.FillRectangle(new SolidColorBrush(BgColor), bounds);
 
-        double mainH = h * 0.75;
-        double cohH = h * 0.25;
+        bool isRta = _currentSnapshot?.IsRtaMode ?? false;
+
+        double mainH = isRta ? h * 0.95 : h * 0.75;
+        double cohH = isRta ? 0 : h * 0.25;
         double cohTop = mainH;
 
         DrawFrequencyGrid(context, w, mainH, cohTop, cohH);
-        DrawMagnitudeAndPhaseGrid(context, w, mainH);
-        DrawCoherenceGrid(context, w, cohTop, cohH);
 
-        // Dibujar trazas guardadas (congeladas)
-        foreach (var trace in StoredTraces)
+        if (isRta)
         {
-            if (trace.IsVisible)
+            DrawRtaGrid(context, w, mainH);
+            if (_currentSnapshot != null)
             {
-                DrawStoredTrace(context, w, mainH, cohTop, cohH, trace);
+                DrawRtaCurves(context, w, mainH, _currentSnapshot);
+            }
+        }
+        else
+        {
+            DrawMagnitudeAndPhaseGrid(context, w, mainH);
+            DrawCoherenceGrid(context, w, cohTop, cohH);
+
+            foreach (var trace in StoredTraces)
+            {
+                if (trace.IsVisible)
+                {
+                    DrawStoredTrace(context, w, mainH, cohTop, cohH, trace);
+                }
+            }
+
+            if (_currentSnapshot != null)
+            {
+                DrawDataCurves(context, w, mainH, cohTop, cohH, _currentSnapshot);
             }
         }
 
-        // Curvas en vivo
-        if (_currentSnapshot != null)
-        {
-            DrawDataCurves(context, w, mainH, cohTop, cohH, _currentSnapshot);
-        }
-
-        // Crosshair interactivo
         if (_mousePosition.HasValue && _currentSnapshot != null)
         {
-            DrawCrosshairAndReadout(context, w, mainH, cohTop, cohH, _mousePosition.Value, _currentSnapshot);
+            DrawCrosshairAndReadout(context, w, mainH, cohTop, cohH, _mousePosition.Value, _currentSnapshot, isRta);
+        }
+    }
+
+    private void DrawRtaGrid(DrawingContext context, double w, double mainH)
+    {
+        var gridPen = new Pen(new SolidColorBrush(GridColor), 1, DashStyle.Dash);
+
+        // dBFS: 0 dBFS hasta -96 dBFS (paso 12 dB)
+        for (float db = -96f; db <= 0f; db += 12f)
+        {
+            double y = RtaDbToY(db, mainH);
+            context.DrawLine(gridPen, new Point(0, y), new Point(w, y));
+
+            var label = new FormattedText(
+                $"{db:0} dBFS",
+                CultureInfo.InvariantCulture,
+                FlowDirection.LeftToRight,
+                LabelFont,
+                10,
+                new SolidColorBrush(RtaLiveColor));
+            context.DrawText(label, new Point(5, y - 12));
+        }
+    }
+
+    private void DrawRtaCurves(DrawingContext context, double w, double mainH, MeasurementSnapshot snap)
+    {
+        var rtaGeom = new StreamGeometry();
+        var maxGeom = new StreamGeometry();
+        bool rtaStarted = false;
+        bool maxStarted = false;
+
+        using (var rtaCtx = rtaGeom.Open())
+        using (var maxCtx = maxGeom.Open())
+        {
+            for (int i = 1; i < snap.Frequencies.Length; i++)
+            {
+                float freq = snap.Frequencies[i];
+                if (freq < 20f || freq > 20000f) continue;
+
+                double x = FreqToX(freq, w);
+                double yRta = RtaDbToY(snap.MagnitudeDb[i], mainH);
+                double yMax = RtaDbToY(snap.RtaMaxHoldDb[i], mainH);
+
+                if (!rtaStarted)
+                {
+                    rtaCtx.BeginFigure(new Point(x, yRta), false);
+                    rtaStarted = true;
+                }
+                else
+                {
+                    rtaCtx.LineTo(new Point(x, yRta));
+                }
+
+                if (!maxStarted)
+                {
+                    maxCtx.BeginFigure(new Point(x, yMax), false);
+                    maxStarted = true;
+                }
+                else
+                {
+                    maxCtx.LineTo(new Point(x, yMax));
+                }
+            }
+        }
+
+        if (maxStarted)
+        {
+            context.DrawGeometry(null, new Pen(new SolidColorBrush(RtaMaxColor), 1.4, DashStyle.Dash), maxGeom);
+        }
+        if (rtaStarted)
+        {
+            context.DrawGeometry(null, new Pen(new SolidColorBrush(RtaLiveColor), 2.2), rtaGeom);
         }
     }
 
@@ -247,10 +332,9 @@ public sealed class AcousticGraphControl : Control
                     cohCtx.LineTo(new Point(x, yCoh));
                 }
 
-                // Fase con Coherence Blanking opcional
+                // Fase con Coherence Blanking
                 if (CoherenceThreshold > 0.001f && coh < CoherenceThreshold)
                 {
-                    // Si cae por debajo del umbral de coherencia, se interrumpe el trazado de fase
                     phaseStarted = false;
                 }
                 else
@@ -283,7 +367,7 @@ public sealed class AcousticGraphControl : Control
         }
     }
 
-    private void DrawCrosshairAndReadout(DrawingContext context, double w, double mainH, double cohTop, double cohH, Point mouse, MeasurementSnapshot snap)
+    private void DrawCrosshairAndReadout(DrawingContext context, double w, double mainH, double cohTop, double cohH, Point mouse, MeasurementSnapshot snap, bool isRta)
     {
         var crossPen = new Pen(new SolidColorBrush(CrosshairColor), 1, DashStyle.Dash);
         context.DrawLine(crossPen, new Point(mouse.X, 0), new Point(mouse.X, mainH + cohH));
@@ -293,17 +377,28 @@ public sealed class AcousticGraphControl : Control
         int closestBin = Math.Clamp((int)Math.Round(mouseFreq / (snap.SampleRate / snap.FftSize)), 0, snap.Frequencies.Length - 1);
 
         float fVal = snap.Frequencies[closestBin];
-        float magVal = snap.MagnitudeDb[closestBin];
-        float phaseVal = snap.PhaseDegrees[closestBin];
-        float cohVal = snap.Coherence[closestBin];
 
-        string readout = $"{fVal:0.#} Hz | Mag: {magVal:+0.00;-0.00;0.00} dB | Phase: {phaseVal:+0.0;-0.0;0.0}° | Coh: {cohVal * 100f:0.0}%";
+        string readout;
+        if (isRta)
+        {
+            float rtaVal = snap.MagnitudeDb[closestBin];
+            float maxVal = snap.RtaMaxHoldDb[closestBin];
+            readout = $"{fVal:0.#} Hz | RTA: {rtaVal:+0.00;-0.00;0.00} dBFS | Max Hold: {maxVal:+0.00;-0.00;0.00} dBFS";
+        }
+        else
+        {
+            float magVal = snap.MagnitudeDb[closestBin];
+            float phaseVal = snap.PhaseDegrees[closestBin];
+            float cohVal = snap.Coherence[closestBin];
+            readout = $"{fVal:0.#} Hz | Mag: {magVal:+0.00;-0.00;0.00} dB | Phase: {phaseVal:+0.0;-0.0;0.0}° | Coh: {cohVal * 100f:0.0}%";
+        }
+
         var readoutText = new FormattedText(readout, CultureInfo.InvariantCulture, FlowDirection.LeftToRight, LabelFont, 13, new SolidColorBrush(Color.Parse("#E0E6ED")));
 
-        var badgeRect = new Rect(w / 2 - 170, 10, 340, 26);
+        var badgeRect = new Rect(w / 2 - 180, 10, 360, 26);
         context.FillRectangle(new SolidColorBrush(Color.Parse("#CC1A202C")), badgeRect, 4);
         context.DrawRectangle(new Pen(new SolidColorBrush(Color.Parse("#3A4556")), 1), badgeRect, 4);
-        context.DrawText(readoutText, new Point(w / 2 - 160, 14));
+        context.DrawText(readoutText, new Point(w / 2 - 170, 14));
     }
 
     private static double FreqToX(float freq, double w)
@@ -326,6 +421,14 @@ public sealed class AcousticGraphControl : Control
     {
         const float maxDb = 18f;
         const float minDb = -36f;
+        float norm = (Math.Clamp(db, minDb, maxDb) - minDb) / (maxDb - minDb);
+        return mainH * (1.0 - norm);
+    }
+
+    private static double RtaDbToY(float db, double mainH)
+    {
+        const float maxDb = 0f;
+        const float minDb = -96f;
         float norm = (Math.Clamp(db, minDb, maxDb) - minDb) / (maxDb - minDb);
         return mainH * (1.0 - norm);
     }

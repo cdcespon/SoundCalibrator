@@ -98,10 +98,50 @@ public partial class MainWindow : Window
             }
         };
 
+        ModeCombo.SelectionChanged += OnModeChanged;
         SourceCombo.SelectionChanged += OnSourceChanged;
+        FftCombo.SelectionChanged += OnFftOrWindowChanged;
+        WindowCombo.SelectionChanged += OnFftOrWindowChanged;
         AveragingCombo.SelectionChanged += OnAveragingChanged;
         SmoothingCombo.SelectionChanged += OnSmoothingChanged;
         BlankingCombo.SelectionChanged += OnBlankingChanged;
+    }
+
+    private void OnModeChanged(object? sender, SelectionChangedEventArgs e)
+    {
+        bool isRta = ModeCombo.SelectedIndex == 1;
+        _engine.IsRtaMode = isRta;
+
+        BlankingPanel.IsVisible = !isRta;
+        DelayPanel.IsVisible = !isRta;
+        AutoDelayBorder.IsVisible = !isRta;
+
+        GraphControl.InvalidateVisual();
+    }
+
+    private void OnFftOrWindowChanged(object? sender, SelectionChangedEventArgs e)
+    {
+        if (_engine == null || FftCombo == null || WindowCombo == null) return;
+
+        int fftSize = FftCombo.SelectedIndex switch
+        {
+            0 => 512,
+            1 => 1024,
+            2 => 2048,
+            3 => 4096,
+            _ => 1024
+        };
+
+        WindowType winType = WindowCombo.SelectedIndex switch
+        {
+            0 => WindowType.Hann,
+            1 => WindowType.BlackmanHarris,
+            2 => WindowType.Rectangular,
+            _ => WindowType.Hann
+        };
+
+        _engine.ReconfigureFft(fftSize, winType);
+        UpdateStatusDeviceText();
     }
 
     private void OnSnapshotReady(MeasurementSnapshot snapshot)
@@ -143,7 +183,7 @@ public partial class MainWindow : Window
             _syntheticGen ??= new SyntheticAudioGenerator(48000, 512);
             _syntheticGen.SignalType = TestSignalType.PinkNoise;
             _engine.AttachDevice(_syntheticGen);
-            StatusDeviceText.Text = "Synthetic: Pink Noise (48 kHz, FFT: 1024)";
+            UpdateStatusDeviceText();
             if (!_isPaused) _engine.Start();
         }
         else if (idx == 1) // Sine 1k
@@ -152,7 +192,7 @@ public partial class MainWindow : Window
             _syntheticGen.SignalType = TestSignalType.SineWave;
             _syntheticGen.SineFrequency = 1000f;
             _engine.AttachDevice(_syntheticGen);
-            StatusDeviceText.Text = "Synthetic: Sine 1 kHz (48 kHz, FFT: 1024)";
+            UpdateStatusDeviceText();
             if (!_isPaused) _engine.Start();
         }
         else if (idx == 2) // Sine Sweep
@@ -160,7 +200,7 @@ public partial class MainWindow : Window
             _syntheticGen ??= new SyntheticAudioGenerator(48000, 512);
             _syntheticGen.SignalType = TestSignalType.SineSweep;
             _engine.AttachDevice(_syntheticGen);
-            StatusDeviceText.Text = "Synthetic: Sine Sweep 20Hz-20kHz (48 kHz, FFT: 1024)";
+            UpdateStatusDeviceText();
             if (!_isPaused) _engine.Start();
         }
         else if (idx == 3) // WASAPI
@@ -175,7 +215,7 @@ public partial class MainWindow : Window
                         var wasapi = new WasapiAudioCaptureDevice(dev);
                         _wasapiDevice = wasapi;
                         _engine.AttachDevice(wasapi);
-                        StatusDeviceText.Text = $"WASAPI: {dev.FriendlyName} ({wasapi.SampleRate} Hz, FFT: 1024)";
+                        StatusDeviceText.Text = $"WASAPI: {dev.FriendlyName} ({wasapi.SampleRate} Hz, FFT: {_engine.FftSize})";
                         if (!_isPaused) _engine.Start();
                     }
                     else
@@ -193,6 +233,18 @@ public partial class MainWindow : Window
                 StatusDeviceText.Text = "WASAPI is supported only on Windows";
             }
         }
+    }
+
+    private void UpdateStatusDeviceText()
+    {
+        string srcName = SourceCombo.SelectedIndex switch
+        {
+            0 => "Pink Noise",
+            1 => "Sine 1 kHz",
+            2 => "Sine Sweep 20Hz-20kHz",
+            _ => "Audio Device"
+        };
+        StatusDeviceText.Text = $"Synthetic: {srcName} ({_engine.SampleRate} Hz, FFT: {_engine.FftSize})";
     }
 
     private void OnAveragingChanged(object? sender, SelectionChangedEventArgs e)
