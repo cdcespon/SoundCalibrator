@@ -8,12 +8,14 @@ public enum TestSignalType
 {
     PinkNoise,
     SineWave,
-    SineSweep
+    SineSweep,
+    GatedPinkNoise,
+    IecNoise
 }
 
 /// <summary>
 /// Generador de audio sintético para pruebas de calibración acústica y benchmarks en tiempo real.
-/// Soporta Ruido Rosa (Kellet), Tono senoidal puro y Barrido senoidal logarítmico (Sine Sweep).
+/// Soporta Ruido Rosa (Kellet), Tono senoidal, Barrido senoidal (Farina), Ruido Rosa Racheado (Gated) y Ruido IEC 60268-1.
 /// </summary>
 public sealed class SyntheticAudioGenerator : IAudioCaptureDevice
 {
@@ -22,7 +24,6 @@ public sealed class SyntheticAudioGenerator : IAudioCaptureDevice
     private readonly Timer _timer;
     private readonly Random _random = new(1337);
 
-    // Buffers circulares internos para simular retardo acústico en muestras
     private readonly float[] _delayBuffer;
     private int _delayWriteIdx;
     private int _delaySamples;
@@ -30,14 +31,24 @@ public sealed class SyntheticAudioGenerator : IAudioCaptureDevice
     private float _gainFactor = 1.0f;
     private float _sinePhase;
     private float _sweepTime;
-    private const float SweepDuration = 3.0f; // 3 segundos por barrido
+    private const float SweepDuration = 3.0f;
     private const float FStart = 20f;
     private const float FEnd = 20000f;
+
+    // Gated Noise (Ráfagas)
+    private float _gateTimeSeconds;
+    public float GateOnMs { get; set; } = 500f;
+    public float GateOffMs { get; set; } = 500f;
+
+    // IEC 60268-1 filter states
+    private float _iecLpState;
+    private float _iecHpState;
+    private float _iecPrevIn;
 
     private bool _isRunning;
     private bool _disposed;
 
-    // Filtro Paul Kellet para generar Ruido Rosa (Pink Noise) de alta fidelidad (-3dB/octava)
+    // Filtro Paul Kellet para generar Ruido Rosa (-3dB/octava)
     private float _b0, _b1, _b2, _b3, _b4, _b5, _b6;
 
     public string DeviceName => "Synthetic Loopback Acoustic Generator";
@@ -124,7 +135,6 @@ public sealed class SyntheticAudioGenerator : IAudioCaptureDevice
 
         if (SignalType == TestSignalType.SineSweep)
         {
-            // Barrido senoidal logarítmico continuo (Farina)
             float t = _sweepTime;
             float ratio = FEnd / FStart;
             float k = 2f * MathF.PI * FStart * SweepDuration / MathF.Log(ratio);
@@ -140,18 +150,66 @@ public sealed class SyntheticAudioGenerator : IAudioCaptureDevice
         // Ruido blanco base
         float white = (float)(_random.NextDouble() * 2.0 - 1.0) * 0.25f;
 
+        // Ruido rosa con filtro Paul Kellet
+        _b0 = 0.99886f * _b0 + white * 0.0555179f;
+        _b1 = 0.99332f * _b1 + white * 0.0750759f;
+        _b2 = 0.96900f * _b2 + white * 0.1538520f;
+        _b3 = 0.86650f * _b3 + white * 0.3104856f;
+        _b4 = 0.55000f * _b4 + white * 0.5329522f;
+        _b5 = -0.7616f * _b5 - white * 0.0168980f;
+        float pink = (_b0 + _b1 + _b2 + _b3 + _b4 + _b5 + _b6 + white * 0.5362f) * 0.15f;
+        _b6 = white * 0.115926f;
+
         if (SignalType == TestSignalType.PinkNoise)
         {
-            // Filtro Paul Kellet para -3dB/octava
-            _b0 = 0.99886f * _b0 + white * 0.0555179f;
-            _b1 = 0.99332f * _b1 + white * 0.0750759f;
-            _b2 = 0.96900f * _b2 + white * 0.1538520f;
-            _b3 = 0.86650f * _b3 + white * 0.3104856f;
-            _b4 = 0.55000f * _b4 + white * 0.5329522f;
-            _b5 = -0.7616f * _b5 - white * 0.0168980f;
-            float pink = _b0 + _b1 + _b2 + _b3 + _b4 + _b5 + _b6 + white * 0.5362f;
-            _b6 = white * 0.115926f;
-            return pink * 0.15f;
+            return pink;
+        }
+
+        if (SignalType == TestSignalType.GatedPinkNoise)
+        {
+            float onSec = GateOnMs / 1000f;
+            float offSec = GateOffMs / 1000f;
+            float periodSec = onSec + offSec;
+
+            float phase = _gateTimeSeconds % periodSec;
+            _gateTimeSeconds += 1.0f / _sampleRate;
+
+            float env = 0f;
+            const float fadeSec = 0.015f; // 15 ms fade to avoid clicks
+
+            if (phase < onSec)
+            {
+                if (phase < fadeSec)
+                {
+                    env = 0.5f * (1f - MathF.Cos(MathF.PI * phase / fadeSec));
+                }
+                else if (phase > onSec - fadeSec)
+                {
+                    env = 0.5f * (1f + MathF.Cos(MathF.PI * (phase - (onSec - fadeSec)) / fadeSec));
+                }
+                else
+                {
+                    env = 1.0f;
+                }
+            }
+
+            return pink * env;
+        }
+
+        if (SignalType == TestSignalType.IecNoise)
+        {
+            // Filtro IEC 60268-1: Pasa-bajos 5kHz + Pasa-altos 40Hz
+            float dt = 1.0f / _sampleRate;
+            float rcLp = 1.0f / (2f * MathF.PI * 5000f);
+            float alphaLp = dt / (rcLp + dt);
+            _iecLpState += alphaLp * (pink - _iecLpState);
+
+            float rcHp = 1.0f / (2f * MathF.PI * 40f);
+            float alphaHp = rcHp / (rcHp + dt);
+            _iecHpState = alphaHp * (_iecHpState + _iecLpState - _iecPrevIn);
+            _iecPrevIn = _iecLpState;
+
+            return _iecHpState * 1.3f;
         }
 
         return white;

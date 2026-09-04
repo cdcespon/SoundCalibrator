@@ -416,7 +416,23 @@ public partial class MainWindow : Window
             UpdateStatusDeviceText();
             if (!_isPaused) _engine.Start();
         }
-        else if (idx == 3) // WASAPI
+        else if (idx == 3) // Gated Pink Noise
+        {
+            _syntheticGen ??= new SyntheticAudioGenerator(48000, 512);
+            _syntheticGen.SignalType = TestSignalType.GatedPinkNoise;
+            _engine.AttachDevice(_syntheticGen);
+            UpdateStatusDeviceText();
+            if (!_isPaused) _engine.Start();
+        }
+        else if (idx == 4) // IEC 60268-1 Noise
+        {
+            _syntheticGen ??= new SyntheticAudioGenerator(48000, 512);
+            _syntheticGen.SignalType = TestSignalType.IecNoise;
+            _engine.AttachDevice(_syntheticGen);
+            UpdateStatusDeviceText();
+            if (!_isPaused) _engine.Start();
+        }
+        else if (idx == 5) // WASAPI
         {
             if (OperatingSystem.IsWindows())
             {
@@ -455,6 +471,8 @@ public partial class MainWindow : Window
             0 => "Pink Noise",
             1 => "Sine 1 kHz",
             2 => "Sine Sweep 20Hz-20kHz",
+            3 => "Gated Pink Noise",
+            4 => "IEC 60268-1 Program Noise",
             _ => "Audio Device"
         };
         StatusDeviceText.Text = $"Synthetic: {srcName} ({_engine.SampleRate} Hz, FFT: {_engine.FftSize})";
