@@ -190,6 +190,13 @@
                             </StackPanel>
                             <TextBlock x:Name="AlignmentResultText" Text="Capture ≥2 traces (Sub, Main)" Foreground="#556677" FontSize="9" TextWrapping="Wrap"/>
                             <Button x:Name="ApplyAlignmentBtn" Content="APPLY CORRECTION TO SUB" Background="#2E7D32" Foreground="White" FontWeight="Bold" FontSize="9" Padding="4,2" Margin="0,4,0,0" IsVisible="False" HorizontalAlignment="Stretch"/>
+                            <!-- MULTI-ZONE DELAY MATRIX -->
+                            <Border Height="1" Background="#1F2530" Margin="0,6,0,6"/>
+                            <Grid ColumnDefinitions="*,Auto" Margin="0,0,0,4">
+                                <TextBlock Text="DELAY MATRIX (ZONES)" Foreground="#FFB300" FontWeight="Bold" FontSize="10" VerticalAlignment="Center"/>
+                                <Button x:Name="CalculateDelayMatrixBtn" Grid.Column="1" Content="CALC" Background="#E65100" Foreground="White" FontWeight="Bold" FontSize="9" Padding="6,2"/>
+                            </Grid>
+                            <TextBlock x:Name="DelayMatrixResultText" Text="Capture >=2 traces to calculate multi-zone relative delays" Foreground="#556677" FontSize="9" TextWrapping="Wrap"/>
                         </StackPanel>
                     </Border>
                 </Grid>

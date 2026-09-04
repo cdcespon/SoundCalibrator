@@ -76,6 +76,7 @@ public partial class MainWindow : Window
                 string color = TraceColors[idx % TraceColors.Length];
                 string name = $"Trace {idx + 1}";
                 var trace = new AcousticTrace(name, color, _lastSnapshot.Frequencies, _lastSnapshot.MagnitudeDb, _lastSnapshot.PhaseDegrees, _lastSnapshot.Coherence);
+                trace.DetectedDelayMs = _lastDetectedDelayMs;
                 GraphControl.StoredTraces.Add(trace);
                 TracesCountText.Text = $"Captured Traces: {GraphControl.StoredTraces.Count}";
                 GraphControl.InvalidateVisual();
@@ -171,6 +172,32 @@ public partial class MainWindow : Window
         {
             TraceManagerBorder.IsVisible = false;
         };
+        CalculateDelayMatrixBtn.Click += (s, e) =>
+        {
+            var visibleTraces = System.Linq.Enumerable.ToList(System.Linq.Enumerable.Where(GraphControl.StoredTraces, t => t.IsVisible));
+            if (visibleTraces.Count < 2)
+            {
+                DelayMatrixResultText.Text = "Requires â‰¥2 visible traces with detected delay.";
+                DelayMatrixResultText.Foreground = Avalonia.Media.SolidColorBrush.Parse("#FF5252");
+                return;
+            }
+
+            var zones = System.Linq.Enumerable.ToList(System.Linq.Enumerable.Select(visibleTraces, t => (t.Name, t.DetectedDelayMs)));
+            var report = AcousticDelayMatrix.CalculateAlignmentMatrix(zones, anchorIndex: 0, temperatureCelsius: 20.0f);
+
+            var sb = new System.Text.StringBuilder();
+            sb.AppendLine($"Anchor: {report.AnchorZoneName} (c={report.SpeedOfSoundMps:0} m/s)");
+            for (int i = 1; i < report.Alignments.Count; i++)
+            {
+                var a = report.Alignments[i];
+                string sign = a.RequiredDelayOffsetMs >= 0 ? "+" : "";
+                sb.AppendLine($"â€¢ {a.Name}: {sign}{a.RequiredDelayOffsetMs:0.0} ms ({sign}{a.RelativeDistanceMeters:0.00} m)");
+            }
+
+            DelayMatrixResultText.Text = sb.ToString().TrimEnd();
+            DelayMatrixResultText.Foreground = Avalonia.Media.SolidColorBrush.Parse("#FFB300");
+        };
+
         CalculateAlignmentBtn.Click += (s, e) =>
         {
             if (GraphControl.StoredTraces.Count < 2)
