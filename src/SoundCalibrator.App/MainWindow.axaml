@@ -141,6 +141,7 @@
                     <Button x:Name="SnapshotBtn" Content="SNAP (S)" Background="#00838F" Foreground="White" Width="60" Margin="0,0,3,0" Padding="3,3" FontSize="10"/>
                     <Button x:Name="ReportBtn" Content="REPORT" Background="#283593" Foreground="White" Width="62" Margin="0,0,6,0" Padding="3,3" FontSize="10"/>
                     <Button x:Name="SuggestEqBtn" Content="PEQ (E)" Background="#00796B" Foreground="White" Width="55" Margin="0,0,6,0" Padding="3,3" FontSize="10"/>
+                    <Button x:Name="CalibrateSplBtn" Content="CAL 94dB" Background="#33691E" Foreground="White" Width="62" Margin="0,0,6,0" Padding="3,3" FontSize="10"/>
                 </StackPanel>
 
                 <!-- BOTONES DE CONTROL -->
@@ -215,6 +216,13 @@
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Text="THD: " Foreground="#8C9BAE" FontSize="11" FontWeight="SemiBold"/>
                             <TextBlock x:Name="ThdText" Text="N/A" Foreground="#FF5252" FontSize="11" FontWeight="Bold"/>
+                        </StackPanel>
+                    </Border>
+
+                    <Border x:Name="SplBadge" Background="#14241B" CornerRadius="3" Padding="5,1" Margin="0,0,14,0" VerticalAlignment="Center" IsVisible="False">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="SPL: " Foreground="#81C784" FontSize="11" FontWeight="SemiBold"/>
+                            <TextBlock x:Name="SplText" Text="-- dBA" Foreground="#00E676" FontSize="11" FontWeight="Bold"/>
                         </StackPanel>
                     </Border>
                 </StackPanel>

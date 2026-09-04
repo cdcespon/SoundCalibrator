@@ -21,6 +21,7 @@ namespace SoundCalibrator.App;
 public partial class MainWindow : Window
 {
     private readonly AcousticMeasurementEngine _engine;
+    private readonly SplMeter _splMeter = new();
     private SyntheticAudioGenerator? _syntheticGen;
     private IDisposable? _wasapiDevice;
     private bool _isPaused;
@@ -281,6 +282,22 @@ public partial class MainWindow : Window
                 await using var writer = new System.IO.StreamWriter(stream);
                 await writer.WriteAsync(text);
                 StatusDeviceText.Text = $"Report Saved: {file.Name}";
+            }
+        };
+
+        CalibrateSplBtn.Click += (s, e) =>
+        {
+            if (_lastSnapshot != null && _lastSnapshot.IsRtaMode)
+            {
+                int bin1k = (int)Math.Round(1000f / (_engine.SampleRate / _engine.FftSize));
+                bin1k = Math.Clamp(bin1k, 0, _lastSnapshot.RtaDb.Length - 1);
+                float measured1k = _lastSnapshot.RtaDb[bin1k];
+                _splMeter.CalibrateWithTone(measured1k, 94.0f);
+                StatusDeviceText.Text = $"SPL Calibrated: 94.0 dBSPL @ 1kHz (Input: {measured1k:0.0} dBFS, Offset: {_splMeter.SplOffsetDb:0.0} dB)";
+            }
+            else
+            {
+                StatusDeviceText.Text = "To calibrate SPL: switch to RTA mode, apply 94dB 1kHz calibrator to mic and click CAL 94dB.";
             }
         };
 
@@ -545,10 +562,15 @@ public partial class MainWindow : Window
                 {
                     ThdBadge.IsVisible = false;
                 }
+
+                var spl = _splMeter.CalculateSpl(snapshot.Frequencies, snapshot.RtaDb);
+                SplText.Text = $"{spl.DbA:0.0} dBA | {spl.DbC:0.0} dBC";
+                SplBadge.IsVisible = true;
             }
             else
             {
                 ThdBadge.IsVisible = false;
+                SplBadge.IsVisible = false;
             }
         });
     }
