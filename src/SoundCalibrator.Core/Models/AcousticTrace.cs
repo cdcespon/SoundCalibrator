@@ -12,6 +12,7 @@ public sealed class AcousticTrace
     public float OffsetDb { get; set; } = 0f;
     public float OffsetDelayMs { get; set; } = 0f;
     public float DetectedDelayMs { get; set; } = 0f;
+    public bool IsRtaTrace { get; set; } = false;
 
     public float[] Frequencies { get; }
     public float[] MagnitudeDb { get; }
