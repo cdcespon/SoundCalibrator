@@ -24,6 +24,7 @@
                         <ComboBoxItem Content="Transfer Function"/>
                         <ComboBoxItem Content="RTA Spectrum"/>
                         <ComboBoxItem Content="Spectrogram"/>
+                        <ComboBoxItem Content="Group Delay"/>
                     </ComboBox>
                 </StackPanel>
 

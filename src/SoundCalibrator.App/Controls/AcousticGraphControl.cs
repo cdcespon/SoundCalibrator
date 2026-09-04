@@ -26,6 +26,7 @@ public sealed class AcousticGraphControl : Control
     public bool ShowPeqPreview { get; set; } = false;
     public IReadOnlyList<PeqFilterSuggestion>? ActivePeqFilters { get; set; }
     public bool IsSpectrogramMode { get; set; } = false;
+    public bool ShowGroupDelay { get; set; } = false;
     private SpectrogramBuffer? _spectrogramBuffer;
     private WriteableBitmap? _spectrogramBmp;
 
@@ -613,6 +614,13 @@ public sealed class AcousticGraphControl : Control
         bool phaseStarted = false;
         bool cohStarted = false;
 
+        float[]? gdArray = null;
+        if (ShowGroupDelay && snap.BinCount > 0)
+        {
+            gdArray = new float[snap.BinCount];
+            GroupDelayCalculator.CalculateGroupDelayMs(snap.Frequencies, snap.PhaseDegrees, gdArray);
+        }
+
         using (var magCtx = magGeometry.Open())
         using (var phaseCtx = phaseGeometry.Open())
         using (var cohCtx = cohGeometry.Open())
@@ -656,7 +664,9 @@ public sealed class AcousticGraphControl : Control
                 }
                 else
                 {
-                    double yPhase = PhaseToY(snap.PhaseDegrees[i], mainH);
+                    double yPhase = ShowGroupDelay && gdArray != null
+                        ? GroupDelayToY(gdArray[i], mainH)
+                        : PhaseToY(snap.PhaseDegrees[i], mainH);
                     if (!phaseStarted)
                     {
                         phaseCtx.BeginFigure(new Point(x, yPhase), false);
@@ -676,7 +686,8 @@ public sealed class AcousticGraphControl : Control
         }
         if (phaseStarted)
         {
-            context.DrawGeometry(null, new Pen(new SolidColorBrush(PhaseLineColor), 1.6), phaseGeometry);
+            Color pColor = ShowGroupDelay ? Color.Parse("#FFB300") : PhaseLineColor;
+            context.DrawGeometry(null, new Pen(new SolidColorBrush(pColor), 1.6), phaseGeometry);
         }
         if (cohStarted)
         {
@@ -756,5 +767,11 @@ public sealed class AcousticGraphControl : Control
         const float minDeg = -180f;
         float norm = (Math.Clamp(deg, minDeg, maxDeg) - minDeg) / (maxDeg - minDeg);
         return mainH * (1.0 - norm);
+    }
+
+    private static double GroupDelayToY(float ms, double mainH)
+    {
+        float clamped = Math.Clamp(ms, -10f, 30f);
+        return mainH * (1.0 - (clamped + 10f) / 40f);
     }
 }
