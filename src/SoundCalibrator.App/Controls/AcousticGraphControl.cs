@@ -601,6 +601,22 @@ public sealed class AcousticGraphControl : Control
 
         var label50 = new FormattedText("0.5", CultureInfo.InvariantCulture, FlowDirection.LeftToRight, LabelFont, 9, new SolidColorBrush(TextColor));
         context.DrawText(label50, new Point(5, y50 - 10));
+
+        if (CoherenceThreshold > 0.01f)
+        {
+            double yThresh = cohTop + cohH * (1.0 - CoherenceThreshold);
+            var threshPen = new Pen(new SolidColorBrush(Color.Parse("#D32F2F")), 1.2, DashStyle.Dash);
+            context.DrawLine(threshPen, new Point(0, yThresh), new Point(w, yThresh));
+
+            var labelThresh = new FormattedText(
+                $"Cutoff: {CoherenceThreshold * 100:0}%",
+                CultureInfo.InvariantCulture,
+                FlowDirection.LeftToRight,
+                LabelFont,
+                9,
+                new SolidColorBrush(Color.Parse("#FF5252")));
+            context.DrawText(labelThresh, new Point(w - 75, yThresh - 12));
+        }
     }
 
     private void DrawDataCurves(DrawingContext context, double w, double mainH, double cohTop, double cohH, MeasurementSnapshot snap)
@@ -716,9 +732,19 @@ public sealed class AcousticGraphControl : Control
         else
         {
             float magVal = snap.MagnitudeDb[closestBin];
-            float phaseVal = snap.PhaseDegrees[closestBin];
             float cohVal = snap.Coherence[closestBin];
-            readout = $"{fVal:0.#} Hz | Mag: {magVal:+0.00;-0.00;0.00} dB | Phase: {phaseVal:+0.0;-0.0;0.0}° | Coh: {cohVal * 100f:0.0}%";
+            if (ShowGroupDelay)
+            {
+                float[] gdArr = new float[snap.BinCount];
+                GroupDelayCalculator.CalculateGroupDelayMs(snap.Frequencies, snap.PhaseDegrees, gdArr);
+                float gdVal = gdArr[closestBin];
+                readout = $"{fVal:0.#} Hz | Mag: {magVal:+0.00;-0.00;0.00} dB | GD: {gdVal:+0.00;-0.00;0.00} ms | Coh: {cohVal * 100f:0.0}%";
+            }
+            else
+            {
+                float phaseVal = snap.PhaseDegrees[closestBin];
+                readout = $"{fVal:0.#} Hz | Mag: {magVal:+0.00;-0.00;0.00} dB | Phase: {phaseVal:+0.0;-0.0;0.0}Â° | Coh: {cohVal * 100f:0.0}%";
+            }
         }
 
         var readoutText = new FormattedText(readout, CultureInfo.InvariantCulture, FlowDirection.LeftToRight, LabelFont, 13, new SolidColorBrush(Color.Parse("#E0E6ED")));
