@@ -98,6 +98,17 @@ public partial class MainWindow : Window
             }
         };
 
+        InvertPolarityBtn.Click += (s, e) =>
+        {
+            _engine.InvertPolarity = !_engine.InvertPolarity;
+            InvertPolarityBtn.Background = _engine.InvertPolarity
+                ? Avalonia.Media.SolidColorBrush.Parse("#D32F2F")
+                : Avalonia.Media.SolidColorBrush.Parse("#263238");
+            InvertPolarityBtn.Foreground = _engine.InvertPolarity
+                ? Avalonia.Media.SolidColorBrush.Parse("#FFFFFF")
+                : Avalonia.Media.SolidColorBrush.Parse("#B0BEC5");
+        };
+
         ModeCombo.SelectionChanged += OnModeChanged;
         SourceCombo.SelectionChanged += OnSourceChanged;
         FftCombo.SelectionChanged += OnFftOrWindowChanged;
@@ -105,6 +116,58 @@ public partial class MainWindow : Window
         AveragingCombo.SelectionChanged += OnAveragingChanged;
         SmoothingCombo.SelectionChanged += OnSmoothingChanged;
         BlankingCombo.SelectionChanged += OnBlankingChanged;
+    }
+
+    protected override void OnKeyDown(Avalonia.Input.KeyEventArgs e)
+    {
+        base.OnKeyDown(e);
+
+        switch (e.Key)
+        {
+            case Avalonia.Input.Key.Space:
+                OnStartStopClick(this, new RoutedEventArgs());
+                e.Handled = true;
+                break;
+            case Avalonia.Input.Key.C:
+                CaptureTraceBtn.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+                e.Handled = true;
+                break;
+            case Avalonia.Input.Key.R:
+                ResetBtn.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+                e.Handled = true;
+                break;
+            case Avalonia.Input.Key.A:
+                if (AutoAlignBtn.IsVisible)
+                {
+                    AutoAlignBtn.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+                    e.Handled = true;
+                }
+                break;
+            case Avalonia.Input.Key.M:
+                ModeCombo.SelectedIndex = (ModeCombo.SelectedIndex + 1) % ModeCombo.ItemCount;
+                e.Handled = true;
+                break;
+            case Avalonia.Input.Key.P:
+                InvertPolarityBtn.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+                e.Handled = true;
+                break;
+            case Avalonia.Input.Key.D1 or Avalonia.Input.Key.NumPad1:
+                SmoothingCombo.SelectedIndex = 0;
+                e.Handled = true;
+                break;
+            case Avalonia.Input.Key.D2 or Avalonia.Input.Key.NumPad2:
+                SmoothingCombo.SelectedIndex = 1;
+                e.Handled = true;
+                break;
+            case Avalonia.Input.Key.D3 or Avalonia.Input.Key.NumPad3:
+                SmoothingCombo.SelectedIndex = 2;
+                e.Handled = true;
+                break;
+            case Avalonia.Input.Key.D4 or Avalonia.Input.Key.NumPad4:
+                SmoothingCombo.SelectedIndex = 3;
+                e.Handled = true;
+                break;
+        }
     }
 
     private void OnModeChanged(object? sender, SelectionChangedEventArgs e)
