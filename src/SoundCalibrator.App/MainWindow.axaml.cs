@@ -12,6 +12,7 @@ using SoundCalibrator.Core.Analysis;
 using Avalonia.Platform.Storage;
 using SoundCalibrator.Core.Calibration;
 using SoundCalibrator.Core.Serialization;
+using SoundCalibrator.Core.Reporting;
 using Avalonia;
 using Avalonia.Media.Imaging;
 
@@ -234,6 +235,50 @@ public partial class MainWindow : Window
                 RefreshTraceManagerUI();
                 GraphControl.InvalidateVisual();
                 StatusDeviceText.Text = $"Aligned {sub.Name}: {sub.OffsetDelayMs:+0.00}ms, Polarity: {(sub.InvertPolarity ? "INV" : "NOR")}";
+            }
+        };
+
+        ReportBtn.Click += async (s, e) =>
+        {
+            var topLevel = TopLevel.GetTopLevel(this);
+            if (topLevel == null) return;
+
+            var file = await topLevel.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
+            {
+                Title = "Export Acoustic Calibration Technical Report",
+                DefaultExtension = "md",
+                SuggestedFileName = $"Calibration_Report_{DateTime.Now:yyyyMMdd_HHmmss}.md"
+            });
+
+            if (file != null)
+            {
+                var reportData = new CalibrationReportData
+                {
+                    ProjectName = "SoundCalibrator Live Tuning",
+                    SampleRate = (int)_engine.SampleRate,
+                    FftSize = _engine.FftSize,
+                    WindowType = (WindowCombo.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? "Hann",
+                    AveragingType = _engine.Averaging.ToString(),
+                    TargetCurveName = GraphControl.ActiveTargetCurve?.Name ?? "None",
+                    DelayCompensationMs = _engine.DelayCompensationMs,
+                    InvertPolarity = _engine.InvertPolarity,
+                    Rt60 = _lastSnapshot != null && !_lastSnapshot.IsRtaMode && _lastSnapshot.ImpulseResponse.Length > 0 
+                        ? ReverberationTimeCalculator.Calculate(_lastSnapshot.ImpulseResponse, (int)_lastSnapshot.SampleRate) 
+                        : null,
+                    Thd = _lastSnapshot != null && _lastSnapshot.IsRtaMode 
+                        ? ThdCalculator.Calculate(_lastSnapshot.Frequencies, _lastSnapshot.RtaDb) 
+                        : null,
+                    Alignment = _lastAlignmentSuggestion,
+                    Traces = GraphControl.StoredTraces
+                };
+
+                bool isHtml = file.Name.EndsWith(".html", StringComparison.OrdinalIgnoreCase);
+                string text = isHtml ? ReportGenerator.GenerateHtml(reportData) : ReportGenerator.GenerateMarkdown(reportData);
+
+                await using var stream = await file.OpenWriteAsync();
+                await using var writer = new System.IO.StreamWriter(stream);
+                await writer.WriteAsync(text);
+                StatusDeviceText.Text = $"Report Saved: {file.Name}";
             }
         };
 
