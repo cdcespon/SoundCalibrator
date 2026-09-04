@@ -8,6 +8,9 @@ using SoundCalibrator.Audio.Generators;
 using SoundCalibrator.Core.Averaging;
 using SoundCalibrator.Core.Models;
 using SoundCalibrator.Core.Smoothing;
+using Avalonia.Platform.Storage;
+using SoundCalibrator.Core.Calibration;
+using SoundCalibrator.Core.Serialization;
 
 namespace SoundCalibrator.App;
 
@@ -116,6 +119,90 @@ public partial class MainWindow : Window
         AveragingCombo.SelectionChanged += OnAveragingChanged;
         SmoothingCombo.SelectionChanged += OnSmoothingChanged;
         BlankingCombo.SelectionChanged += OnBlankingChanged;
+
+        TargetCombo.SelectionChanged += (s, e) =>
+        {
+            var preset = TargetCombo.SelectedIndex switch
+            {
+                1 => TargetCurvePreset.HarmanTarget,
+                2 => TargetCurvePreset.BruelKjaer1974,
+                3 => TargetCurvePreset.CinemaXCurve,
+                4 => TargetCurvePreset.Flat,
+                _ => TargetCurvePreset.None
+            };
+            GraphControl.ActiveTargetCurve = preset == TargetCurvePreset.None ? null : TargetCurve.CreatePreset(preset);
+            GraphControl.InvalidateVisual();
+        };
+
+        ExportTraceBtn.Click += async (s, e) =>
+        {
+            if (GraphControl.StoredTraces.Count == 0 && _lastSnapshot == null) return;
+
+            var traceToExport = GraphControl.StoredTraces.Count > 0
+                ? GraphControl.StoredTraces[^1]
+                : new AcousticTrace("Measurement", "#00E5FF", _lastSnapshot!.Frequencies, _lastSnapshot.MagnitudeDb, _lastSnapshot.PhaseDegrees, _lastSnapshot.Coherence);
+
+            var topLevel = TopLevel.GetTopLevel(this);
+            if (topLevel != null)
+            {
+                var file = await topLevel.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
+                {
+                    Title = "Export Acoustic Trace (CSV)",
+                    DefaultExtension = "csv",
+                    SuggestedFileName = $"{traceToExport.Name.Replace(' ', '_')}.csv"
+                });
+
+                if (file != null)
+                {
+                    string csv = TraceSerializer.ExportToCsv(traceToExport);
+                    await using var stream = await file.OpenWriteAsync();
+                    await using var writer = new System.IO.StreamWriter(stream);
+                    await writer.WriteAsync(csv);
+                }
+            }
+        };
+
+        ImportTraceBtn.Click += async (s, e) =>
+        {
+            var topLevel = TopLevel.GetTopLevel(this);
+            if (topLevel != null)
+            {
+                var files = await topLevel.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+                {
+                    Title = "Import Trace (.csv) or Mic Calibration (.cal, .txt)",
+                    AllowMultiple = false
+                });
+
+                if (files.Count > 0)
+                {
+                    var file = files[0];
+                    await using var stream = await file.OpenReadAsync();
+                    using var reader = new System.IO.StreamReader(stream);
+                    string text = await reader.ReadToEndAsync();
+
+                    if (file.Name.EndsWith(".cal", System.StringComparison.OrdinalIgnoreCase) ||
+                        file.Name.EndsWith(".txt", System.StringComparison.OrdinalIgnoreCase))
+                    {
+                        _engine.Calibration.LoadFromText(text);
+                        StatusDeviceText.Text = $"Cal Loaded: {file.Name} ({_engine.Calibration.Points.Count} pts)";
+                    }
+                    else
+                    {
+                        try
+                        {
+                            var trace = TraceSerializer.ImportFromCsv(text);
+                            GraphControl.StoredTraces.Add(trace);
+                            TracesCountText.Text = $"Captured Traces: {GraphControl.StoredTraces.Count}";
+                            GraphControl.InvalidateVisual();
+                        }
+                        catch
+                        {
+                            // Formato no reconocido
+                        }
+                    }
+                }
+            }
+        };
     }
 
     protected override void OnKeyDown(Avalonia.Input.KeyEventArgs e)
