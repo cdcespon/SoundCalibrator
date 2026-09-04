@@ -1,0 +1,10 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/SoundCalibrator.App/SoundCalibrator.App.csproj" />
+    <Project Path="src/SoundCalibrator.Audio/SoundCalibrator.Audio.csproj" />
+    <Project Path="src/SoundCalibrator.Core/SoundCalibrator.Core.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/SoundCalibrator.Core.Tests/SoundCalibrator.Core.Tests.csproj" />
+  </Folder>
+</Solution>
