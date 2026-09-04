@@ -7,6 +7,7 @@ using Avalonia.Input;
 using Avalonia.Media;
 using SoundCalibrator.Audio.Engine;
 using SoundCalibrator.Core.Models;
+using SoundCalibrator.Core.Analysis;
 using SoundCalibrator.Core.DSP;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform;
@@ -22,6 +23,8 @@ public sealed class AcousticGraphControl : Control
     public float CoherenceThreshold { get; set; } = 0.0f;
     public TargetCurve? ActiveTargetCurve { get; set; }
     public bool ShowDeltaCurve { get; set; } = false;
+    public bool ShowPeqPreview { get; set; } = false;
+    public IReadOnlyList<PeqFilterSuggestion>? ActivePeqFilters { get; set; }
     public bool IsSpectrogramMode { get; set; } = false;
     private SpectrogramBuffer? _spectrogramBuffer;
     private WriteableBitmap? _spectrogramBmp;
@@ -127,6 +130,11 @@ public sealed class AcousticGraphControl : Control
             {
                 DrawDeltaCurve(context, w, mainH, _currentSnapshot, ActiveTargetCurve);
             }
+        }
+
+        if (ShowPeqPreview && ActivePeqFilters != null && ActivePeqFilters.Count > 0 && _currentSnapshot != null)
+        {
+            DrawPeqPreview(context, w, mainH, _currentSnapshot, ActivePeqFilters);
         }
 
         if (_mousePosition.HasValue && _currentSnapshot != null)
@@ -404,6 +412,71 @@ public sealed class AcousticGraphControl : Control
                 11,
                 new SolidColorBrush(Color.Parse("#FFC107")));
             context.DrawText(label, new Point(w - 200, 10));
+        }
+    }
+
+    private void DrawPeqPreview(DrawingContext context, double w, double mainH, MeasurementSnapshot snap, IReadOnlyList<PeqFilterSuggestion> filters)
+    {
+        int count = snap.Frequencies.Length;
+        float[] peqResponse = new float[count];
+        BiquadFilter.EvaluateCascade(filters, snap.Frequencies, peqResponse, snap.SampleRate);
+
+        var peqGeom = new StreamGeometry();
+        var simGeom = new StreamGeometry();
+        bool peqStarted = false;
+        bool simStarted = false;
+
+        using (var peqCtx = peqGeom.Open())
+        using (var simCtx = simGeom.Open())
+        {
+            for (int i = 1; i < count; i++)
+            {
+                float freq = snap.Frequencies[i];
+                if (freq < 20f || freq > 20000f) continue;
+
+                double x = FreqToX(freq, w);
+
+                double yPeq = DbToY(peqResponse[i], mainH);
+                if (!peqStarted)
+                {
+                    peqCtx.BeginFigure(new Point(x, yPeq), false);
+                    peqStarted = true;
+                }
+                else
+                {
+                    peqCtx.LineTo(new Point(x, yPeq));
+                }
+
+                float correctedMag = snap.MagnitudeDb[i] + peqResponse[i];
+                double ySim = DbToY(correctedMag, mainH);
+                if (!simStarted)
+                {
+                    simCtx.BeginFigure(new Point(x, ySim), false);
+                    simStarted = true;
+                }
+                else
+                {
+                    simCtx.LineTo(new Point(x, ySim));
+                }
+            }
+        }
+
+        if (peqStarted)
+        {
+            context.DrawGeometry(null, new Pen(new SolidColorBrush(Color.Parse("#40C4FF")), 1.5, DashStyle.Dash), peqGeom);
+        }
+        if (simStarted)
+        {
+            context.DrawGeometry(null, new Pen(new SolidColorBrush(Color.Parse("#76FF03")), 2.2), simGeom);
+
+            var label = new FormattedText(
+                "Simulated Corrected Response (PEQ Preview)",
+                CultureInfo.InvariantCulture,
+                FlowDirection.LeftToRight,
+                LabelFont,
+                11,
+                new SolidColorBrush(Color.Parse("#76FF03")));
+            context.DrawText(label, new Point(w - 280, 26));
         }
     }
 

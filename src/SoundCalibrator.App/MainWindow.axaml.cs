@@ -306,12 +306,16 @@ public partial class MainWindow : Window
             if (_lastPeqSuggestions.Count == 0)
             {
                 StatusDeviceText.Text = "PEQ: System within +/-2dB of target curve. No filters needed.";
+                GraphControl.ShowPeqPreview = false;
             }
             else
             {
+                GraphControl.ActivePeqFilters = _lastPeqSuggestions;
+                GraphControl.ShowPeqPreview = !GraphControl.ShowPeqPreview;
                 string summary = string.Join(" | ", System.Linq.Enumerable.Select(_lastPeqSuggestions, f => $"{f.FrequencyHz:0}Hz {f.GainDb:+0.0;-0.0}dB Q:{f.Q:0.0}"));
-                StatusDeviceText.Text = $"Suggested PEQ: {summary}";
+                StatusDeviceText.Text = $"PEQ Preview {(GraphControl.ShowPeqPreview ? "ON" : "OFF")}: {summary}";
             }
+            GraphControl.InvalidateVisual();
         };
 
         SnapshotBtn.Click += async (s, e) =>
