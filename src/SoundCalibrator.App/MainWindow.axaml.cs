@@ -427,6 +427,24 @@ public partial class MainWindow : Window
             StatusAvgText.Text = $"Averages: {snapshot.AverageCount}";
             DetectedDelayText.Text = $"{snapshot.Delay.DelayMs:0.00} ms";
 
+            if (!snapshot.IsRtaMode && snapshot.ImpulseResponse.Length > 0)
+            {
+                var rt60 = ReverberationTimeCalculator.Calculate(snapshot.ImpulseResponse, (int)snapshot.SampleRate);
+                if (rt60.IsValid)
+                {
+                    Rt60Text.Text = $"RT60: {rt60.T20Seconds:0.00}s";
+                    Rt60Text.IsVisible = true;
+                }
+                else
+                {
+                    Rt60Text.IsVisible = false;
+                }
+            }
+            else
+            {
+                Rt60Text.IsVisible = false;
+            }
+
             if (snapshot.IsRtaMode)
             {
                 var thd = ThdCalculator.Calculate(snapshot.Frequencies, snapshot.RtaDb);

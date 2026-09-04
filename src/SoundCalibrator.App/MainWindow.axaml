@@ -126,6 +126,7 @@
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                         <TextBlock Text="IR:" Foreground="#7E8B9B" FontSize="10" VerticalAlignment="Center" Margin="0,0,3,0"/>
                         <TextBlock x:Name="DetectedDelayText" Text="0.0 ms" Foreground="#00E676" FontWeight="Bold" FontSize="10" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                        <TextBlock x:Name="Rt60Text" Text="RT60: --" Foreground="#BA68C8" FontSize="10" FontWeight="SemiBold" VerticalAlignment="Center" Margin="2,0,4,0" IsVisible="False"/>
                         <Button x:Name="AutoAlignBtn" Content="ALIGN (A)" Background="#E65100" Foreground="White" FontWeight="Bold" FontSize="9" Padding="4,2"/>
                     </StackPanel>
                 </Border>

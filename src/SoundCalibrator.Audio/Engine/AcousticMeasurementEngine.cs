@@ -18,6 +18,7 @@ public sealed class MeasurementSnapshot
     public float[] Coherence { get; }
     public float[] RtaDb { get; }
     public float[] RtaMaxHoldDb { get; }
+    public float[] ImpulseResponse { get; }
 
     public int FftSize { get; }
     public float SampleRate { get; }
@@ -39,6 +40,7 @@ public sealed class MeasurementSnapshot
         Coherence = new float[count];
         RtaDb = new float[count];
         RtaMaxHoldDb = new float[count];
+        ImpulseResponse = new float[fftSize];
 
         float deltaF = sampleRate / fftSize;
         for (int i = 0; i < count; i++)
@@ -237,6 +239,7 @@ public sealed class AcousticMeasurementEngine : IDisposable
                         }
 
                         _irCalculator.CalculateImpulseResponse(snapshot.MagnitudeDb, snapshot.PhaseDegrees, _irBuffer, SampleRate, snapshot.Delay);
+                        Array.Copy(_irBuffer, snapshot.ImpulseResponse, _irBuffer.Length);
 
                         // Compensación de retardo, polaridad y ganancia
                         float compSeconds = DelayCompensationMs / 1000f;
