@@ -28,6 +28,7 @@ public partial class MainWindow : Window
     private bool _isAligned;
     private MeasurementSnapshot? _lastSnapshot;
     private AlignmentSuggestion? _lastAlignmentSuggestion;
+    private System.Collections.Generic.IReadOnlyList<PeqFilterSuggestion>? _lastPeqSuggestions;
 
     private static readonly string[] TraceColors = ["#E040FB", "#76FF03", "#FFD600", "#FF4081", "#00E676", "#448AFF"];
 
@@ -269,6 +270,7 @@ public partial class MainWindow : Window
                         ? ThdCalculator.Calculate(_lastSnapshot.Frequencies, _lastSnapshot.RtaDb) 
                         : null,
                     Alignment = _lastAlignmentSuggestion,
+                    PeqFilters = _lastPeqSuggestions,
                     Traces = GraphControl.StoredTraces
                 };
 
@@ -279,6 +281,36 @@ public partial class MainWindow : Window
                 await using var writer = new System.IO.StreamWriter(stream);
                 await writer.WriteAsync(text);
                 StatusDeviceText.Text = $"Report Saved: {file.Name}";
+            }
+        };
+
+        SuggestEqBtn.Click += (s, e) =>
+        {
+            if (_lastSnapshot == null || GraphControl.ActiveTargetCurve == null)
+            {
+                StatusDeviceText.Text = "Please select a Target Curve (e.g. Harman) to compute PEQ correction.";
+                return;
+            }
+
+            int count = _lastSnapshot.BinCount;
+            float[] delta = new float[count];
+            for (int i = 0; i < count; i++)
+            {
+                float f = _lastSnapshot.Frequencies[i];
+                float target = GraphControl.ActiveTargetCurve.Evaluate(f);
+                delta[i] = _lastSnapshot.MagnitudeDb[i] - target;
+            }
+
+            _lastPeqSuggestions = PeqSuggester.SuggestFilters(_lastSnapshot.Frequencies, delta, maxFilters: 5);
+
+            if (_lastPeqSuggestions.Count == 0)
+            {
+                StatusDeviceText.Text = "PEQ: System within +/-2dB of target curve. No filters needed.";
+            }
+            else
+            {
+                string summary = string.Join(" | ", System.Linq.Enumerable.Select(_lastPeqSuggestions, f => $"{f.FrequencyHz:0}Hz {f.GainDb:+0.0;-0.0}dB Q:{f.Q:0.0}"));
+                StatusDeviceText.Text = $"Suggested PEQ: {summary}";
             }
         };
 
@@ -396,6 +428,10 @@ public partial class MainWindow : Window
                 break;
             case Avalonia.Input.Key.S:
                 SnapshotBtn.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+                e.Handled = true;
+                break;
+            case Avalonia.Input.Key.E:
+                SuggestEqBtn.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
                 e.Handled = true;
                 break;
             case Avalonia.Input.Key.D1 or Avalonia.Input.Key.NumPad1:
