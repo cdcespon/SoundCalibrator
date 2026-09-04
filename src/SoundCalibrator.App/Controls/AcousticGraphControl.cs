@@ -99,6 +99,15 @@ public sealed class AcousticGraphControl : Control
         if (isRta)
         {
             DrawRtaGrid(context, w, mainH);
+
+            foreach (var trace in StoredTraces)
+            {
+                if (trace.IsVisible && trace.IsRtaTrace)
+                {
+                    DrawStoredRtaTrace(context, w, mainH, trace);
+                }
+            }
+
             if (_currentSnapshot != null)
             {
                 DrawRtaCurves(context, w, mainH, _currentSnapshot);
@@ -213,6 +222,41 @@ public sealed class AcousticGraphControl : Control
         if (rtaStarted)
         {
             context.DrawGeometry(null, new Pen(new SolidColorBrush(RtaLiveColor), 2.2), rtaGeom);
+        }
+    }
+
+    private void DrawStoredRtaTrace(DrawingContext context, double w, double mainH, AcousticTrace trace)
+    {
+        Color traceColor = Color.Parse(trace.HexColor);
+        var rtaPen = new Pen(new SolidColorBrush(traceColor), 1.6, DashStyle.Dash);
+        var rtaGeometry = new StreamGeometry();
+        bool rtaStarted = false;
+
+        using (var rtaCtx = rtaGeometry.Open())
+        {
+            for (int i = 1; i < trace.Frequencies.Length; i++)
+            {
+                float freq = trace.Frequencies[i];
+                if (freq < 20f || freq > 20000f) continue;
+
+                double x = FreqToX(freq, w);
+                double yRta = RtaDbToY(trace.MagnitudeDb[i] + trace.OffsetDb, mainH);
+
+                if (!rtaStarted)
+                {
+                    rtaCtx.BeginFigure(new Point(x, yRta), false);
+                    rtaStarted = true;
+                }
+                else
+                {
+                    rtaCtx.LineTo(new Point(x, yRta));
+                }
+            }
+        }
+
+        if (rtaStarted)
+        {
+            context.DrawGeometry(null, rtaPen, rtaGeometry);
         }
     }
 

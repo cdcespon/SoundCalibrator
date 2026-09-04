@@ -76,9 +76,14 @@ public partial class MainWindow : Window
             {
                 int idx = GraphControl.StoredTraces.Count;
                 string color = TraceColors[idx % TraceColors.Length];
-                string name = $"Trace {idx + 1}";
-                var trace = new AcousticTrace(name, color, _lastSnapshot.Frequencies, _lastSnapshot.MagnitudeDb, _lastSnapshot.PhaseDegrees, _lastSnapshot.Coherence);
-                trace.DetectedDelayMs = _lastDetectedDelayMs;
+                bool isRta = _lastSnapshot.IsRtaMode;
+                string name = isRta ? $"RTA {idx + 1}" : $"Trace {idx + 1}";
+                float[] mag = isRta && _lastSnapshot.RtaDb != null ? _lastSnapshot.RtaDb : _lastSnapshot.MagnitudeDb;
+                var trace = new AcousticTrace(name, color, _lastSnapshot.Frequencies, mag, _lastSnapshot.PhaseDegrees, _lastSnapshot.Coherence)
+                {
+                    DetectedDelayMs = _lastDetectedDelayMs,
+                    IsRtaTrace = isRta
+                };
                 GraphControl.StoredTraces.Add(trace);
                 TracesCountText.Text = $"Captured Traces: {GraphControl.StoredTraces.Count}";
                 GraphControl.InvalidateVisual();
