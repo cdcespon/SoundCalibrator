@@ -18,6 +18,8 @@ public sealed class MeasurementSnapshot
     public int FftSize { get; }
     public float SampleRate { get; }
     public int AverageCount { get; }
+    public int BinCount => Frequencies.Length;
+    public DelayResult Delay { get; set; } = new();
 
     public MeasurementSnapshot(int fftSize, float sampleRate, int averageCount)
     {
@@ -45,9 +47,11 @@ public sealed class AcousticMeasurementEngine : IDisposable
     private readonly TransferFunctionCalculator _calculator;
     private readonly SpectralAverager _averager;
     private readonly TransferFunctionResult _rawResult;
+    private readonly ImpulseResponseCalculator _irCalculator;
 
     private readonly float[] _refChunk;
     private readonly float[] _measChunk;
+    private readonly float[] _irBuffer;
 
     private IAudioCaptureDevice? _device;
     private bool _isProcessing;
@@ -65,6 +69,8 @@ public sealed class AcousticMeasurementEngine : IDisposable
         set => _averager.Mode = value;
     }
 
+    public float DelayCompensationMs { get; set; } = 0f;
+
     public event Action<MeasurementSnapshot>? SnapshotReady;
 
     public AcousticMeasurementEngine(int fftSize = 1024)
@@ -76,9 +82,11 @@ public sealed class AcousticMeasurementEngine : IDisposable
         _calculator = new TransferFunctionCalculator(fftSize, WindowType.Hann);
         _averager = new SpectralAverager(fftSize);
         _rawResult = new TransferFunctionResult(fftSize);
+        _irCalculator = new ImpulseResponseCalculator(fftSize);
 
         _refChunk = new float[fftSize];
         _measChunk = new float[fftSize];
+        _irBuffer = new float[fftSize];
 
         _processingThread = new Thread(ProcessingLoop)
         {
@@ -151,21 +159,30 @@ public sealed class AcousticMeasurementEngine : IDisposable
                 _refFifo.Read(_refChunk);
                 _measFifo.Read(_measChunk);
 
-                // Calcular Función de Transferencia con Promediado Espectral
                 _calculator.Calculate(_refChunk, _measChunk, _averager, _rawResult);
 
-                // Generar Snapshot para UI
                 var snapshot = new MeasurementSnapshot(fft, SampleRate, _averager.SampleCount);
                 
-                // Aplicar suavizado de octava opcional a la magnitud
                 OctaveSmoother.Smooth(_rawResult.MagnitudeDb, snapshot.MagnitudeDb, Smoothing, SampleRate, fft);
 
                 Array.Copy(_rawResult.PhaseDegrees, snapshot.PhaseDegrees, _rawResult.BinCount);
                 Array.Copy(_rawResult.Coherence, snapshot.Coherence, _rawResult.BinCount);
 
+                _irCalculator.CalculateImpulseResponse(snapshot.MagnitudeDb, snapshot.PhaseDegrees, _irBuffer, SampleRate, snapshot.Delay);
+
+                if (MathF.Abs(DelayCompensationMs) > 0.001f)
+                {
+                    float compSeconds = DelayCompensationMs / 1000f;
+                    for (int k = 0; k < snapshot.BinCount; k++)
+                    {
+                        float f = snapshot.Frequencies[k];
+                        float compensated = snapshot.PhaseDegrees[k] + (360f * f * compSeconds);
+                        snapshot.PhaseDegrees[k] = ((compensated + 180f) % 360f + 360f) % 360f - 180f;
+                    }
+                }
+
                 SnapshotReady?.Invoke(snapshot);
 
-                // Tasa de refresco amigable: ~30-60 FPS
                 Thread.Sleep(15);
             }
             else

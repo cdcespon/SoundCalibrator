@@ -35,6 +35,34 @@ public sealed class FastFourierTransform
 
     public void Forward(Span<float> real, Span<float> imag)
     {
+        ExecuteCore(real, imag);
+    }
+
+    public void Inverse(Span<float> real, Span<float> imag)
+    {
+        if (real.Length < _length || imag.Length < _length)
+            throw new ArgumentException("Buffer length is smaller than FFT length");
+
+        // 1. Conjugar entrada: imag = -imag
+        for (int i = 0; i < _length; i++)
+        {
+            imag[i] = -imag[i];
+        }
+
+        // 2. FFT directa
+        ExecuteCore(real, imag);
+
+        // 3. Conjugar salida y escalar por 1/N
+        float scale = 1.0f / _length;
+        for (int i = 0; i < _length; i++)
+        {
+            real[i] *= scale;
+            imag[i] = -imag[i] * scale;
+        }
+    }
+
+    private void ExecuteCore(Span<float> real, Span<float> imag)
+    {
         if (real.Length < _length || imag.Length < _length)
             throw new ArgumentException("Buffer length is smaller than FFT length");
 
@@ -69,7 +97,6 @@ public sealed class FastFourierTransform
                     float vReal = real[vIdx];
                     float vImag = imag[vIdx];
 
-                    // Multiplicación compleja con twiddle
                     float tReal = vReal * c - vImag * s;
                     float tImag = vReal * s + vImag * c;
 
