@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Runtime.Versioning;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Threading;
@@ -17,6 +16,8 @@ public partial class MainWindow : Window
     private SyntheticAudioGenerator? _syntheticGen;
     private IDisposable? _wasapiDevice;
     private bool _isPaused;
+    private float _lastDetectedDelayMs;
+    private bool _isAligned;
 
     public MainWindow()
     {
@@ -35,7 +36,32 @@ public partial class MainWindow : Window
     private void SetupEventHandlers()
     {
         StartStopBtn.Click += OnStartStopClick;
-        ResetBtn.Click += (s, e) => _engine.Reset();
+        ResetBtn.Click += (s, e) =>
+        {
+            _engine.Reset();
+            _engine.DelayCompensationMs = 0f;
+            _isAligned = false;
+            AutoAlignBtn.Content = "ALIGN PHASE";
+            AutoAlignBtn.Background = Avalonia.Media.SolidColorBrush.Parse("#E65100");
+        };
+
+        AutoAlignBtn.Click += (s, e) =>
+        {
+            if (!_isAligned)
+            {
+                _engine.DelayCompensationMs = -_lastDetectedDelayMs;
+                _isAligned = true;
+                AutoAlignBtn.Content = "UNALIGN";
+                AutoAlignBtn.Background = Avalonia.Media.SolidColorBrush.Parse("#388E3C");
+            }
+            else
+            {
+                _engine.DelayCompensationMs = 0f;
+                _isAligned = false;
+                AutoAlignBtn.Content = "ALIGN PHASE";
+                AutoAlignBtn.Background = Avalonia.Media.SolidColorBrush.Parse("#E65100");
+            }
+        };
 
         DelaySlider.PropertyChanged += (s, e) =>
         {
@@ -64,10 +90,13 @@ public partial class MainWindow : Window
 
     private void OnSnapshotReady(MeasurementSnapshot snapshot)
     {
+        _lastDetectedDelayMs = snapshot.Delay.DelayMs;
+
         Dispatcher.UIThread.Post(() =>
         {
             GraphControl.UpdateSnapshot(snapshot);
             StatusAvgText.Text = $"Averages: {snapshot.AverageCount}";
+            DetectedDelayText.Text = $"{snapshot.Delay.DelayMs:0.00} ms ({snapshot.Delay.DistanceMeters:0.00} m)";
         });
     }
 

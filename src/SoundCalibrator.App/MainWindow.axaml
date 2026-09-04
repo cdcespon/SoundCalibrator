@@ -3,7 +3,7 @@
         xmlns:controls="clr-namespace:SoundCalibrator.App.Controls"
         x:Class="SoundCalibrator.App.MainWindow"
         Title="SoundCalibrator - Dual-Channel FFT Acoustic Measurement (Open Sound Meter Clone)"
-        Width="1280" Height="760"
+        Width="1320" Height="780"
         Background="#0B0E14"
         FontFamily="Segoe UI">
 
@@ -12,15 +12,15 @@
         <Border Grid.Row="0" Background="#141821" BorderBrush="#222836" BorderThickness="0,0,0,1" Padding="12,8">
             <WrapPanel Orientation="Horizontal" VerticalAlignment="Center">
                 <!-- LOGO / TITULO -->
-                <StackPanel Orientation="Horizontal" Margin="0,0,24,0" VerticalAlignment="Center">
+                <StackPanel Orientation="Horizontal" Margin="0,0,20,0" VerticalAlignment="Center">
                     <TextBlock Text="SOUND" Foreground="#00E5FF" FontWeight="Bold" FontSize="16" Margin="0,0,4,0"/>
                     <TextBlock Text="CALIBRATOR" Foreground="#E0E6ED" FontWeight="SemiBold" FontSize="16"/>
                 </StackPanel>
 
                 <!-- FUENTE DE AUDIO -->
-                <StackPanel Orientation="Horizontal" Margin="0,0,16,0" VerticalAlignment="Center">
-                    <TextBlock Text="Source:" Foreground="#7E8B9B" VerticalAlignment="Center" Margin="0,0,6,0" FontSize="12"/>
-                    <ComboBox x:Name="SourceCombo" Width="170" SelectedIndex="0">
+                <StackPanel Orientation="Horizontal" Margin="0,0,12,0" VerticalAlignment="Center">
+                    <TextBlock Text="Source:" Foreground="#7E8B9B" VerticalAlignment="Center" Margin="0,0,4,0" FontSize="12"/>
+                    <ComboBox x:Name="SourceCombo" Width="160" SelectedIndex="0">
                         <ComboBoxItem Content="Pink Noise (Synthetic)"/>
                         <ComboBoxItem Content="Sine 1kHz (Synthetic)"/>
                         <ComboBoxItem Content="WASAPI Audio Device"/>
@@ -28,9 +28,9 @@
                 </StackPanel>
 
                 <!-- PROMEDIO -->
-                <StackPanel Orientation="Horizontal" Margin="0,0,16,0" VerticalAlignment="Center">
-                    <TextBlock Text="Averaging:" Foreground="#7E8B9B" VerticalAlignment="Center" Margin="0,0,6,0" FontSize="12"/>
-                    <ComboBox x:Name="AveragingCombo" Width="130" SelectedIndex="1">
+                <StackPanel Orientation="Horizontal" Margin="0,0,12,0" VerticalAlignment="Center">
+                    <TextBlock Text="Avg:" Foreground="#7E8B9B" VerticalAlignment="Center" Margin="0,0,4,0" FontSize="12"/>
+                    <ComboBox x:Name="AveragingCombo" Width="110" SelectedIndex="1">
                         <ComboBoxItem Content="None"/>
                         <ComboBoxItem Content="Fast (Exp)"/>
                         <ComboBoxItem Content="Slow (Exp)"/>
@@ -40,9 +40,9 @@
                 </StackPanel>
 
                 <!-- SUAVIZADO DE OCTAVA -->
-                <StackPanel Orientation="Horizontal" Margin="0,0,16,0" VerticalAlignment="Center">
-                    <TextBlock Text="Smooth:" Foreground="#7E8B9B" VerticalAlignment="Center" Margin="0,0,6,0" FontSize="12"/>
-                    <ComboBox x:Name="SmoothingCombo" Width="110" SelectedIndex="0">
+                <StackPanel Orientation="Horizontal" Margin="0,0,12,0" VerticalAlignment="Center">
+                    <TextBlock Text="Smooth:" Foreground="#7E8B9B" VerticalAlignment="Center" Margin="0,0,4,0" FontSize="12"/>
+                    <ComboBox x:Name="SmoothingCombo" Width="100" SelectedIndex="0">
                         <ComboBoxItem Content="None"/>
                         <ComboBoxItem Content="1/3 Oct"/>
                         <ComboBoxItem Content="1/6 Oct"/>
@@ -51,24 +51,33 @@
                     </ComboBox>
                 </StackPanel>
 
-                <!-- DELAY SLIDER (PARA SIMULACIÓN ACÚSTICA) -->
-                <StackPanel Orientation="Horizontal" Margin="0,0,16,0" VerticalAlignment="Center">
-                    <TextBlock Text="Delay:" Foreground="#7E8B9B" VerticalAlignment="Center" Margin="0,0,6,0" FontSize="12"/>
-                    <Slider x:Name="DelaySlider" Width="90" Minimum="0" Maximum="20" Value="0" TickFrequency="0.5" IsSnapToTickEnabled="False"/>
-                    <TextBlock x:Name="DelayText" Text="0.0 ms" Foreground="#FF9100" VerticalAlignment="Center" Width="45" Margin="4,0,0,0" FontSize="11"/>
+                <!-- SIMULACION RETARDO -->
+                <StackPanel Orientation="Horizontal" Margin="0,0,12,0" VerticalAlignment="Center">
+                    <TextBlock Text="Sim Delay:" Foreground="#7E8B9B" VerticalAlignment="Center" Margin="0,0,4,0" FontSize="12"/>
+                    <Slider x:Name="DelaySlider" Width="70" Minimum="0" Maximum="20" Value="0" TickFrequency="0.5" IsSnapToTickEnabled="False"/>
+                    <TextBlock x:Name="DelayText" Text="0.0 ms" Foreground="#FF9100" VerticalAlignment="Center" Width="42" Margin="2,0,0,0" FontSize="11"/>
                 </StackPanel>
 
+                <!-- AUTO DELAY TRACKER (IFFT) -->
+                <Border Background="#1A2230" CornerRadius="4" Padding="6,3" Margin="0,0,12,0" VerticalAlignment="Center">
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock Text="IR Delay:" Foreground="#7E8B9B" FontSize="11" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                        <TextBlock x:Name="DetectedDelayText" Text="0.0 ms" Foreground="#00E676" FontWeight="Bold" FontSize="11" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                        <Button x:Name="AutoAlignBtn" Content="ALIGN PHASE" Background="#E65100" Foreground="White" FontWeight="Bold" FontSize="10" Padding="5,2"/>
+                    </StackPanel>
+                </Border>
+
                 <!-- GAIN SLIDER -->
-                <StackPanel Orientation="Horizontal" Margin="0,0,16,0" VerticalAlignment="Center">
-                    <TextBlock Text="Gain:" Foreground="#7E8B9B" VerticalAlignment="Center" Margin="0,0,6,0" FontSize="12"/>
-                    <Slider x:Name="GainSlider" Width="80" Minimum="-12" Maximum="12" Value="0" TickFrequency="1" IsSnapToTickEnabled="False"/>
-                    <TextBlock x:Name="GainText" Text="0 dB" Foreground="#00E5FF" VerticalAlignment="Center" Width="40" Margin="4,0,0,0" FontSize="11"/>
+                <StackPanel Orientation="Horizontal" Margin="0,0,12,0" VerticalAlignment="Center">
+                    <TextBlock Text="Gain:" Foreground="#7E8B9B" VerticalAlignment="Center" Margin="0,0,4,0" FontSize="12"/>
+                    <Slider x:Name="GainSlider" Width="60" Minimum="-12" Maximum="12" Value="0" TickFrequency="1" IsSnapToTickEnabled="False"/>
+                    <TextBlock x:Name="GainText" Text="0 dB" Foreground="#00E5FF" VerticalAlignment="Center" Width="35" Margin="2,0,0,0" FontSize="11"/>
                 </StackPanel>
 
                 <!-- BOTONES DE ACCION -->
-                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="8,0,0,0">
-                    <Button x:Name="StartStopBtn" Content="PAUSE" Background="#1E88E5" Foreground="White" FontWeight="Bold" Width="70" Margin="0,0,8,0"/>
-                    <Button x:Name="ResetBtn" Content="RESET" Background="#263238" Foreground="#E0E6ED" Width="65"/>
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="4,0,0,0">
+                    <Button x:Name="StartStopBtn" Content="PAUSE" Background="#1E88E5" Foreground="White" FontWeight="Bold" Width="65" Margin="0,0,6,0"/>
+                    <Button x:Name="ResetBtn" Content="RESET" Background="#263238" Foreground="#E0E6ED" Width="60"/>
                 </StackPanel>
             </WrapPanel>
         </Border>

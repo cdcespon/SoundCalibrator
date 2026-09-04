@@ -7,6 +7,7 @@ using SoundCalibrator.Audio.Interfaces;
 
 namespace SoundCalibrator.Audio.Devices;
 
+#pragma warning disable CS0618 // WasapiCapture obsolescence warning in NAudio 3.x
 [SupportedOSPlatform("windows")]
 public sealed class WasapiAudioCaptureDevice : IAudioCaptureDevice
 {
@@ -121,3 +122,4 @@ public sealed class WasapiAudioCaptureDevice : IAudioCaptureDevice
         _device.Dispose();
     }
 }
+#pragma warning restore CS0618
