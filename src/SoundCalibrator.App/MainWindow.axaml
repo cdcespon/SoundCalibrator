@@ -3,7 +3,7 @@
         xmlns:controls="clr-namespace:SoundCalibrator.App.Controls"
         x:Class="SoundCalibrator.App.MainWindow"
         Title="SoundCalibrator - Dual-Channel FFT Acoustic Measurement (Open Sound Meter Clone)"
-        Width="1380" Height="800"
+        Width="1400" Height="800"
         Background="#0B0E14"
         FontFamily="Segoe UI">
 
@@ -20,9 +20,10 @@
                 <!-- FUENTE DE AUDIO -->
                 <StackPanel Orientation="Horizontal" Margin="0,0,10,0" VerticalAlignment="Center">
                     <TextBlock Text="Source:" Foreground="#7E8B9B" VerticalAlignment="Center" Margin="0,0,4,0" FontSize="12"/>
-                    <ComboBox x:Name="SourceCombo" Width="150" SelectedIndex="0">
+                    <ComboBox x:Name="SourceCombo" Width="175" SelectedIndex="0">
                         <ComboBoxItem Content="Pink Noise (Synthetic)"/>
                         <ComboBoxItem Content="Sine 1kHz (Synthetic)"/>
+                        <ComboBoxItem Content="Sine Sweep (Synthetic)"/>
                         <ComboBoxItem Content="WASAPI Audio Device"/>
                     </ComboBox>
                 </StackPanel>

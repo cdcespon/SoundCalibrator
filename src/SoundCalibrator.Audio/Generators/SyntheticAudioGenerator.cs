@@ -13,6 +13,7 @@ public enum TestSignalType
 
 /// <summary>
 /// Generador de audio sintético para pruebas de calibración acústica y benchmarks en tiempo real.
+/// Soporta Ruido Rosa (Kellet), Tono senoidal puro y Barrido senoidal logarítmico (Sine Sweep).
 /// </summary>
 public sealed class SyntheticAudioGenerator : IAudioCaptureDevice
 {
@@ -28,6 +29,11 @@ public sealed class SyntheticAudioGenerator : IAudioCaptureDevice
 
     private float _gainFactor = 1.0f;
     private float _sinePhase;
+    private float _sweepTime;
+    private const float SweepDuration = 3.0f; // 3 segundos por barrido
+    private const float FStart = 20f;
+    private const float FEnd = 20000f;
+
     private bool _isRunning;
     private bool _disposed;
 
@@ -94,7 +100,6 @@ public sealed class SyntheticAudioGenerator : IAudioCaptureDevice
             float sample = GenerateNextSample();
             refBlock[i] = sample;
 
-            // Simular retardo acústico con el buffer circular
             _delayBuffer[_delayWriteIdx] = sample;
             int readIdx = _delayWriteIdx - _delaySamples;
             if (readIdx < 0) readIdx += _delayBuffer.Length;
@@ -117,12 +122,27 @@ public sealed class SyntheticAudioGenerator : IAudioCaptureDevice
             return val * 0.5f;
         }
 
+        if (SignalType == TestSignalType.SineSweep)
+        {
+            // Barrido senoidal logarítmico continuo (Farina)
+            float t = _sweepTime;
+            float ratio = FEnd / FStart;
+            float k = 2f * MathF.PI * FStart * SweepDuration / MathF.Log(ratio);
+            float phase = k * (MathF.Pow(ratio, t / SweepDuration) - 1.0f);
+            float val = MathF.Sin(phase) * 0.4f;
+
+            _sweepTime += 1.0f / _sampleRate;
+            if (_sweepTime >= SweepDuration) _sweepTime = 0f;
+
+            return val;
+        }
+
         // Ruido blanco base
         float white = (float)(_random.NextDouble() * 2.0 - 1.0) * 0.25f;
 
         if (SignalType == TestSignalType.PinkNoise)
         {
-            // Filtro de 3dB/octava
+            // Filtro Paul Kellet para -3dB/octava
             _b0 = 0.99886f * _b0 + white * 0.0555179f;
             _b1 = 0.99332f * _b1 + white * 0.0750759f;
             _b2 = 0.96900f * _b2 + white * 0.1538520f;

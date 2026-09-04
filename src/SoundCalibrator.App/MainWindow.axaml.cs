@@ -155,7 +155,15 @@ public partial class MainWindow : Window
             StatusDeviceText.Text = "Synthetic: Sine 1 kHz (48 kHz, FFT: 1024)";
             if (!_isPaused) _engine.Start();
         }
-        else if (idx == 2) // WASAPI
+        else if (idx == 2) // Sine Sweep
+        {
+            _syntheticGen ??= new SyntheticAudioGenerator(48000, 512);
+            _syntheticGen.SignalType = TestSignalType.SineSweep;
+            _engine.AttachDevice(_syntheticGen);
+            StatusDeviceText.Text = "Synthetic: Sine Sweep 20Hz-20kHz (48 kHz, FFT: 1024)";
+            if (!_isPaused) _engine.Start();
+        }
+        else if (idx == 3) // WASAPI
         {
             if (OperatingSystem.IsWindows())
             {
