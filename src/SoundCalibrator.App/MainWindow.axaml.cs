@@ -566,11 +566,24 @@ public partial class MainWindow : Window
                 var spl = _splMeter.CalculateSpl(snapshot.Frequencies, snapshot.RtaDb);
                 SplText.Text = $"{spl.DbA:0.0} dBA | {spl.DbC:0.0} dBC";
                 SplBadge.IsVisible = true;
+
+                var feedbacks = FeedbackHunter.Detect(snapshot.Frequencies, snapshot.RtaDb);
+                if (feedbacks.Count > 0)
+                {
+                    var worst = feedbacks[0];
+                    FeedbackText.Text = $"{worst.FrequencyHz:0} Hz ({worst.ProminenceDb:+0.0} dB)";
+                    FeedbackBadge.IsVisible = true;
+                }
+                else
+                {
+                    FeedbackBadge.IsVisible = false;
+                }
             }
             else
             {
                 ThdBadge.IsVisible = false;
                 SplBadge.IsVisible = false;
+                FeedbackBadge.IsVisible = false;
             }
         });
     }
