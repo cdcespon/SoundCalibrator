@@ -609,7 +609,15 @@ public partial class MainWindow : Window
             UpdateStatusDeviceText();
             if (!_isPaused) _engine.Start();
         }
-        else if (idx == 5) // WASAPI
+        else if (idx == 5) // Polarity Pulse
+        {
+            _syntheticGen ??= new SyntheticAudioGenerator(48000, 512);
+            _syntheticGen.SignalType = TestSignalType.PolarityPulse;
+            _engine.AttachDevice(_syntheticGen);
+            UpdateStatusDeviceText();
+            if (!_isPaused) _engine.Start();
+        }
+        else if (idx == 6) // WASAPI
         {
             if (OperatingSystem.IsWindows())
             {
@@ -649,6 +657,7 @@ public partial class MainWindow : Window
             2 => "Sine Sweep 20Hz-20kHz",
             3 => "Gated Pink Noise",
             4 => "IEC 60268-1 Program Noise",
+            5 => "Polarity Pulse",
             _ => "Audio Device"
         };
         StatusDeviceText.Text = $"Synthetic: {srcName} ({_engine.SampleRate} Hz, FFT: {_engine.FftSize})";

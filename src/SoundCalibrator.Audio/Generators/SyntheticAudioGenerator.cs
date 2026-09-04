@@ -10,7 +10,8 @@ public enum TestSignalType
     SineWave,
     SineSweep,
     GatedPinkNoise,
-    IecNoise
+    IecNoise,
+    PolarityPulse
 }
 
 /// <summary>
@@ -210,6 +211,20 @@ public sealed class SyntheticAudioGenerator : IAudioCaptureDevice
             _iecPrevIn = _iecLpState;
 
             return _iecHpState * 1.3f;
+        }
+
+        if (SignalType == TestSignalType.PolarityPulse)
+        {
+            float periodSec = 0.5f; // Click cada 500 ms (2 Hz)
+            float t = _gateTimeSeconds % periodSec;
+            _gateTimeSeconds += 1.0f / _sampleRate;
+
+            const float pulseWidthSec = 0.0015f; // Pulso positivo de 1.5 ms
+            if (t < pulseWidthSec)
+            {
+                return 0.85f * MathF.Sin(MathF.PI * t / pulseWidthSec);
+            }
+            return 0f;
         }
 
         return white;

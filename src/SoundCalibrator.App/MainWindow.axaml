@@ -37,6 +37,7 @@
                         <ComboBoxItem Content="Sine Sweep (20Hz-20k)"/>
                         <ComboBoxItem Content="Gated Pink Noise (Burst)"/>
                         <ComboBoxItem Content="IEC 60268-1 Program Noise"/>
+                        <ComboBoxItem Content="Polarity Pulse (Click)"/>
                         <ComboBoxItem Content="WASAPI Audio Device"/>
                     </ComboBox>
                 </StackPanel>
