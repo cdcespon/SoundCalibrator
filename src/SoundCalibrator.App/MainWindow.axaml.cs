@@ -288,6 +288,15 @@ public partial class MainWindow : Window
                 StatusDeviceText.Text = $"Report Saved: {file.Name}";
             }
         };
+        ToggleRtaBarsBtn.Click += (s, e) =>
+        {
+            GraphControl.RtaBarMode = !GraphControl.RtaBarMode;
+            ToggleRtaBarsBtn.Background = GraphControl.RtaBarMode
+                ? Avalonia.Media.SolidColorBrush.Parse("#F57F17")
+                : Avalonia.Media.SolidColorBrush.Parse("#37474F");
+            GraphControl.InvalidateVisual();
+        };
+
         CalibrateSplBtn.Click += (s, e) =>
         {
             if (_lastSnapshot != null && _lastSnapshot.IsRtaMode)
@@ -491,6 +500,7 @@ public partial class MainWindow : Window
         _engine.IsRtaMode = isRta;
         GraphControl.IsSpectrogramMode = isSpectro;
         GraphControl.ShowGroupDelay = isGroupDelay;
+        ToggleRtaBarsBtn.IsVisible = isRta;
 
         bool showControls = isTf || isGroupDelay;
         BlankingPanel.IsVisible = showControls;
