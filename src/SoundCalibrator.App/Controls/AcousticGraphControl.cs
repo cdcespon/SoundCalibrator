@@ -18,6 +18,7 @@ public sealed class AcousticGraphControl : Control
     public List<AcousticTrace> StoredTraces { get; } = [];
     public float CoherenceThreshold { get; set; } = 0.0f;
     public TargetCurve? ActiveTargetCurve { get; set; }
+    public bool ShowDeltaCurve { get; set; } = false;
 
     // Paleta de diseño
     private static readonly Color BgColor = Color.Parse("#101318");
@@ -99,6 +100,11 @@ public sealed class AcousticGraphControl : Control
         if (ActiveTargetCurve != null && ActiveTargetCurve.Points.Count > 0)
         {
             DrawTargetCurve(context, w, mainH, ActiveTargetCurve);
+
+            if (ShowDeltaCurve && _currentSnapshot != null)
+            {
+                DrawDeltaCurve(context, w, mainH, _currentSnapshot, ActiveTargetCurve);
+            }
         }
 
         if (_mousePosition.HasValue && _currentSnapshot != null)
@@ -256,6 +262,52 @@ public sealed class AcousticGraphControl : Control
                 11,
                 new SolidColorBrush(Color.Parse("#FFC107")));
             context.DrawText(label, new Point(w - 200, 10));
+        }
+    }
+
+    private void DrawDeltaCurve(DrawingContext context, double w, double mainH, MeasurementSnapshot snap, TargetCurve target)
+    {
+        var deltaGeom = new StreamGeometry();
+        bool started = false;
+        var pen = new Pen(new SolidColorBrush(Color.Parse("#E040FB")), 2.0);
+
+        using (var ctx = deltaGeom.Open())
+        {
+            for (int i = 1; i < snap.Frequencies.Length; i++)
+            {
+                float freq = snap.Frequencies[i];
+                if (freq < 20f || freq > 20000f) continue;
+
+                float measDb = snap.MagnitudeDb[i];
+                float targetDb = target.Evaluate(freq);
+                float deltaDb = measDb - targetDb;
+
+                double x = FreqToX(freq, w);
+                double y = DbToY(deltaDb, mainH);
+
+                if (!started)
+                {
+                    ctx.BeginFigure(new Point(x, y), false);
+                    started = true;
+                }
+                else
+                {
+                    ctx.LineTo(new Point(x, y));
+                }
+            }
+        }
+
+        if (started)
+        {
+            context.DrawGeometry(null, pen, deltaGeom);
+            var label = new FormattedText(
+                "Δ Delta (Meas - Target)",
+                CultureInfo.InvariantCulture,
+                FlowDirection.LeftToRight,
+                LabelFont,
+                11,
+                new SolidColorBrush(Color.Parse("#E040FB")));
+            context.DrawText(label, new Point(w - 360, 10));
         }
     }
 
