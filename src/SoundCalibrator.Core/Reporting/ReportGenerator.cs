@@ -19,8 +19,10 @@ public sealed class CalibrationReportData
     public float DelayCompensationMs { get; set; } = 0f;
     public bool InvertPolarity { get; set; } = false;
     public ReverberationTimeResult? Rt60 { get; set; }
+    public StiResult? Sti { get; set; }
     public ThdResult? Thd { get; set; }
     public AlignmentSuggestion? Alignment { get; set; }
+    public DelayMatrixReport? DelayMatrix { get; set; }
     public IReadOnlyList<AcousticTrace> Traces { get; set; } = [];
     public IReadOnlyList<PeqFilterSuggestion>? PeqFilters { get; set; }
 }
@@ -57,6 +59,12 @@ public static class ReportGenerator
             sb.AppendLine($"| **T20 (RT60)** | {r.T20Seconds:0.00}s | Standard RT60 extrapolation (-5 to -25 dB fit) |");
             sb.AppendLine($"| **T30 (RT60)** | {r.T30Seconds:0.00}s | High dynamic range RT60 (-5 to -35 dB fit) |");
             sb.AppendLine($"| Dynamic Range | {r.DynamicRangeDb:0.0} dB | Signal to noise decay margin |");
+            if (data.Sti.HasValue)
+            {
+                var s = data.Sti.Value;
+                sb.AppendLine($"| **STI** | {s.Sti:0.00} ({s.Rating}) | Speech Transmission Index (IEC 60268-16) |");
+                sb.AppendLine($"| **%ALCons** | {s.AlConsPercent:0.0}% | Articulation Loss of Consonants (Farah/Peutz) |");
+            }
             sb.AppendLine();
         }
 
@@ -95,7 +103,22 @@ public static class ReportGenerator
             sb.AppendLine();
         }
 
-        sb.AppendLine("## 6. Stored Traces");
+        if (data.DelayMatrix != null && data.DelayMatrix.Alignments.Count > 0)
+        {
+            var dm = data.DelayMatrix;
+            sb.AppendLine("## 6. Multi-Zone Delay Matrix Alignment");
+            sb.AppendLine($"* **Anchor Zone:** {dm.AnchorZoneName} | **Temperature:** {dm.TemperatureCelsius:0.#} \u00B0C | **Speed of Sound:** {dm.SpeedOfSoundMps:0.#} m/s");
+            sb.AppendLine("| Zone | Measured Arrival | Required Offset | Relative Distance |");
+            sb.AppendLine("| :--- | :--- | :--- | :--- |");
+            foreach (var a in dm.Alignments)
+            {
+                string sign = a.RequiredDelayOffsetMs >= 0 ? "+" : "";
+                sb.AppendLine($"| {a.Name} | {a.MeasuredDelayMs:0.00} ms | {sign}{a.RequiredDelayOffsetMs:0.00} ms | {sign}{a.RelativeDistanceMeters:0.00} m ({sign}{a.RelativeDistanceFeet:0.0} ft) |");
+            }
+            sb.AppendLine();
+        }
+
+        sb.AppendLine("## 7. Stored Traces");
         if (data.Traces.Count == 0)
         {
             sb.AppendLine("*No individual traces stored in this session.*");
