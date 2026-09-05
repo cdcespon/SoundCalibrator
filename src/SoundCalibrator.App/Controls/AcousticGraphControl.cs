@@ -29,6 +29,7 @@ public sealed class AcousticGraphControl : Control
     public bool ShowGroupDelay { get; set; } = false;
     public bool RtaBarMode { get; set; } = false;
     public bool ShowImpulseEtc { get; set; } = false;
+    public bool ShowMinimumPhase { get; set; } = false;
     private SpectrogramBuffer? _spectrogramBuffer;
     private WriteableBitmap? _spectrogramBmp;
 
@@ -738,6 +739,14 @@ public sealed class AcousticGraphControl : Control
             GroupDelayCalculator.CalculateGroupDelayMs(snap.Frequencies, snap.PhaseDegrees, gdArray);
         }
 
+        MinimumPhaseResult? minPhaseResult = null;
+        var minPhaseGeometry = new StreamGeometry();
+        bool minPhaseStarted = false;
+        if (ShowMinimumPhase && snap.BinCount > 0)
+        {
+            minPhaseResult = MinimumPhaseAnalyzer.Analyze(snap.Frequencies, snap.MagnitudeDb, snap.PhaseDegrees);
+        }
+
         using (var magCtx = magGeometry.Open())
         using (var phaseCtx = phaseGeometry.Open())
         using (var cohCtx = cohGeometry.Open())
@@ -794,7 +803,38 @@ public sealed class AcousticGraphControl : Control
                         phaseCtx.LineTo(new Point(x, yPhase));
                     }
                 }
+
+                if (minPhaseResult != null)
+                {
+                    double yMp = PhaseToY(minPhaseResult.MinPhaseDegrees[i], mainH);
+                    if (!minPhaseStarted)
+                    {
+                        using var mpCtx = minPhaseGeometry.Open();
+                        mpCtx.BeginFigure(new Point(x, yMp), false);
+                        minPhaseStarted = true;
+                    }
+                }
             }
+        }
+
+        if (minPhaseResult != null)
+        {
+            using (var mpCtx = minPhaseGeometry.Open())
+            {
+                bool started = false;
+                for (int i = 1; i < count; i++)
+                {
+                    float freq = snap.Frequencies[i];
+                    if (freq < 20f || freq > 20000f) continue;
+                    double x = FreqToX(freq, w);
+                    double yMp = PhaseToY(minPhaseResult.MinPhaseDegrees[i], mainH);
+                    if (!started) { mpCtx.BeginFigure(new Point(x, yMp), false); started = true; }
+                    else { mpCtx.LineTo(new Point(x, yMp)); }
+                }
+            }
+            context.DrawGeometry(null, new Pen(new SolidColorBrush(Color.Parse("#76FF03")), 1.5, DashStyle.Dash), minPhaseGeometry);
+            var mpLabel = new FormattedText("Min Phase (---)", CultureInfo.InvariantCulture, FlowDirection.LeftToRight, LabelFont, 10, new SolidColorBrush(Color.Parse("#76FF03")));
+            context.DrawText(mpLabel, new Point(w - 200, 26));
         }
 
         if (magStarted)

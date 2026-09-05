@@ -116,6 +116,17 @@ public partial class MainWindow : Window
                 ? Avalonia.Media.SolidColorBrush.Parse("#FFFFFF")
                 : Avalonia.Media.SolidColorBrush.Parse("#B0BEC5");
         };
+        MinPhaseBtn.Click += (s, e) =>
+        {
+            GraphControl.ShowMinimumPhase = !GraphControl.ShowMinimumPhase;
+            MinPhaseBtn.Background = GraphControl.ShowMinimumPhase
+                ? Avalonia.Media.SolidColorBrush.Parse("#2E7D32")
+                : Avalonia.Media.SolidColorBrush.Parse("#263238");
+            MinPhaseBtn.Foreground = GraphControl.ShowMinimumPhase
+                ? Avalonia.Media.SolidColorBrush.Parse("#FFFFFF")
+                : Avalonia.Media.SolidColorBrush.Parse("#B0BEC5");
+            GraphControl.InvalidateVisual();
+        };
         ModeCombo.SelectionChanged += OnModeChanged;
         SourceCombo.SelectionChanged += OnSourceChanged;
         FftCombo.SelectionChanged += OnFftOrWindowChanged;
