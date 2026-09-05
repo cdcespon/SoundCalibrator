@@ -23,6 +23,7 @@ public partial class MainWindow : Window
     private SyntheticAudioGenerator? _syntheticGen;
     private IDisposable? _wasapiDevice;
     private bool _isPaused;
+    private bool _channelsSwapped;
     private float _lastDetectedDelayMs;
     private bool _isAligned;
     private MeasurementSnapshot? _lastSnapshot;
@@ -107,6 +108,27 @@ public partial class MainWindow : Window
                 DelayText.Text = $"{val:0.0} ms";
             }
         };
+        SwapChannelsBtn.Click += (s, e) =>
+        {
+            _channelsSwapped = !_channelsSwapped;
+            SwapChannelsBtn.Content = _channelsSwapped ? "CH 2:1" : "CH 1:2";
+            SwapChannelsBtn.Background = _channelsSwapped
+                ? Avalonia.Media.SolidColorBrush.Parse("#E65100")
+                : Avalonia.Media.SolidColorBrush.Parse("#263238");
+            SwapChannelsBtn.Foreground = _channelsSwapped
+                ? Avalonia.Media.SolidColorBrush.Parse("#FFFFFF")
+                : Avalonia.Media.SolidColorBrush.Parse("#B0BEC5");
+
+            #pragma warning disable CA1416
+            if (_wasapiDevice is WasapiAudioCaptureDevice wasapi)
+            {
+                wasapi.ReferenceChannelIndex = _channelsSwapped ? 1 : 0;
+                wasapi.MeasurementChannelIndex = _channelsSwapped ? 0 : 1;
+            }
+#pragma warning restore CA1416
+            StatusDeviceText.Text = $"Input Routing: {(_channelsSwapped ? "Ref = Ch 2, Meas = Ch 1" : "Ref = Ch 1, Meas = Ch 2")}";
+        };
+
         InvertPolarityBtn.Click += (s, e) =>
         {
             _engine.InvertPolarity = !_engine.InvertPolarity;

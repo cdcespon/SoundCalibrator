@@ -20,6 +20,8 @@ public sealed class WasapiAudioCaptureDevice : IAudioCaptureDevice
     public int SampleRate => _capture?.WaveFormat.SampleRate ?? 48000;
     public int Channels => _capture?.WaveFormat.Channels ?? 2;
     public bool IsRunning => _isRunning;
+    public int ReferenceChannelIndex { get; set; } = 0;
+    public int MeasurementChannelIndex { get; set; } = 1;
 
     public event EventHandler<AudioBlockEventArgs>? AudioBlockAvailable;
 
@@ -81,8 +83,10 @@ public sealed class WasapiAudioCaptureDevice : IAudioCaptureDevice
             return;
         }
 
-        var refSamples = ExtractChannelSamples(e.Buffer, e.BytesRecorded, format, 0, channels);
-        var measSamples = ExtractChannelSamples(e.Buffer, e.BytesRecorded, format, 1, channels);
+        int refCh = Math.Clamp(ReferenceChannelIndex, 0, channels - 1);
+        int measCh = Math.Clamp(MeasurementChannelIndex, 0, channels - 1);
+        var refSamples = ExtractChannelSamples(e.Buffer, e.BytesRecorded, format, refCh, channels);
+        var measSamples = ExtractChannelSamples(e.Buffer, e.BytesRecorded, format, measCh, channels);
 
         AudioBlockAvailable?.Invoke(this, new AudioBlockEventArgs(refSamples, measSamples, refSamples.Length));
     }
