@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SoundCalibrator — Perspectiva 3: Arena Field-Ops Precision (Antigravity Signature)</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-deep: #08090d;
+            --bg-panel: #11131a;
+            --bg-panel-border: #232736;
+            --accent-brand: #3b82f6;
+            --trace-live: #00f0ff;
+            --trace-phase: #f59e0b;
+            --trace-coherence: #10b981;
+            --trace-spatial: #a855f7;
+            --trace-target: #e11d48;
+            --text-heading: #f8fafc;
+            --text-dim: #94a3b8;
+            --text-muted: #64748b;
+            --font-ui: 'Plus Jakarta Sans', sans-serif;
+            --font-mono: 'Space Mono', monospace;
+        }
+
+        /* Daylight Arena Mode Variables */
+        body.daylight-mode {
+            --bg-deep: #f1f5f9;
+            --bg-panel: #ffffff;
+            --bg-panel-border: #cbd5e1;
+            --text-heading: #0f172a;
+            --text-dim: #475569;
+            --text-muted: #64748b;
+            --trace-live: #0284c7;
+            --trace-phase: #d97706;
+            --trace-coherence: #059669;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+        }
+
+        body {
+            background: var(--bg-deep);
+            color: var(--text-heading);
+            font-family: var(--font-ui);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            transition: background 0.3s, color 0.3s;
+        }
+
+        /* Top High-Bandwidth Tactical Bar */
+        header {
+            height: 52px;
+            background: var(--bg-panel);
+            border-bottom: 1px solid var(--bg-panel-border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 16px;
+            z-index: 50;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .brand-badge {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .brand-badge h1 {
+            font-size: 16px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            background: linear-gradient(135deg, #60a5fa 0%, #a855f7 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .pill-edition {
+            background: rgba(59, 130, 246, 0.15);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            color: #60a5fa;
+            font-size: 10px;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 12px;
+            text-transform: uppercase;
+        }
+
+        /* Tactical Command Hotbar */
+        .tactical-hotbar {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .hot-btn {
+            background: #1e2433;
+            border: 1px solid var(--bg-panel-border);
+            color: var(--text-heading);
+            font-family: var(--font-ui);
+            font-size: 11px;
+            font-weight: 700;
+            padding: 7px 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.15s;
+        }
+
+        .hot-btn:hover {
+            border-color: #60a5fa;
+            background: #283145;
+        }
+
+        .hot-btn.primary {
+            background: #2563eb;
+            border-color: #3b82f6;
+            color: #fff;
+            box-shadow: 0 0 12px rgba(37, 99, 235, 0.4);
+        }
+
+        .hot-btn.amber {
+            background: rgba(245, 158, 11, 0.15);
+            border-color: #f59e0b;
+            color: #f59e0b;
+        }
+
+        .hot-btn.active {
+            background: #10b981;
+            border-color: #10b981;
+            color: #fff;
+        }
+
+        .key-badge {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            padding: 1px 5px;
+            border-radius: 3px;
+            font-family: var(--font-mono);
+            font-size: 9px;
+        }
+
+        /* Arena Mode Switch */
+        .daylight-toggle {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--bg-panel-border);
+            border-radius: 20px;
+            padding: 4px 10px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            color: var(--text-dim);
+        }
+
+        /* 3-Column Ergonomic Grid */
+        .app-body {
+            flex: 1;
+            display: grid;
+            grid-template-columns: 280px 1fr 320px;
+            gap: 8px;
+            padding: 8px;
+            overflow: hidden;
+        }
+
+        /* Left Dock: Multi-Mic Trace Stacks & Spatial Averaging */
+        .left-dock {
+            background: var(--bg-panel);
+            border: 1px solid var(--bg-panel-border);
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .panel-heading {
+            padding: 10px 14px;
+            border-bottom: 1px solid var(--bg-panel-border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-dim);
+        }
+
+        .trace-cards-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .multi-mic-card {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--bg-panel-border);
+            border-radius: 6px;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            transition: all 0.15s;
+        }
+
+        .multi-mic-card:hover {
+            border-color: #60a5fa;
+            background: rgba(59, 130, 246, 0.05);
+        }
+
+        .card-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .mic-title {
+            font-size: 12px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .color-tag {
+            width: 10px;
+            height: 10px;
+            border-radius: 3px;
+        }
+
+        .mic-readouts {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            font-family: var(--font-mono);
+            font-size: 10px;
+            color: var(--text-muted);
+        }
+
+        .mic-actions {
+            display: flex;
+            gap: 4px;
+            margin-top: 4px;
+        }
+
+        .mic-mini-btn {
+            flex: 1;
+            padding: 4px 0;
+            text-align: center;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--bg-panel-border);
+            border-radius: 4px;
+            font-size: 9px;
+            font-weight: 700;
+            cursor: pointer;
+            color: var(--text-dim);
+        }
+
+        .mic-mini-btn.active {
+            background: #2563eb;
+            color: #fff;
+            border-color: #3b82f6;
+        }
+
+        /* Center Multi-Window Workspace */
+        .center-dock {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            overflow: hidden;
+        }
+
+        /* Top Canvas: Transfer Function (Mag & Phase) */
+        .tf-window {
+            flex: 2;
+            background: var(--bg-panel);
+            border: 1px solid var(--bg-panel-border);
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Bottom Split Window: RTA 1/3 Oct & ETC Impulse */
+        .secondary-split-row {
+            flex: 1;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            overflow: hidden;
+        }
+
+        .sub-window {
+            background: var(--bg-panel);
+            border: 1px solid var(--bg-panel-border);
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .sub-window-header {
+            height: 28px;
+            padding: 0 10px;
+            background: rgba(0, 0, 0, 0.2);
+            border-bottom: 1px solid var(--bg-panel-border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-dim);
+        }
+
+        canvas {
+            flex: 1;
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        /* Floating Tactical Crosshair Badge */
+        .tactical-cursor-badge {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: rgba(17, 19, 26, 0.9);
+            border: 1px solid var(--bg-panel-border);
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-family: var(--font-mono);
+            font-size: 11px;
+            display: flex;
+            gap: 12px;
+            z-index: 20;
+            backdrop-filter: blur(8px);
+        }
+
+        /* Right Dock: Arena Sound System Alignment & Target Compliance */
+        .right-dock {
+            background: var(--bg-panel);
+            border: 1px solid var(--bg-panel-border);
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            padding: 8px;
+            overflow-y: auto;
+        }
+
+        .arena-card {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--bg-panel-border);
+            border-radius: 6px;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .arena-card-title {
+            font-size: 11px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: #60a5fa;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .compliance-meter {
+            height: 12px;
+            background: #1e2433;
+            border-radius: 6px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .compliance-fill {
+            height: 100%;
+            width: 82%;
+            background: linear-gradient(90deg, #10b981 0%, #f59e0b 75%, #ef4444 100%);
+        }
+
+        /* Bottom Status Line */
+        footer {
+            height: 28px;
+            background: var(--bg-panel);
+            border-top: 1px solid var(--bg-panel-border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 16px;
+            font-family: var(--font-mono);
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Tactical Top Bar -->
+    <header>
+        <div class="header-left">
+            <div class="brand-badge">
+                <h1>SoundCalibrator</h1>
+                <span class="pill-edition">Perspective 3: Field-Ops Precision</span>
+            </div>
+
+            <!-- Big Action Buttons -->
+            <div class="tactical-hotbar">
+                <button class="hot-btn primary" id="btnCapture">
+                    ● CAPTURE <span class="key-badge">Space</span>
+                </button>
+                <button class="hot-btn amber" id="btnAutoAlign">
+                    ⚡ AUTO-ALIGN <span class="key-badge">A</span>
+                </button>
+                <button class="hot-btn" id="btnFdw">
+                    FDW QUASI-ANECHOIC <span class="key-badge">W</span>
+                </button>
+                <button class="hot-btn active" id="btnSpatial">
+                    ∑ SPATIAL AVG
+                </button>
+                <button class="hot-btn" id="btnInvert">
+                    INV Ø <span class="key-badge">P</span>
+                </button>
+            </div>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 12px;">
+            <div class="daylight-toggle" id="btnDaylight">
+                <span>☀️ ARENA DAYLIGHT MODE</span>
+            </div>
+            <button class="hot-btn" style="padding: 4px 10px; font-size: 10px;">
+                EXPORT REW/SMAART
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Workspace (3 Columns) -->
+    <div class="app-body">
+        
+        <!-- Left Column: Multi-Mic Stacks -->
+        <div class="left-dock">
+            <div class="panel-heading">
+                <span>Multi-Mic Positions (4)</span>
+                <span style="color: #60a5fa; cursor: pointer;">+ ADD MIC</span>
+            </div>
+
+            <div class="trace-cards-container">
+                <!-- Mic 1 -->
+                <div class="multi-mic-card">
+                    <div class="card-top">
+                        <div class="mic-title">
+                            <div class="color-tag" style="background: #00f0ff;"></div>
+                            <span>Mic 1: FOH Center (Ref)</span>
+                        </div>
+                        <span style="font-size: 9px; font-weight: 700; color: #10b981;">LIVE</span>
+                    </div>
+                    <div class="mic-readouts">
+                        <span>Delay: +4.18 ms</span>
+                        <span>Level: 89.4 dB</span>
+                        <span>Coh: 96%</span>
+                        <span>Distance: 1.43 m</span>
+                    </div>
+                    <div class="mic-actions">
+                        <div class="mic-mini-btn active">SOLO</div>
+                        <div class="mic-mini-btn">MUTE</div>
+                        <div class="mic-mini-btn active">AVG ON</div>
+                    </div>
+                </div>
+
+                <!-- Mic 2 -->
+                <div class="multi-mic-card">
+                    <div class="card-top">
+                        <div class="mic-title">
+                            <div class="color-tag" style="background: #f59e0b;"></div>
+                            <span>Mic 2: Stage Ground Plane</span>
+                        </div>
+                        <span style="font-size: 9px; font-weight: 700; color: #94a3b8;">CAPTURED</span>
+                    </div>
+                    <div class="mic-readouts">
+                        <span>Delay: +2.10 ms</span>
+                        <span>Level: 94.1 dB</span>
+                        <span>Offset: -2.08 ms</span>
+                        <span>Phase: Inverted</span>
+                    </div>
+                    <div class="mic-actions">
+                        <div class="mic-mini-btn">SOLO</div>
+                        <div class="mic-mini-btn">MUTE</div>
+                        <div class="mic-mini-btn active">AVG ON</div>
+                    </div>
+                </div>
+
+                <!-- Mic 3 -->
+                <div class="multi-mic-card">
+                    <div class="card-top">
+                        <div class="mic-title">
+                            <div class="color-tag" style="background: #10b981;"></div>
+                            <span>Mic 3: Balcony Row 14</span>
+                        </div>
+                        <span style="font-size: 9px; font-weight: 700; color: #94a3b8;">CAPTURED</span>
+                    </div>
+                    <div class="mic-readouts">
+                        <span>Delay: +28.40 ms</span>
+                        <span>Level: 82.3 dB</span>
+                        <span>Offset: +24.2 ms</span>
+                        <span>Dist: 9.74 m</span>
+                    </div>
+                    <div class="mic-actions">
+                        <div class="mic-mini-btn">SOLO</div>
+                        <div class="mic-mini-btn">MUTE</div>
+                        <div class="mic-mini-btn active">AVG ON</div>
+                    </div>
+                </div>
+
+                <!-- Spatial Average Result -->
+                <div class="multi-mic-card" style="border-color: #a855f7; background: rgba(168, 85, 247, 0.06);">
+                    <div class="card-top">
+                        <div class="mic-title">
+                            <div class="color-tag" style="background: #a855f7;"></div>
+                            <span style="color: #c084fc;">3-Point Spatial Power Avg</span>
+                        </div>
+                        <span style="font-size: 9px; font-weight: 700; color: #c084fc;">∑ COMPOSITE</span>
+                    </div>
+                    <div class="mic-readouts">
+                        <span>Uniformity: 84%</span>
+                        <span>StdDev: 1.8 dB</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Center Column: Multi-Pane Split View -->
+        <div class="center-dock">
+            <!-- Top Main: Dual-Channel Transfer Function & Phase -->
+            <div class="tf-window">
+                <div class="sub-window-header">
+                    <span>TRANSFER FUNCTION H1(f) & PHASE UNWRAP</span>
+                    <span>RESOLUTION: 16k FFT (2.9 Hz) | SMOOTH: 1/12 OCT</span>
+                </div>
+                <div class="tactical-cursor-badge">
+                    <span>f: <strong style="color: #60a5fa;">1000 Hz</strong></span>
+                    <span>MAG: <strong style="color: #00f0ff;">+2.1 dB</strong></span>
+                    <span>PHASE: <strong style="color: #f59e0b;">-34.5°</strong></span>
+                    <span>COH: <strong style="color: #10b981;">98.4%</strong></span>
+                </div>
+                <canvas id="canvasTf"></canvas>
+            </div>
+
+            <!-- Bottom Row Split: 1/3 Octave RTA + Impulse / ETC -->
+            <div class="secondary-split-row">
+                <!-- Sub-Window 1: 1/3 Octave ISO 266 Bars -->
+                <div class="sub-window">
+                    <div class="sub-window-header">
+                        <span>ISO 266 1/3 OCTAVE RTA (CONTINUOUS + PEAK)</span>
+                        <span style="color: #f59e0b;">MAX HOLD: ON</span>
+                    </div>
+                    <canvas id="canvasRta"></canvas>
+                </div>
+
+                <!-- Sub-Window 2: Impulse Response / ETC -->
+                <div class="sub-window">
+                    <div class="sub-window-header">
+                        <span>ENERGY-TIME CURVE (ETC) & EARLY REFLECTIONS</span>
+                        <span style="color: #10b981;">DIRECT: 4.18 ms</span>
+                    </div>
+                    <canvas id="canvasEtc"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column: System Tuning Tools -->
+        <div class="right-dock">
+            
+            <!-- Sound Level Leq Compliance -->
+            <div class="arena-card">
+                <div class="arena-card-title">
+                    <span>ARENA SPL LEQ MONITOR</span>
+                    <span style="color: #10b981;">COMPLIANT</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: baseline;">
+                    <span style="font-size: 28px; font-weight: 800; color: var(--text-heading);">92.4 <small style="font-size: 14px; font-weight: 500;">dBA</small></span>
+                    <span style="font-family: var(--font-mono); font-size: 11px; color: var(--text-muted);">LIMIT: 99.0 dBA Leq15</span>
+                </div>
+                <div class="compliance-meter">
+                    <div class="compliance-fill"></div>
+                </div>
+            </div>
+
+            <!-- Multi-Zone Alignment Matrix -->
+            <div class="arena-card">
+                <div class="arena-card-title">
+                    <span>DELAY MATRIX (20°C / c=343 m/s)</span>
+                    <span style="color: #60a5fa;">4 ZONES</span>
+                </div>
+                <div style="font-family: var(--font-mono); font-size: 11px; display: flex; flex-direction: column; gap: 4px;">
+                    <div style="display: flex; justify-content: space-between;">
+                        <span>Main PA (Anchor):</span>
+                        <span style="color: var(--text-muted);">0.0 ms (0.00 m)</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <span>Subwoofer Array:</span>
+                        <span style="color: #f59e0b; font-weight: 700;">+8.2 ms (+2.81 m)</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <span>Front Fills:</span>
+                        <span style="color: #f59e0b; font-weight: 700;">+3.4 ms (+1.17 m)</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <span>Balcony Delay:</span>
+                        <span style="color: #f59e0b; font-weight: 700;">+24.3 ms (+8.33 m)</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Auto PEQ Synthesizer -->
+            <div class="arena-card">
+                <div class="arena-card-title">
+                    <span>AUTO PEQ SYNTHESIS</span>
+                    <span style="color: #10b981;">RMS: 1.2 dB</span>
+                </div>
+                <div style="font-family: var(--font-mono); font-size: 10px; display: flex; flex-direction: column; gap: 3px;">
+                    <div>• PK 63 Hz: -4.0 dB (Q: 3.5)</div>
+                    <div>• PK 145 Hz: +2.5 dB (Q: 2.2)</div>
+                    <div>• PK 520 Hz: -3.2 dB (Q: 4.8)</div>
+                    <div>• PK 2.8k: -2.0 dB (Q: 1.9)</div>
+                </div>
+                <button class="hot-btn primary" style="width: 100%; justify-content: center; margin-top: 6px; font-size: 10px;">
+                    PUSH TO DSP PROCESSOR
+                </button>
+            </div>
+
+            <!-- Acoustic Parameters -->
+            <div class="arena-card">
+                <div class="arena-card-title">
+                    <span>ROOM ACOUSTICS (ISO 3382)</span>
+                    <span style="color: #a855f7;">EXCELLENT</span>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; font-family: var(--font-mono); font-size: 11px; gap: 4px;">
+                    <div>RT60 T20: <strong style="color: var(--text-heading);">0.52 s</strong></div>
+                    <div>RT60 T30: <strong style="color: var(--text-heading);">0.49 s</strong></div>
+                    <div>EDT: <strong style="color: var(--text-heading);">0.42 s</strong></div>
+                    <div>STI: <strong style="color: #10b981;">0.83</strong></div>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- Telemetry Footer -->
+    <footer>
+        <div>ENGINE: .NET 10 CLEAN ARCHITECTURE | ZERO HEAP ALLOCATIONS | 101/101 TESTS PASSING</div>
+        <div>WASAPI CAPTURE: 48000 Hz / 32-bit FLOAT | LATENCY: 0.8 ms</div>
+    </footer>
+
+    <!-- Interactive Canvas & Daylight Mode Wiring -->
+    <script>
+        // Daylight Mode Toggle
+        const btnDaylight = document.getElementById('btnDaylight');
+        btnDaylight.addEventListener('click', () => {
+            document.body.classList.toggle('daylight-mode');
+            btnDaylight.innerHTML = document.body.classList.contains('daylight-mode')
+                ? '<span>🌙 ARENA MIDNIGHT MODE</span>'
+                : '<span>☀️ ARENA DAYLIGHT MODE</span>';
+        });
+
+        // Canvas 1: Transfer Function
+        const cTf = document.getElementById('canvasTf');
+        const ctxTf = cTf.getContext('2d');
+
+        // Canvas 2: RTA Bars
+        const cRta = document.getElementById('canvasRta');
+        const ctxRta = cRta.getContext('2d');
+
+        // Canvas 3: ETC Impulse
+        const cEtc = document.getElementById('canvasEtc');
+        const ctxEtc = cEtc.getContext('2d');
+
+        function resizeAll() {
+            [cTf, cRta, cEtc].forEach(c => {
+                c.width = c.parentElement.clientWidth * window.devicePixelRatio;
+                c.height = (c.parentElement.clientHeight - 28) * window.devicePixelRatio;
+            });
+        }
+        window.addEventListener('resize', resizeAll);
+        setTimeout(resizeAll, 100);
+
+        let t = 0;
+        function animate() {
+            const isLight = document.body.classList.contains('daylight-mode');
+
+            // 1. Render TF
+            if (cTf.width > 0) {
+                const w = cTf.width, h = cTf.height;
+                const mainH = h * 0.72;
+                ctxTf.clearRect(0, 0, w, h);
+
+                ctxTf.strokeStyle = isLight ? '#e2e8f0' : '#1a202c';
+                ctxTf.lineWidth = 1;
+                for (let i = 1; i < 10; i++) {
+                    const x = (i / 10) * w;
+                    ctxTf.beginPath(); ctxTf.moveTo(x, 0); ctxTf.lineTo(x, h); ctxTf.stroke();
+                }
+
+                // Mag Line
+                ctxTf.beginPath();
+                ctxTf.strokeStyle = isLight ? '#0284c7' : '#00f0ff';
+                ctxTf.lineWidth = 2.4 * window.devicePixelRatio;
+                for (let i = 0; i <= 200; i++) {
+                    const x = (i / 200) * w;
+                    const y = mainH * 0.45 + Math.sin(i * 0.08 + t) * (18 * window.devicePixelRatio);
+                    if (i === 0) ctxTf.moveTo(x, y);
+                    else ctxTf.lineTo(x, y);
+                }
+                ctxTf.stroke();
+
+                // Phase Line
+                ctxTf.beginPath();
+                ctxTf.strokeStyle = isLight ? '#d97706' : '#f59e0b';
+                ctxTf.lineWidth = 1.6 * window.devicePixelRatio;
+                for (let i = 0; i <= 200; i++) {
+                    const x = (i / 200) * w;
+                    const y = mainH * 0.5 + ((i * 12 + t * 40) % (mainH * 0.8)) - (mainH * 0.4);
+                    if (i === 0) ctxTf.moveTo(x, y);
+                    else ctxTf.lineTo(x, y);
+                }
+                ctxTf.stroke();
+            }
+
+            // 2. Render RTA 1/3 Octave Bars
+            if (cRta.width > 0) {
+                const w = cRta.width, h = cRta.height;
+                ctxRta.clearRect(0, 0, w, h);
+                const bars = 31;
+                const barW = (w / bars) - 2;
+
+                for (let i = 0; i < bars; i++) {
+                    const x = i * (barW + 2);
+                    const level = 0.3 + Math.sin(i * 0.3 + t * 1.5) * 0.25 + (Math.sin(i * 0.8) * 0.15);
+                    const barH = h * Math.max(0.05, Math.min(0.95, level));
+                    const y = h - barH;
+
+                    ctxRta.fillStyle = isLight ? '#0284c7' : '#f59e0b';
+                    ctxRta.fillRect(x, y, barW, barH);
+                }
+            }
+
+            // 3. Render ETC Impulse
+            if (cEtc.width > 0) {
+                const w = cEtc.width, h = cEtc.height;
+                ctxEtc.clearRect(0, 0, w, h);
+
+                ctxEtc.beginPath();
+                ctxEtc.strokeStyle = isLight ? '#059669' : '#10b981';
+                ctxEtc.lineWidth = 2 * window.devicePixelRatio;
+
+                // Direct arrival spike at 20%
+                const directX = w * 0.2;
+                ctxEtc.moveTo(0, h * 0.85);
+                ctxEtc.lineTo(directX - 10, h * 0.85);
+                ctxEtc.lineTo(directX, h * 0.15); // spike
+                ctxEtc.lineTo(directX + 15, h * 0.65);
+                // Early reflection
+                ctxEtc.lineTo(directX + 50, h * 0.45);
+                ctxEtc.lineTo(directX + 80, h * 0.8);
+                ctxEtc.lineTo(w, h * 0.85);
+                ctxEtc.stroke();
+            }
+
+            t += 0.02;
+            requestAnimationFrame(animate);
+        }
+        animate();
+    </script>
+</body>
+</html>

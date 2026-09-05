@@ -1,0 +1,961 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SoundCalibrator — Perspectiva 2: Audio Engineer Console & DAW</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --chassis-metal: #181a1f;
+            --chassis-dark: #101216;
+            --chassis-edge: #262933;
+            --rack-screw: #474d5d;
+            --console-strip: #1e2129;
+            --console-border: #0c0e12;
+            --knob-cap: #2b303c;
+            --knob-body: #191c24;
+            --meter-amber: #ffaa00;
+            --meter-green: #00e676;
+            --meter-red: #ff3d00;
+            --phosphor-cyan: #29b6f6;
+            --phosphor-orange: #ff9800;
+            --vu-cream: #f4ecd8;
+            --text-engraved: #8e95a5;
+            --font-label: 'Rajdhani', sans-serif;
+            --font-readout: 'Share Tech Mono', monospace;
+            --font-ui: 'Inter', sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+        }
+
+        body {
+            background-color: #0b0c10;
+            color: #d1d5db;
+            font-family: var(--font-ui);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            background-image: 
+                linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+            background-size: 30px 30px;
+        }
+
+        /* 19" Rack Chassis Container */
+        .rack-frame {
+            flex: 1;
+            margin: 10px;
+            background: linear-gradient(180deg, #222630 0%, #161820 100%);
+            border: 2px solid #333846;
+            border-radius: 6px;
+            box-shadow: 0 12px 40px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.1);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Rack Ears */
+        .rack-ear-left, .rack-ear-right {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 24px;
+            background: #191c24;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            padding: 14px 0;
+            z-index: 40;
+            border-right: 1px solid #000;
+        }
+
+        .rack-ear-right {
+            right: 0;
+            border-right: none;
+            border-left: 1px solid #000;
+        }
+
+        .rack-bolt {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 35% 35%, #6b7280 0%, #20242e 75%);
+            border: 1px solid #11141a;
+            box-shadow: inset 0 1px 1px rgba(255,255,255,0.3), 0 2px 4px rgba(0,0,0,0.6);
+            position: relative;
+        }
+
+        .rack-bolt::after {
+            content: '';
+            position: absolute;
+            top: 6px;
+            left: 2px;
+            right: 2px;
+            height: 2px;
+            background: #0f1115;
+        }
+
+        /* Main Console Panel */
+        .console-interior {
+            margin: 0 24px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* Top Header Unit */
+        .console-header {
+            height: 64px;
+            background: linear-gradient(180deg, #1c1f28 0%, #14161c 100%);
+            border-bottom: 2px solid #090a0d;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 16px;
+        }
+
+        .engraved-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .brand-metal-badge {
+            background: linear-gradient(135deg, #374151 0%, #1f2937 100%);
+            border: 1px solid #4b5563;
+            box-shadow: inset 0 1px 1px rgba(255,255,255,0.2), 0 2px 6px rgba(0,0,0,0.5);
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-family: var(--font-label);
+            font-weight: 700;
+            font-size: 16px;
+            letter-spacing: 2px;
+            color: #f3f4f6;
+            text-transform: uppercase;
+        }
+
+        .engraved-subtitle {
+            font-family: var(--font-label);
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 1.5px;
+            color: var(--text-engraved);
+            text-transform: uppercase;
+        }
+
+        /* Dual Analog VU Meters */
+        .analog-vu-block {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .vu-housing {
+            width: 130px;
+            height: 52px;
+            background: #252830;
+            border: 2px solid #0f1115;
+            border-radius: 4px;
+            box-shadow: inset 0 2px 6px rgba(0,0,0,0.8), 0 1px 1px rgba(255,255,255,0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .vu-face {
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at 50% 100%, #ffe9b8 0%, #d8c292 80%);
+            position: relative;
+        }
+
+        .vu-scale-arc {
+            position: absolute;
+            top: 4px;
+            left: 10px;
+            right: 10px;
+            height: 30px;
+            border-top: 2px solid #2e281e;
+            border-radius: 50px 50px 0 0;
+        }
+
+        .vu-needle {
+            position: absolute;
+            bottom: -5px;
+            left: 50%;
+            width: 1.5px;
+            height: 48px;
+            background: #1e1e1e;
+            transform-origin: bottom center;
+            transform: rotate(-25deg);
+            transition: transform 0.08s ease-out;
+            box-shadow: 1px 0 2px rgba(0,0,0,0.4);
+        }
+
+        .vu-needle::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -1px;
+            width: 3.5px;
+            height: 8px;
+            background: #d32f2f;
+        }
+
+        .vu-label {
+            position: absolute;
+            bottom: 4px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            font-family: var(--font-label);
+            font-weight: 700;
+            font-size: 9px;
+            color: #4a3e2a;
+            letter-spacing: 1px;
+        }
+
+        /* Center Display CRT/LCD & Strips Split */
+        .console-deck {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+        }
+
+        /* Left Channel Strips (Consola) */
+        .channel-strips-bank {
+            width: 320px;
+            background: #171920;
+            border-right: 2px solid #0a0b0e;
+            display: flex;
+            overflow-x: auto;
+        }
+
+        .channel-strip {
+            width: 106px;
+            background: linear-gradient(180deg, #1f222a 0%, #16181f 100%);
+            border-right: 1px solid #2d3240;
+            border-left: 1px solid #0d0f13;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 8px 4px;
+            gap: 10px;
+        }
+
+        .strip-header {
+            font-family: var(--font-label);
+            font-size: 11px;
+            font-weight: 700;
+            color: #9ca3af;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            text-align: center;
+            border-bottom: 2px solid #374151;
+            width: 90%;
+            padding-bottom: 2px;
+        }
+
+        .strip-led {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 9px;
+            font-family: var(--font-label);
+            font-weight: 700;
+            color: #6b7280;
+        }
+
+        .led-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #242833;
+            border: 1px solid #000;
+        }
+
+        .led-indicator.on-red {
+            background: #ff3333;
+            box-shadow: 0 0 6px #ff3333;
+        }
+
+        .led-indicator.on-green {
+            background: #00e676;
+            box-shadow: 0 0 6px #00e676;
+        }
+
+        /* Rotary Knob */
+        .rotary-control {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .knob-housing {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: radial-gradient(circle, #3d4352 0%, #1b1e26 80%);
+            border: 2px solid #0f1115;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.6), inset 0 1px 1px rgba(255,255,255,0.2);
+            position: relative;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .knob-marker {
+            position: absolute;
+            top: 4px;
+            width: 3px;
+            height: 10px;
+            background: #00e5ff;
+            border-radius: 2px;
+            transform-origin: center 18px;
+        }
+
+        .knob-title {
+            font-family: var(--font-label);
+            font-size: 9px;
+            font-weight: 700;
+            color: #9ca3af;
+            letter-spacing: 0.5px;
+        }
+
+        .knob-val {
+            font-family: var(--font-readout);
+            font-size: 10px;
+            color: #00e5ff;
+        }
+
+        /* Mechanical Toggle Switch */
+        .toggle-switch-unit {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 3px;
+        }
+
+        .switch-plate {
+            width: 36px;
+            height: 18px;
+            background: #12141a;
+            border: 1px solid #374151;
+            border-radius: 3px;
+            position: relative;
+            cursor: pointer;
+        }
+
+        .switch-baton {
+            position: absolute;
+            width: 14px;
+            height: 14px;
+            top: 1px;
+            left: 2px;
+            background: linear-gradient(180deg, #d1d5db 0%, #6b7280 100%);
+            border-radius: 2px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+            transition: all 0.15s ease;
+        }
+
+        .switch-plate.active .switch-baton {
+            left: 18px;
+            background: linear-gradient(180deg, #38bdf8 0%, #0284c7 100%);
+        }
+
+        /* Console Fader */
+        .fader-track-housing {
+            flex: 1;
+            width: 30px;
+            background: #0c0e12;
+            border: 1px solid #232733;
+            border-radius: 4px;
+            position: relative;
+            margin: 4px 0;
+            display: flex;
+            justify-content: center;
+        }
+
+        .fader-slot {
+            width: 4px;
+            height: 90%;
+            background: #000;
+            border-radius: 2px;
+            position: absolute;
+            top: 5%;
+        }
+
+        .fader-cap {
+            position: absolute;
+            top: 40%;
+            width: 26px;
+            height: 38px;
+            background: linear-gradient(90deg, #2b303c 0%, #474f63 50%, #222630 100%);
+            border: 1px solid #101217;
+            border-radius: 3px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.8);
+            cursor: ns-resize;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .fader-white-stripe {
+            width: 100%;
+            height: 2px;
+            background: #ffffff;
+        }
+
+        /* Center CRT Phosphor Screen */
+        .center-screen-zone {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: #080a0f;
+            position: relative;
+            overflow: hidden;
+            border-right: 2px solid #0a0b0e;
+        }
+
+        .screen-bezel {
+            flex: 1;
+            margin: 8px;
+            background: #05070a;
+            border: 3px solid #1f232d;
+            border-radius: 6px;
+            box-shadow: inset 0 0 30px rgba(0,0,0,0.9), 0 0 10px rgba(0, 229, 255, 0.05);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .screen-bezel::after {
+            content: " ";
+            display: block;
+            position: absolute;
+            top: 0; left: 0; bottom: 0; right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            z-index: 20;
+            background-size: 100% 2px, 3px 100%;
+            pointer-events: none;
+        }
+
+        .screen-header {
+            height: 28px;
+            background: #0c1017;
+            border-bottom: 1px solid #192130;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 12px;
+            font-family: var(--font-readout);
+            font-size: 11px;
+            color: #38bdf8;
+            z-index: 25;
+        }
+
+        .screen-canvas-wrapper {
+            flex: 1;
+            position: relative;
+        }
+
+        canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        /* Right Rackmount DSP Unit (PEQ & Dynamics) */
+        .rack-processor-zone {
+            width: 280px;
+            background: linear-gradient(180deg, #1b1e26 0%, #13151b 100%);
+            display: flex;
+            flex-direction: column;
+            padding: 12px;
+            gap: 12px;
+            overflow-y: auto;
+        }
+
+        .rack-unit-box {
+            background: #111319;
+            border: 2px solid #232733;
+            border-radius: 4px;
+            padding: 10px;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.6);
+        }
+
+        .rack-title-bar {
+            font-family: var(--font-label);
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            color: #f59e0b;
+            text-transform: uppercase;
+            border-bottom: 1px solid #262c3b;
+            padding-bottom: 4px;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .peq-band-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        /* Bottom Transport & Utility Deck */
+        .transport-deck {
+            height: 50px;
+            background: linear-gradient(180deg, #1e222b 0%, #15171d 100%);
+            border-top: 2px solid #090a0d;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+        }
+
+        .tape-transport-btn {
+            background: linear-gradient(180deg, #374151 0%, #1f2937 100%);
+            border: 1px solid #4b5563;
+            border-radius: 4px;
+            color: #f3f4f6;
+            font-family: var(--font-label);
+            font-weight: 700;
+            font-size: 11px;
+            padding: 6px 14px;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+            transition: all 0.1s;
+        }
+
+        .tape-transport-btn:active {
+            transform: translateY(1px);
+            box-shadow: 0 1px 2px rgba(0,0,0,0.8);
+        }
+
+        .tape-transport-btn.rec-active {
+            background: linear-gradient(180deg, #ef4444 0%, #b91c1c 100%);
+            border-color: #f87171;
+            box-shadow: 0 0 10px rgba(239, 68, 68, 0.6);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="rack-frame">
+        <!-- Rack Ear Left -->
+        <div class="rack-ear-left">
+            <div class="rack-bolt"></div>
+            <div class="rack-bolt"></div>
+            <div class="rack-bolt"></div>
+        </div>
+
+        <!-- Rack Ear Right -->
+        <div class="rack-ear-right">
+            <div class="rack-bolt"></div>
+            <div class="rack-bolt"></div>
+            <div class="rack-bolt"></div>
+        </div>
+
+        <div class="console-interior">
+            
+            <!-- Console Top Header Unit -->
+            <div class="console-header">
+                <div class="engraved-brand">
+                    <div class="brand-metal-badge">SOUNDCALIBRATOR CONSOLE</div>
+                    <div class="engraved-subtitle">Dual-Channel Acoustic Analyzer Mk IV • DAW Edition</div>
+                </div>
+
+                <!-- Dual Analog Backlit VU Meters -->
+                <div class="analog-vu-block">
+                    <!-- VU Left (Ref) -->
+                    <div class="vu-housing">
+                        <div class="vu-face">
+                            <div class="vu-scale-arc"></div>
+                            <div class="vu-needle" id="vuNeedleRef"></div>
+                            <div class="vu-label">REF CH 1 (dB)</div>
+                        </div>
+                    </div>
+
+                    <!-- VU Right (Meas) -->
+                    <div class="vu-housing">
+                        <div class="vu-face">
+                            <div class="vu-scale-arc"></div>
+                            <div class="vu-needle" id="vuNeedleMeas"></div>
+                            <div class="vu-label">MEAS CH 2 (dB)</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Console Deck -->
+            <div class="console-deck">
+                
+                <!-- Left Channel Strips Bank (Consola de Audio) -->
+                <div class="channel-strips-bank">
+                    
+                    <!-- Strip 1: REFERENCE CH -->
+                    <div class="channel-strip">
+                        <div class="strip-header">REF BUS</div>
+                        <div class="strip-led">
+                            <div class="led-indicator on-green"></div>
+                            <span>ACTIVE</span>
+                        </div>
+
+                        <!-- Gain Trim -->
+                        <div class="rotary-control">
+                            <div class="knob-housing">
+                                <div class="knob-marker" style="transform: rotate(15deg);"></div>
+                            </div>
+                            <span class="knob-title">INPUT TRIM</span>
+                            <span class="knob-val">0.0 dB</span>
+                        </div>
+
+                        <!-- Polarity Invert -->
+                        <div class="toggle-switch-unit">
+                            <span class="knob-title">POLARITY</span>
+                            <div class="switch-plate" id="swRefPol">
+                                <div class="switch-baton"></div>
+                            </div>
+                            <span class="knob-val">NORM</span>
+                        </div>
+
+                        <!-- Fader -->
+                        <div class="fader-track-housing">
+                            <div class="fader-slot"></div>
+                            <div class="fader-cap" style="top: 35%;">
+                                <div class="fader-white-stripe"></div>
+                            </div>
+                        </div>
+
+                        <button class="tape-transport-btn" style="width: 100%; padding: 4px 0;">MUTE</button>
+                    </div>
+
+                    <!-- Strip 2: MEAS MIC 1 (FOH) -->
+                    <div class="channel-strip">
+                        <div class="strip-header">MIC 1 FOH</div>
+                        <div class="strip-led">
+                            <div class="led-indicator on-red"></div>
+                            <span>+48V</span>
+                        </div>
+
+                        <!-- Gain Trim -->
+                        <div class="rotary-control">
+                            <div class="knob-housing">
+                                <div class="knob-marker" style="transform: rotate(-30deg);"></div>
+                            </div>
+                            <span class="knob-title">MIC GAIN</span>
+                            <span class="knob-val">+18 dB</span>
+                        </div>
+
+                        <!-- Delay Compensation Knob -->
+                        <div class="rotary-control">
+                            <div class="knob-housing">
+                                <div class="knob-marker" style="transform: rotate(45deg);"></div>
+                            </div>
+                            <span class="knob-title">DELAY COMP</span>
+                            <span class="knob-val">4.18 ms</span>
+                        </div>
+
+                        <!-- Fader -->
+                        <div class="fader-track-housing">
+                            <div class="fader-slot"></div>
+                            <div class="fader-cap" style="top: 25%;">
+                                <div class="fader-white-stripe"></div>
+                            </div>
+                        </div>
+
+                        <button class="tape-transport-btn rec-active" style="width: 100%; padding: 4px 0;">SOLO</button>
+                    </div>
+
+                    <!-- Strip 3: MEAS MIC 2 (BALCONY) -->
+                    <div class="channel-strip">
+                        <div class="strip-header">MIC 2 BALC</div>
+                        <div class="strip-led">
+                            <div class="led-indicator"></div>
+                            <span>+48V</span>
+                        </div>
+
+                        <div class="rotary-control">
+                            <div class="knob-housing">
+                                <div class="knob-marker" style="transform: rotate(0deg);"></div>
+                            </div>
+                            <span class="knob-title">MIC GAIN</span>
+                            <span class="knob-val">+12 dB</span>
+                        </div>
+
+                        <div class="rotary-control">
+                            <div class="knob-housing">
+                                <div class="knob-marker" style="transform: rotate(90deg);"></div>
+                            </div>
+                            <span class="knob-title">DELAY COMP</span>
+                            <span class="knob-val">28.4 ms</span>
+                        </div>
+
+                        <!-- Fader -->
+                        <div class="fader-track-housing">
+                            <div class="fader-slot"></div>
+                            <div class="fader-cap" style="top: 50%;">
+                                <div class="fader-white-stripe"></div>
+                            </div>
+                        </div>
+
+                        <button class="tape-transport-btn" style="width: 100%; padding: 4px 0;">SOLO</button>
+                    </div>
+
+                </div>
+
+                <!-- Center CRT Phosphor Analyzer Display -->
+                <div class="center-screen-zone">
+                    <div class="screen-bezel">
+                        <div class="screen-header">
+                            <span>PHOSPHOR CRT MATRIX // H1 ESTIMATOR DUAL FFT</span>
+                            <span>CURSOR: 1000.0 Hz | +1.8 dB | -42.0° | γ²: 0.98</span>
+                            <span>TRACE: LIVE (GREEN PHOSPHOR)</span>
+                        </div>
+
+                        <div class="screen-canvas-wrapper">
+                            <canvas id="crtCanvas"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Hardware Rackmount Processor (PEQ & Alignment) -->
+                <div class="rack-processor-zone">
+                    
+                    <!-- Parametric EQ 5-Band Unit -->
+                    <div class="rack-unit-box">
+                        <div class="rack-title-bar">
+                            <span>ANALOG-STYLE 4-BAND PEQ</span>
+                            <span style="color: #00e676;">ACTIVE</span>
+                        </div>
+
+                        <!-- Band 1 -->
+                        <div class="peq-band-row">
+                            <div class="rotary-control">
+                                <div class="knob-housing" style="width: 34px; height: 34px;">
+                                    <div class="knob-marker" style="transform: rotate(-60deg); height: 8px;"></div>
+                                </div>
+                                <span class="knob-title">62 Hz</span>
+                            </div>
+                            <div class="rotary-control">
+                                <div class="knob-housing" style="width: 34px; height: 34px;">
+                                    <div class="knob-marker" style="transform: rotate(-40deg); height: 8px;"></div>
+                                </div>
+                                <span class="knob-title">-4.2 dB</span>
+                            </div>
+                            <div class="rotary-control">
+                                <div class="knob-housing" style="width: 34px; height: 34px;">
+                                    <div class="knob-marker" style="transform: rotate(20deg); height: 8px;"></div>
+                                </div>
+                                <span class="knob-title">Q: 3.2</span>
+                            </div>
+                        </div>
+
+                        <!-- Band 2 -->
+                        <div class="peq-band-row">
+                            <div class="rotary-control">
+                                <div class="knob-housing" style="width: 34px; height: 34px;">
+                                    <div class="knob-marker" style="transform: rotate(-20deg); height: 8px;"></div>
+                                </div>
+                                <span class="knob-title">180 Hz</span>
+                            </div>
+                            <div class="rotary-control">
+                                <div class="knob-housing" style="width: 34px; height: 34px;">
+                                    <div class="knob-marker" style="transform: rotate(30deg); height: 8px;"></div>
+                                </div>
+                                <span class="knob-title">+2.5 dB</span>
+                            </div>
+                            <div class="rotary-control">
+                                <div class="knob-housing" style="width: 34px; height: 34px;">
+                                    <div class="knob-marker" style="transform: rotate(0deg); height: 8px;"></div>
+                                </div>
+                                <span class="knob-title">Q: 2.0</span>
+                            </div>
+                        </div>
+
+                        <!-- Band 3 -->
+                        <div class="peq-band-row">
+                            <div class="rotary-control">
+                                <div class="knob-housing" style="width: 34px; height: 34px;">
+                                    <div class="knob-marker" style="transform: rotate(50deg); height: 8px;"></div>
+                                </div>
+                                <span class="knob-title">2.4 kHz</span>
+                            </div>
+                            <div class="rotary-control">
+                                <div class="knob-housing" style="width: 34px; height: 34px;">
+                                    <div class="knob-marker" style="transform: rotate(-30deg); height: 8px;"></div>
+                                </div>
+                                <span class="knob-title">-2.0 dB</span>
+                            </div>
+                            <div class="rotary-control">
+                                <div class="knob-housing" style="width: 34px; height: 34px;">
+                                    <div class="knob-marker" style="transform: rotate(40deg); height: 8px;"></div>
+                                </div>
+                                <span class="knob-title">Q: 4.5</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Multi-Zone Alignment Matrix Box -->
+                    <div class="rack-unit-box">
+                        <div class="rack-title-bar">
+                            <span>ALIGNMENT DELAY MATRIX</span>
+                            <span style="color: #38bdf8;">20.0 °C</span>
+                        </div>
+                        <div style="font-family: var(--font-readout); font-size: 11px; line-height: 1.6; color: #9ca3af;">
+                            <div>ANCHOR: Main L (0.0 ms)</div>
+                            <div>SUB CTR: <span style="color: #f59e0b;">+8.2 ms (2.81 m)</span></div>
+                            <div>BALCONY: <span style="color: #f59e0b;">+24.3 ms (8.33 m)</span></div>
+                            <div>OUTFILL: <span style="color: #f59e0b;">+11.5 ms (3.94 m)</span></div>
+                        </div>
+                    </div>
+
+                    <!-- Generator Hardware Controls -->
+                    <div class="rack-unit-box">
+                        <div class="rack-title-bar">
+                            <span>SIGNAL GENERATOR</span>
+                            <span style="color: #ef4444;">ACTIVE</span>
+                        </div>
+                        <div style="display: flex; gap: 6px;">
+                            <button class="tape-transport-btn rec-active" style="flex: 1;">PINK NOISE</button>
+                            <button class="tape-transport-btn" style="flex: 1;">SWEEP</button>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+
+            <!-- Bottom Transport Deck -->
+            <div class="transport-deck">
+                <div style="display: flex; gap: 8px; align-items: center;">
+                    <button class="tape-transport-btn rec-active">● CAPTURE [Space]</button>
+                    <button class="tape-transport-btn">■ FREEZE</button>
+                    <button class="tape-transport-btn">⚡ AUTO-ALIGN</button>
+                    <button class="tape-transport-btn">⟳ SWAP (CH 1:2 / 2:1)</button>
+                </div>
+
+                <div style="font-family: var(--font-readout); font-size: 12px; color: #94a3b8; display: flex; gap: 20px;">
+                    <span>ACOUSTIC DELAY: <strong style="color: #00e676;">4.18 ms (1.43 m)</strong></span>
+                    <span>SPL Leq: <strong style="color: #f59e0b;">89.2 dBA</strong></span>
+                    <span>THD+N: <strong style="color: #38bdf8;">0.12%</strong></span>
+                </div>
+
+                <div>
+                    <button class="tape-transport-btn" style="border-color: #38bdf8; color: #38bdf8;">PRINT REPORT</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- CRT Simulation & VU Needle Ballistics -->
+    <script>
+        const canvas = document.getElementById('crtCanvas');
+        const ctx = canvas.getContext('2d');
+        const needleRef = document.getElementById('vuNeedleRef');
+        const needleMeas = document.getElementById('vuNeedleMeas');
+
+        function resize() {
+            canvas.width = canvas.parentElement.clientWidth * window.devicePixelRatio;
+            canvas.height = canvas.parentElement.clientHeight * window.devicePixelRatio;
+            render();
+        }
+        window.addEventListener('resize', resize);
+
+        let t = 0;
+        function render() {
+            const w = canvas.width;
+            const h = canvas.height;
+            const mainH = h * 0.72;
+            const cohH = h * 0.28;
+
+            ctx.clearRect(0, 0, w, h);
+
+            // CRT Green Phosphor Grid
+            ctx.strokeStyle = 'rgba(0, 230, 118, 0.12)';
+            ctx.lineWidth = 1;
+
+            for (let f = 20; f <= 20000; f *= 2) {
+                const x = (Math.log10(f/20) / 3.0) * w;
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, h);
+                ctx.stroke();
+            }
+
+            for (let db = -36; db <= 18; db += 6) {
+                const y = mainH * (1.0 - (db + 36) / 54);
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(w, y);
+                ctx.stroke();
+            }
+
+            // Green Phosphor Magnitude Trace with Glow
+            ctx.beginPath();
+            ctx.strokeStyle = '#00e676';
+            ctx.lineWidth = 2.2 * window.devicePixelRatio;
+            ctx.shadowColor = 'rgba(0, 230, 118, 0.6)';
+            ctx.shadowBlur = 12;
+
+            for (let i = 0; i <= 300; i++) {
+                const ratio = i / 300;
+                const f = 20 * Math.pow(1000, ratio);
+                const x = ratio * w;
+                const mag = -3 + Math.sin(ratio * 20 + t * 2) * 2 + Math.sin(ratio * 50) * 1.5;
+                const y = mainH * (1.0 - (mag + 36) / 54);
+
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            }
+            ctx.stroke();
+            ctx.shadowBlur = 0;
+
+            // Amber Phosphor Phase Trace
+            ctx.beginPath();
+            ctx.strokeStyle = '#ff9800';
+            ctx.lineWidth = 1.4 * window.devicePixelRatio;
+
+            for (let i = 0; i <= 300; i++) {
+                const ratio = i / 300;
+                const x = ratio * w;
+                const phase = ((ratio * 1200 + t * 40) % 360) - 180;
+                const y = mainH * (1.0 - (phase + 180) / 360);
+
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            }
+            ctx.stroke();
+
+            // VU Meter Ballistics Simulation
+            const refDb = -18 + Math.sin(t * 3) * 6;
+            const measDb = -12 + Math.sin(t * 4 + 1) * 8;
+            needleRef.style.transform = `rotate(${Math.min(30, Math.max(-35, refDb * 1.5))}deg)`;
+            needleMeas.style.transform = `rotate(${Math.min(30, Math.max(-35, measDb * 1.5))}deg)`;
+
+            t += 0.02;
+            requestAnimationFrame(render);
+        }
+
+        setTimeout(resize, 100);
+    </script>
+</body>
+</html>
