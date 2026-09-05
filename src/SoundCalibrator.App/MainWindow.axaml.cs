@@ -312,6 +312,21 @@ public partial class MainWindow : Window
                 StatusDeviceText.Text = "To calibrate SPL: switch to RTA mode, apply 94dB 1kHz calibrator to mic and click CAL 94dB.";
             }
         };
+        SimulateSumBtn.Click += (s, e) =>
+        {
+            var visibleTraces = System.Linq.Enumerable.ToList(System.Linq.Enumerable.Where(GraphControl.StoredTraces, t => t.IsVisible && !t.IsRtaTrace));
+            if (visibleTraces.Count >= 2)
+            {
+                var sumTrace = AcousticSummationSimulator.SimulateSummation(visibleTraces, $"Sum ({visibleTraces.Count} sources)", "#FF4081");
+                if (sumTrace != null)
+                {
+                    GraphControl.StoredTraces.Add(sumTrace);
+                    RefreshTraceManagerUI();
+                    GraphControl.InvalidateVisual();
+                }
+            }
+        };
+
         SpatialAvgBtn.Click += (s, e) =>
         {
             var visibleTraces = System.Linq.Enumerable.ToList(System.Linq.Enumerable.Where(GraphControl.StoredTraces, t => t.IsVisible));
