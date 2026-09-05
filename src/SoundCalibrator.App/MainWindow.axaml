@@ -1,4 +1,4 @@
-<Window xmlns="https://github.com/avaloniaui"
+﻿<Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -287,41 +287,43 @@
                     </Border>
 
                     <!-- ===================================================== -->
-                    <!-- PROMINENT DELAY & ACOUSTIC ALIGNMENT CAPSULE          -->
+                    <!-- PROMINENT DELAY & ACOUSTIC ALIGNMENT CAPSULE (FIXED) -->
                     <!-- ===================================================== -->
                     <Border Grid.Column="1" Background="#121826" BorderBrush="#33FF9100" BorderThickness="1" CornerRadius="6" Padding="8,3" Margin="0,0,8,0">
-                        <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                        <Grid ColumnDefinitions="Auto,Auto,85,Auto,54,1,Auto,66,120" VerticalAlignment="Center">
                             
-                            <TextBlock Text="DELAY:" Foreground="#FF9100" FontSize="10" FontWeight="Bold" VerticalAlignment="Center"/>
+                            <TextBlock Grid.Column="0" Text="DELAY:" Foreground="#FF9100" FontSize="10" FontWeight="Bold" VerticalAlignment="Center" Margin="0,0,6,0"/>
                             
                             <!-- Fine-tune Minus Button -->
-                            <Button x:Name="DelayMinusBtn" Content="&#8722;" Width="20" Height="20" Padding="0" CornerRadius="3"
+                            <Button Grid.Column="1" x:Name="DelayMinusBtn" Content="&#8722;" Width="20" Height="20" Padding="0" CornerRadius="3"
                                     Background="#1E2638" Foreground="#FF9100" FontWeight="Bold" FontSize="11"
-                                    HorizontalContentAlignment="Center" VerticalContentAlignment="Center" ToolTip.Tip="Decrement delay (-0.1 ms)"/>
+                                    HorizontalContentAlignment="Center" VerticalContentAlignment="Center" ToolTip.Tip="Decrement delay (-0.1 ms)" Margin="0,0,4,0"/>
 
-                            <!-- Real-time Slider -->
-                            <Slider x:Name="DelaySlider" Width="85" Minimum="0" Maximum="50" Value="4.2"
+                            <!-- Real-time Slider (fixed 85) -->
+                            <Slider Grid.Column="2" x:Name="DelaySlider" Width="85" Minimum="0" Maximum="50" Value="4.2"
                                     Foreground="#FF9100" VerticalAlignment="Center"/>
 
                             <!-- Fine-tune Plus Button -->
-                            <Button x:Name="DelayPlusBtn" Content="+" Width="20" Height="20" Padding="0" CornerRadius="3"
+                            <Button Grid.Column="3" x:Name="DelayPlusBtn" Content="+" Width="20" Height="20" Padding="0" CornerRadius="3"
                                     Background="#1E2638" Foreground="#FF9100" FontWeight="Bold" FontSize="11"
-                                    HorizontalContentAlignment="Center" VerticalContentAlignment="Center" ToolTip.Tip="Increment delay (+0.1 ms)"/>
+                                    HorizontalContentAlignment="Center" VerticalContentAlignment="Center" ToolTip.Tip="Increment delay (+0.1 ms)" Margin="4,0,6,0"/>
 
-                            <!-- Readout in ms -->
-                            <TextBlock x:Name="DelayText" Text="4.2 ms" Foreground="#FF9100" FontWeight="Bold" FontSize="11" Width="44" VerticalAlignment="Center"/>
+                            <!-- Readout in ms (fixed 54, right-aligned monospace) -->
+                            <TextBlock Grid.Column="4" x:Name="DelayText" Text="4.2 ms" Foreground="#FF9100" FontWeight="Bold" FontSize="11" Width="54" TextAlignment="Right" VerticalAlignment="Center" FontFamily="JetBrains Mono, Consolas"/>
 
-                            <Border Width="1" Height="16" Background="#1E2638" Margin="4,0"/>
+                            <!-- Separator -->
+                            <Border Grid.Column="5" Width="1" Height="16" Background="#1E2638" Margin="6,0"/>
 
                             <!-- Detected Impulse Response Delay -->
-                            <TextBlock Text="IR:" Foreground="#64748B" FontSize="10" FontWeight="Bold" VerticalAlignment="Center"/>
-                            <TextBlock x:Name="DetectedDelayText" Text="+4.18 ms" Foreground="#10B981" FontWeight="Bold" FontSize="11" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                            <TextBlock Grid.Column="6" Text="IR:" Foreground="#64748B" FontSize="10" FontWeight="Bold" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                            <TextBlock Grid.Column="7" x:Name="DetectedDelayText" Text="+4.18 ms" Foreground="#10B981" FontWeight="Bold" FontSize="11" Width="66" TextAlignment="Left" VerticalAlignment="Center" FontFamily="JetBrains Mono, Consolas" Margin="0,0,6,0"/>
 
-                            <!-- Live Auto Align Button -->
-                            <Button x:Name="AutoAlignBtn" Content="&#9889; ALIGN (+4.2 ms)"
+                            <!-- Live Auto Align Button (fixed 120 width, centered, motionless position) -->
+                            <Button Grid.Column="8" x:Name="AutoAlignBtn" Content="&#9889; ALIGN (+4.2 ms)" Width="120"
                                     Background="#26F59E0B" BorderBrush="#4DF59E0B" BorderThickness="1"
-                                    Foreground="#F59E0B" FontWeight="Bold" FontSize="10" Padding="10,4" CornerRadius="4" Cursor="Hand"/>
-                        </StackPanel>
+                                    Foreground="#F59E0B" FontWeight="Bold" FontSize="10" Padding="0,4"
+                                    HorizontalContentAlignment="Center" CornerRadius="4" Cursor="Hand"/>
+                        </Grid>
                     </Border>
 
                     <!-- Main Actions Group (Aligned Right) -->
@@ -456,32 +458,44 @@
                 <!-- Main SkiaSharp Canvas -->
                 <controls:AcousticGraphControl x:Name="GraphControl"/>
 
-                <!-- Floating HUD Glass Capsule (Top Center) -->
+                <!-- Floating HUD Glass Capsule (Top Center - Rock Solid Fixed Width 590px) -->
                 <Border HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,14,0,0"
-                        Background="#D90E121A" BorderBrush="#4D00F0FF" BorderThickness="1" CornerRadius="30"
-                        Padding="18,6" BoxShadow="0 8 32 0 #80000000" IsHitTestVisible="False">
-                    <StackPanel Orientation="Horizontal" Spacing="16" VerticalAlignment="Center">
-                        <StackPanel Orientation="Horizontal" Spacing="4">
-                            <TextBlock Text="FREQ:" Foreground="#94A3B8" FontSize="11" FontFamily="JetBrains Mono, Consolas"/>
-                            <TextBlock x:Name="HudFreqText" Text="1000.0 Hz" Foreground="#00F0FF" FontWeight="Bold" FontSize="11" FontFamily="JetBrains Mono, Consolas"/>
+                        Width="590" Height="36"
+                        Background="#D90E121A" BorderBrush="#4D00F0FF" BorderThickness="1" CornerRadius="18"
+                        BoxShadow="0 8 32 0 #80000000" IsHitTestVisible="False">
+                    <Grid ColumnDefinitions="*,*,*,*,*" VerticalAlignment="Center" Margin="12,0">
+                        
+                        <!-- Col 0: FREQ -->
+                        <StackPanel Grid.Column="0" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <TextBlock Text="FREQ:" Foreground="#94A3B8" FontSize="11" FontFamily="JetBrains Mono, Consolas" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                            <TextBlock x:Name="HudFreqText" Text="1000.0 Hz" Foreground="#00F0FF" FontWeight="Bold" FontSize="11" FontFamily="JetBrains Mono, Consolas" Width="66" TextAlignment="Left" VerticalAlignment="Center"/>
                         </StackPanel>
-                        <StackPanel Orientation="Horizontal" Spacing="4">
-                            <TextBlock Text="MAG:" Foreground="#94A3B8" FontSize="11" FontFamily="JetBrains Mono, Consolas"/>
-                            <TextBlock x:Name="HudMagText" Text="+2.4 dB" Foreground="#00F0FF" FontWeight="Bold" FontSize="11" FontFamily="JetBrains Mono, Consolas"/>
+
+                        <!-- Col 1: MAG -->
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <TextBlock Text="MAG:" Foreground="#94A3B8" FontSize="11" FontFamily="JetBrains Mono, Consolas" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                            <TextBlock x:Name="HudMagText" Text="+2.4 dB" Foreground="#00F0FF" FontWeight="Bold" FontSize="11" FontFamily="JetBrains Mono, Consolas" Width="56" TextAlignment="Left" VerticalAlignment="Center"/>
                         </StackPanel>
-                        <StackPanel Orientation="Horizontal" Spacing="4">
-                            <TextBlock Text="PHASE:" Foreground="#94A3B8" FontSize="11" FontFamily="JetBrains Mono, Consolas"/>
-                            <TextBlock x:Name="HudPhaseText" Text="-45.2&#176;" Foreground="#FF9100" FontWeight="Bold" FontSize="11" FontFamily="JetBrains Mono, Consolas"/>
+
+                        <!-- Col 2: PHASE -->
+                        <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <TextBlock Text="PHASE:" Foreground="#94A3B8" FontSize="11" FontFamily="JetBrains Mono, Consolas" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                            <TextBlock x:Name="HudPhaseText" Text="-45.2&#176;" Foreground="#FF9100" FontWeight="Bold" FontSize="11" FontFamily="JetBrains Mono, Consolas" Width="52" TextAlignment="Left" VerticalAlignment="Center"/>
                         </StackPanel>
-                        <StackPanel Orientation="Horizontal" Spacing="4">
-                            <TextBlock Text="COH:" Foreground="#94A3B8" FontSize="11" FontFamily="JetBrains Mono, Consolas"/>
-                            <TextBlock x:Name="HudCohText" Text="98.2%" Foreground="#10B981" FontWeight="Bold" FontSize="11" FontFamily="JetBrains Mono, Consolas"/>
+
+                        <!-- Col 3: COH -->
+                        <StackPanel Grid.Column="3" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <TextBlock Text="COH:" Foreground="#94A3B8" FontSize="11" FontFamily="JetBrains Mono, Consolas" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                            <TextBlock x:Name="HudCohText" Text="98.2%" Foreground="#10B981" FontWeight="Bold" FontSize="11" FontFamily="JetBrains Mono, Consolas" Width="50" TextAlignment="Left" VerticalAlignment="Center"/>
                         </StackPanel>
-                        <StackPanel Orientation="Horizontal" Spacing="4">
-                            <TextBlock Text="GD:" Foreground="#94A3B8" FontSize="11" FontFamily="JetBrains Mono, Consolas"/>
-                            <TextBlock x:Name="HudGdText" Text="0.12 ms" Foreground="#00F0FF" FontWeight="Bold" FontSize="11" FontFamily="JetBrains Mono, Consolas"/>
+
+                        <!-- Col 4: GD -->
+                        <StackPanel Grid.Column="4" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <TextBlock Text="GD:" Foreground="#94A3B8" FontSize="11" FontFamily="JetBrains Mono, Consolas" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                            <TextBlock x:Name="HudGdText" Text="0.12 ms" Foreground="#00F0FF" FontWeight="Bold" FontSize="11" FontFamily="JetBrains Mono, Consolas" Width="58" TextAlignment="Left" VerticalAlignment="Center"/>
                         </StackPanel>
-                    </StackPanel>
+
+                    </Grid>
                 </Border>
 
                 <!-- Floating Zoom Controls (Bottom Right) -->
