@@ -30,6 +30,8 @@ public sealed class AcousticGraphControl : Control
     public bool RtaBarMode { get; set; } = false;
     public bool ShowImpulseEtc { get; set; } = false;
     public bool ShowMinimumPhase { get; set; } = false;
+    public bool ShowFdwQuasiAnechoic { get; set; } = false;
+    public float FdwCycles { get; set; } = 10.0f;
 
     // Rango dinÃƒÂ¡mico y Zoom interactivo
     public float MinFreq { get; set; } = 20.0f;
@@ -844,6 +846,13 @@ public sealed class AcousticGraphControl : Control
             minPhaseResult = MinimumPhaseAnalyzer.Analyze(snap.Frequencies, snap.MagnitudeDb, snap.PhaseDegrees);
         }
 
+        float[]? fdwMag = null;
+        if (ShowFdwQuasiAnechoic && snap.ImpulseResponse.Length > 0 && snap.BinCount > 0)
+        {
+            fdwMag = new float[snap.BinCount];
+            FrequencyDependentWindow.ApplyFdw(snap.ImpulseResponse, snap.Frequencies, fdwMag, FdwCycles, snap.SampleRate);
+        }
+
         using (var magCtx = magGeometry.Open())
         using (var phaseCtx = phaseGeometry.Open())
         using (var cohCtx = cohGeometry.Open())
@@ -932,6 +941,27 @@ public sealed class AcousticGraphControl : Control
             context.DrawGeometry(null, new Pen(new SolidColorBrush(Color.Parse("#76FF03")), 1.5, DashStyle.Dash), minPhaseGeometry);
             var mpLabel = new FormattedText("Min Phase (---)", CultureInfo.InvariantCulture, FlowDirection.LeftToRight, LabelFont, 10, new SolidColorBrush(Color.Parse("#76FF03")));
             context.DrawText(mpLabel, new Point(w - 200, 26));
+        }
+
+        if (fdwMag != null)
+        {
+            var fdwGeom = new StreamGeometry();
+            using (var fdwCtx = fdwGeom.Open())
+            {
+                bool started = false;
+                for (int i = 1; i < count; i++)
+                {
+                    float freq = snap.Frequencies[i];
+                    if (freq < MinFreq || freq > MaxFreq) continue;
+                    double x = FreqToX(freq, w);
+                    double yFdw = DbToY(fdwMag[i], mainH);
+                    if (!started) { fdwCtx.BeginFigure(new Point(x, yFdw), false); started = true; }
+                    else { fdwCtx.LineTo(new Point(x, yFdw)); }
+                }
+            }
+            context.DrawGeometry(null, new Pen(new SolidColorBrush(Color.Parse("#E040FB")), 2.0, DashStyle.Dash), fdwGeom);
+            var fdwLabel = new FormattedText($"FDW Quasi-Anechoic ({FdwCycles:0} cyc)", CultureInfo.InvariantCulture, FlowDirection.LeftToRight, LabelFont, 10, new SolidColorBrush(Color.Parse("#E040FB")));
+            context.DrawText(fdwLabel, new Point(w - 240, 42));
         }
 
         if (magStarted)
