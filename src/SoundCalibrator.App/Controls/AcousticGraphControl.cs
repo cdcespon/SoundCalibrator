@@ -1017,10 +1017,10 @@ public sealed class AcousticGraphControl : Control
 
         var readoutText = new FormattedText(readout, CultureInfo.InvariantCulture, FlowDirection.LeftToRight, LabelFont, 13, new SolidColorBrush(Color.Parse("#E0E6ED")));
 
-        var badgeRect = new Rect(w / 2 - 180, 10, 360, 26);
-        context.FillRectangle(new SolidColorBrush(Color.Parse("#CC1A202C")), badgeRect, 4);
-        context.DrawRectangle(new Pen(new SolidColorBrush(Color.Parse("#3A4556")), 1), badgeRect, 4);
-        context.DrawText(readoutText, new Point(w / 2 - 170, 14));
+        var badgeRect = new Rect(w / 2 - 200, 10, 400, 28);
+        context.FillRectangle(new SolidColorBrush(Color.Parse("#E00E121A")), badgeRect, 14);
+        context.DrawRectangle(new Pen(new SolidColorBrush(Color.Parse("#4D00F0FF")), 1.2), badgeRect, 14);
+        context.DrawText(readoutText, new Point(w / 2 - 190, 15));
     }
 
     private double FreqToX(float freq, double w)
