@@ -178,21 +178,21 @@ public partial class MainWindow : Window
         {
             _engine.InvertPolarity = !_engine.InvertPolarity;
             InvertPolarityBtn.Background = _engine.InvertPolarity
-                ? Avalonia.Media.SolidColorBrush.Parse("#D32F2F")
-                : Avalonia.Media.SolidColorBrush.Parse("#263238");
+                ? Avalonia.Media.SolidColorBrush.Parse("#EF4444")
+                : Avalonia.Media.SolidColorBrush.Parse("#1E2638");
             InvertPolarityBtn.Foreground = _engine.InvertPolarity
                 ? Avalonia.Media.SolidColorBrush.Parse("#FFFFFF")
-                : Avalonia.Media.SolidColorBrush.Parse("#B0BEC5");
+                : Avalonia.Media.SolidColorBrush.Parse("#F59E0B");
         };
         MinPhaseBtn.Click += (s, e) =>
         {
             GraphControl.ShowMinimumPhase = !GraphControl.ShowMinimumPhase;
             MinPhaseBtn.Background = GraphControl.ShowMinimumPhase
-                ? Avalonia.Media.SolidColorBrush.Parse("#2E7D32")
-                : Avalonia.Media.SolidColorBrush.Parse("#263238");
+                ? Avalonia.Media.SolidColorBrush.Parse("#10B981")
+                : Avalonia.Media.SolidColorBrush.Parse("#1E2638");
             MinPhaseBtn.Foreground = GraphControl.ShowMinimumPhase
-                ? Avalonia.Media.SolidColorBrush.Parse("#FFFFFF")
-                : Avalonia.Media.SolidColorBrush.Parse("#B0BEC5");
+                ? Avalonia.Media.SolidColorBrush.Parse("#000000")
+                : Avalonia.Media.SolidColorBrush.Parse("#10B981");
             GraphControl.InvalidateVisual();
         };
         ResetZoomBtn.Click += (s, e) =>
@@ -203,11 +203,11 @@ public partial class MainWindow : Window
         {
             GraphControl.ShowFdwQuasiAnechoic = !GraphControl.ShowFdwQuasiAnechoic;
             FdwBtn.Background = GraphControl.ShowFdwQuasiAnechoic
-                ? Avalonia.Media.SolidColorBrush.Parse("#8E24AA")
-                : Avalonia.Media.SolidColorBrush.Parse("#263238");
+                ? Avalonia.Media.SolidColorBrush.Parse("#A855F7")
+                : Avalonia.Media.SolidColorBrush.Parse("#1E2638");
             FdwBtn.Foreground = GraphControl.ShowFdwQuasiAnechoic
                 ? Avalonia.Media.SolidColorBrush.Parse("#FFFFFF")
-                : Avalonia.Media.SolidColorBrush.Parse("#B0BEC5");
+                : Avalonia.Media.SolidColorBrush.Parse("#E040FB");
             GraphControl.InvalidateVisual();
         };
         ModeCombo.SelectionChanged += OnModeChanged;
@@ -221,11 +221,11 @@ public partial class MainWindow : Window
         {
             GraphControl.ShowDeltaCurve = !GraphControl.ShowDeltaCurve;
             DeltaBtn.Background = GraphControl.ShowDeltaCurve
-                ? Avalonia.Media.SolidColorBrush.Parse("#8E24AA")
-                : Avalonia.Media.SolidColorBrush.Parse("#263238");
+                ? Avalonia.Media.SolidColorBrush.Parse("#E040FB")
+                : Avalonia.Media.SolidColorBrush.Parse("#1E2638");
             DeltaBtn.Foreground = GraphControl.ShowDeltaCurve
-                ? Avalonia.Media.SolidColorBrush.Parse("#FFFFFF")
-                : Avalonia.Media.SolidColorBrush.Parse("#B0BEC5");
+                ? Avalonia.Media.SolidColorBrush.Parse("#000000")
+                : Avalonia.Media.SolidColorBrush.Parse("#E040FB");
             GraphControl.InvalidateVisual();
         };
         TargetCombo.SelectionChanged += (s, e) =>
@@ -1020,12 +1020,12 @@ public partial class MainWindow : Window
         {
             var itemBorder = new Border
             {
-                Background = Avalonia.Media.SolidColorBrush.Parse("#1A202C"),
-                CornerRadius = new Avalonia.CornerRadius(4),
-                Padding = new Avalonia.Thickness(6, 5),
+                Background = Avalonia.Media.SolidColorBrush.Parse("#121826"),
+                CornerRadius = new Avalonia.CornerRadius(6),
+                Padding = new Avalonia.Thickness(8, 6),
                 Margin = new Avalonia.Thickness(0, 0, 0, 6),
                 BorderBrush = Avalonia.Media.SolidColorBrush.Parse(trace.HexColor),
-                BorderThickness = new Avalonia.Thickness(2, 0, 0, 0)
+                BorderThickness = new Avalonia.Thickness(3, 1, 1, 1)
             };
             var mainStack = new StackPanel();
             var headerGrid = new Grid
