@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading;
 using SoundCalibrator.Audio.Interfaces;
+using NAudio.Wave;
 
 namespace SoundCalibrator.Audio.Generators;
 
@@ -20,7 +21,7 @@ public enum TestSignalType
 /// Generador de audio sintético para pruebas de calibración acústica y benchmarks en tiempo real.
 /// Soporta Ruido Rosa (Kellet), Tono senoidal, Barrido senoidal (Farina), Ruido Rosa Racheado (Gated) y Ruido IEC 60268-1.
 /// </summary>
-public sealed class SyntheticAudioGenerator : IAudioCaptureDevice
+public sealed class SyntheticAudioGenerator : IAudioCaptureDevice, ISampleProvider
 {
     private readonly int _sampleRate;
     private readonly int _blockSize;
@@ -53,6 +54,8 @@ public sealed class SyntheticAudioGenerator : IAudioCaptureDevice
 
     // Filtro Paul Kellet para generar Ruido Rosa (-3dB/octava)
     private float _b0, _b1, _b2, _b3, _b4, _b5, _b6;
+    private readonly WaveFormat _waveFormat;
+    public WaveFormat WaveFormat => _waveFormat;
 
     public string DeviceName => "Synthetic Loopback Acoustic Generator";
     public int SampleRate => _sampleRate;
@@ -82,6 +85,7 @@ public sealed class SyntheticAudioGenerator : IAudioCaptureDevice
         _blockSize = blockSize;
         int maxDelaySamples = (int)MathF.Ceiling(maxDelayMs * sampleRate / 1000f) + blockSize * 2;
         _delayBuffer = new float[maxDelaySamples];
+        _waveFormat = WaveFormat.CreateIeeeFloatWaveFormat(sampleRate, 2);
 
         int intervalMs = Math.Max(1, (int)MathF.Round((float)blockSize * 1000f / sampleRate));
         _timer = new Timer(OnTimerTick, null, Timeout.Infinite, intervalMs);
@@ -246,6 +250,17 @@ public sealed class SyntheticAudioGenerator : IAudioCaptureDevice
         }
 
         return white;
+    }
+
+    public int Read(Span<float> buffer)
+    {
+        for (int i = 0; i < buffer.Length; i += 2)
+        {
+            float s = GenerateNextSample();
+            buffer[i] = s;
+            if (i + 1 < buffer.Length) buffer[i + 1] = s;
+        }
+        return buffer.Length;
     }
 
     public void Dispose()

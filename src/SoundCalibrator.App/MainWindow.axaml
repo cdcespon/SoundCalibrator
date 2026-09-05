@@ -45,6 +45,7 @@
                     </ComboBox>
                 </StackPanel>
                 <Button x:Name="SwapChannelsBtn" Content="CH 1:2" ToolTip.Tip="Swap Reference and Measurement channels (1:2 / 2:1)" Background="#263238" Foreground="#B0BEC5" FontWeight="Bold" Width="54" Margin="0,0,8,0" Padding="3,3" FontSize="10"/>
+                <Button x:Name="GenOutputBtn" Content="DAC OUT: OFF" ToolTip.Tip="Stream test generator through physical DAC output (speakers)" Background="#263238" Foreground="#B0BEC5" FontWeight="Bold" Width="84" Margin="0,0,8,0" Padding="3,3" FontSize="10"/>
 
                 <!-- TAMAÑO DE FFT -->
                 <StackPanel Orientation="Horizontal" Margin="0,0,8,0" VerticalAlignment="Center">
