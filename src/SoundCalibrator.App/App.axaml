@@ -1,10 +1,83 @@
 <Application xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Class="SoundCalibrator.App.App"
-             RequestedThemeVariant="Default">
-             <!-- "Default" ThemeVariant follows system theme variant. "Dark" or "Light" are other available options. -->
+             RequestedThemeVariant="Dark">
+
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.ThemeDictionaries>
+                <ResourceDictionary x:Key="Dark">
+                    <SolidColorBrush x:Key="AppWindowBg">#07090E</SolidColorBrush>
+                    <SolidColorBrush x:Key="AppHeaderBg">#D90E121A</SolidColorBrush>
+                    <SolidColorBrush x:Key="AppRibbonBg">#B30E121A</SolidColorBrush>
+                    <SolidColorBrush x:Key="AppCardBg">#121826</SolidColorBrush>
+                    <SolidColorBrush x:Key="AppBorderBrush">#1E2638</SolidColorBrush>
+                    <SolidColorBrush x:Key="AppCanvasBg">#090C12</SolidColorBrush>
+                    <SolidColorBrush x:Key="AppSidebarBg">#B30E121A</SolidColorBrush>
+                    <SolidColorBrush x:Key="AppRightDrawerBg">#D90E121A</SolidColorBrush>
+                    <SolidColorBrush x:Key="AppFooterBg">#090C12</SolidColorBrush>
+                    <SolidColorBrush x:Key="AppTextPrimary">#FFFFFF</SolidColorBrush>
+                    <SolidColorBrush x:Key="AppTextSecondary">#94A3B8</SolidColorBrush>
+                    <SolidColorBrush x:Key="AppTextMuted">#64748B</SolidColorBrush>
+                    <SolidColorBrush x:Key="AppCardSubBg">#B3121826</SolidColorBrush>
+                    <SolidColorBrush x:Key="AppSubPanelBg">#090C12</SolidColorBrush>
+                    <SolidColorBrush x:Key="AppCardInnerBg">#05FFFFFF</SolidColorBrush>
+                    <SolidColorBrush x:Key="AppCardInnerBorder">#0DFFFFFF</SolidColorBrush>
+                    <SolidColorBrush x:Key="AppSlimStripBg">#0C1017</SolidColorBrush>
+                    <SolidColorBrush x:Key="AppHudBg">#D90E121A</SolidColorBrush>
+                    <SolidColorBrush x:Key="AppBadgeBg">#0DFFFFFF</SolidColorBrush>
+                </ResourceDictionary>
+                <ResourceDictionary x:Key="Light">
+                    <SolidColorBrush x:Key="AppWindowBg">#F1F5F9</SolidColorBrush>
+                    <SolidColorBrush x:Key="AppHeaderBg">#FFFFFF</SolidColorBrush>
+                    <SolidColorBrush x:Key="AppRibbonBg">#F8FAFC</SolidColorBrush>
+                    <SolidColorBrush x:Key="AppCardBg">#FFFFFF</SolidColorBrush>
+                    <SolidColorBrush x:Key="AppBorderBrush">#CBD5E1</SolidColorBrush>
+                    <SolidColorBrush x:Key="AppCanvasBg">#F8FAFC</SolidColorBrush>
+                    <SolidColorBrush x:Key="AppSidebarBg">#FFFFFF</SolidColorBrush>
+                    <SolidColorBrush x:Key="AppRightDrawerBg">#FFFFFF</SolidColorBrush>
+                    <SolidColorBrush x:Key="AppFooterBg">#F1F5F9</SolidColorBrush>
+                    <SolidColorBrush x:Key="AppTextPrimary">#0F172A</SolidColorBrush>
+                    <SolidColorBrush x:Key="AppTextSecondary">#475569</SolidColorBrush>
+                    <SolidColorBrush x:Key="AppTextMuted">#64748B</SolidColorBrush>
+                    <SolidColorBrush x:Key="AppCardSubBg">#F8FAFC</SolidColorBrush>
+                    <SolidColorBrush x:Key="AppSubPanelBg">#E2E8F0</SolidColorBrush>
+                    <SolidColorBrush x:Key="AppCardInnerBg">#F8FAFC</SolidColorBrush>
+                    <SolidColorBrush x:Key="AppCardInnerBorder">#E2E8F0</SolidColorBrush>
+                    <SolidColorBrush x:Key="AppSlimStripBg">#E2E8F0</SolidColorBrush>
+                    <SolidColorBrush x:Key="AppHudBg">#FFFFFF</SolidColorBrush>
+                    <SolidColorBrush x:Key="AppBadgeBg">#F1F5F9</SolidColorBrush>
+                </ResourceDictionary>
+            </ResourceDictionary.ThemeDictionaries>
+        </ResourceDictionary>
+    </Application.Resources>
 
     <Application.Styles>
         <FluentTheme />
+        <!-- Hide full screen double arrow button in window titlebar decorations -->
+        <Style Selector="Button#PART_FullScreenButton">
+            <Setter Property="IsVisible" Value="False"/>
+            <Setter Property="Width" Value="0"/>
+            <Setter Property="MaxWidth" Value="0"/>
+            <Setter Property="Opacity" Value="0"/>
+        </Style>
+        <Style Selector="Button#PART_PopoverFullScreenButton">
+            <Setter Property="IsVisible" Value="False"/>
+            <Setter Property="Width" Value="0"/>
+            <Setter Property="MaxWidth" Value="0"/>
+            <Setter Property="Opacity" Value="0"/>
+        </Style>
+        <Style Selector=":is(Window) Button#PART_FullScreenButton">
+            <Setter Property="IsVisible" Value="False"/>
+            <Setter Property="Width" Value="0"/>
+            <Setter Property="MaxWidth" Value="0"/>
+            <Setter Property="Opacity" Value="0"/>
+        </Style>
+        <Style Selector=":is(Window) Button#PART_PopoverFullScreenButton">
+            <Setter Property="IsVisible" Value="False"/>
+            <Setter Property="Width" Value="0"/>
+            <Setter Property="MaxWidth" Value="0"/>
+            <Setter Property="Opacity" Value="0"/>
+        </Style>
     </Application.Styles>
 </Application>

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using Avalonia;
@@ -47,16 +47,18 @@ public sealed class AcousticGraphControl : Control
     private SpectrogramBuffer? _spectrogramBuffer;
     private WriteableBitmap? _spectrogramBmp;
 
-    // Paleta de diseño
-    private static readonly Color BgColor = Color.Parse("#101318");
-    private static readonly Color GridColor = Color.Parse("#1F2530");
-    private static readonly Color TextColor = Color.Parse("#7E8B9B");
+    public bool IsLightMode { get; set; } = false;
+
+    // Paleta de diseño adaptativa (Dark / Light)
+    private Color BgColor => IsLightMode ? Color.Parse("#F8FAFC") : Color.Parse("#101318");
+    private Color GridColor => IsLightMode ? Color.Parse("#E2E8F0") : Color.Parse("#1F2530");
+    private Color TextColor => IsLightMode ? Color.Parse("#475569") : Color.Parse("#7E8B9B");
+    private Color CrosshairColor => IsLightMode ? Color.Parse("#60000000") : Color.Parse("#50FFFFFF");
     private static readonly Color MagLineColor = Color.Parse("#00E5FF"); // Cyan
     private static readonly Color PhaseLineColor = Color.Parse("#FF9100"); // Naranja
     private static readonly Color CohLineColor = Color.Parse("#00E676"); // Verde esmeralda
     private static readonly Color RtaLiveColor = Color.Parse("#FFD600"); // Amarillo dorado
     private static readonly Color RtaMaxColor = Color.Parse("#FF3D00"); // Rojo coral
-    private static readonly Color CrosshairColor = Color.Parse("#50FFFFFF");
 
     private static readonly Typeface LabelFont = new("Segoe UI", FontStyle.Normal, FontWeight.SemiBold);
 
@@ -806,7 +808,7 @@ public sealed class AcousticGraphControl : Control
     private void DrawCoherenceGrid(DrawingContext context, double w, double cohTop, double cohH)
     {
         var gridPen = new Pen(new SolidColorBrush(GridColor), 1);
-        context.DrawLine(new Pen(new SolidColorBrush(Color.Parse("#2C3440")), 1.5), new Point(0, cohTop), new Point(w, cohTop));
+        context.DrawLine(new Pen(new SolidColorBrush(IsLightMode ? Color.Parse("#CBD5E1") : Color.Parse("#2C3440")), 1.5), new Point(0, cohTop), new Point(w, cohTop));
 
         double y100 = cohTop;
         double y50 = cohTop + cohH * 0.5;
@@ -1031,11 +1033,11 @@ public sealed class AcousticGraphControl : Control
             }
         }
 
-        var readoutText = new FormattedText(readout, CultureInfo.InvariantCulture, FlowDirection.LeftToRight, LabelFont, 13, new SolidColorBrush(Color.Parse("#E0E6ED")));
+        var readoutText = new FormattedText(readout, CultureInfo.InvariantCulture, FlowDirection.LeftToRight, LabelFont, 13, new SolidColorBrush(IsLightMode ? Color.Parse("#0F172A") : Color.Parse("#E0E6ED")));
 
         var badgeRect = new Rect(w / 2 - 200, 10, 400, 28);
-        context.FillRectangle(new SolidColorBrush(Color.Parse("#E00E121A")), badgeRect, 14);
-        context.DrawRectangle(new Pen(new SolidColorBrush(Color.Parse("#4D00F0FF")), 1.2), badgeRect, 14);
+        context.FillRectangle(new SolidColorBrush(IsLightMode ? Color.Parse("#E0F1F5F9") : Color.Parse("#E00E121A")), badgeRect, 14);
+        context.DrawRectangle(new Pen(new SolidColorBrush(IsLightMode ? Color.Parse("#0284C7") : Color.Parse("#4D00F0FF")), 1.2), badgeRect, 14);
         context.DrawText(readoutText, new Point(w / 2 - 190, 15));
     }
 
@@ -1146,7 +1148,7 @@ public sealed class AcousticGraphControl : Control
                 else { sgc.LineTo(new Point(x, y)); }
             }
         }
-        context.DrawGeometry(null, new Pen(new SolidColorBrush(Color.Parse("#334155")), 1), irGeom);
+        context.DrawGeometry(null, new Pen(new SolidColorBrush(IsLightMode ? Color.Parse("#94A3B8") : Color.Parse("#334155")), 1), irGeom);
 
         // 4. Curva de EnergÃ­a-Tiempo (ETC dB) en Cyan brillante
         var etcGeom = new StreamGeometry();

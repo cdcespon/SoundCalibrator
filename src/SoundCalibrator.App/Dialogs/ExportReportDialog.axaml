@@ -1,0 +1,93 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="460" d:DesignHeight="340"
+        x:Class="SoundCalibrator.App.Dialogs.ExportReportDialog"
+        Title="Export Calibration Report"
+        Width="460" Height="340"
+        CanResize="False"
+        WindowStartupLocation="CenterOwner"
+        Background="#0A0E17"
+        WindowDecorations="None">
+
+    <Border BorderBrush="#1E2638" BorderThickness="1" Background="#0A0E17" Padding="20">
+        <Grid RowDefinitions="Auto,*,Auto">
+
+            <!-- Dialog Header -->
+            <StackPanel Grid.Row="0" Spacing="4" Margin="0,0,0,16">
+                <Grid ColumnDefinitions="*,Auto">
+                    <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+                        <Border Width="24" Height="24" CornerRadius="6" Background="#1A00F0FF" BorderBrush="#4D00F0FF" BorderThickness="1">
+                            <TextBlock Text="📄" FontSize="12" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <TextBlock Text="EXPORTAR INFORME TÉCNICO" Foreground="#F8FAFC" FontSize="13" FontWeight="Bold" VerticalAlignment="Center"/>
+                    </StackPanel>
+                    <Button x:Name="CloseIconBtn" Grid.Column="1" Content="✕" Width="24" Height="24" Padding="0"
+                            Background="Transparent" Foreground="#64748B" FontSize="11"
+                            HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Cursor="Hand"/>
+                </Grid>
+                <TextBlock Text="Seleccione el formato de destino para el informe de calibración acústica:"
+                           Foreground="#94A3B8" FontSize="11" Margin="34,2,0,0"/>
+            </StackPanel>
+
+            <!-- Options Group -->
+            <StackPanel Grid.Row="1" Spacing="10" VerticalAlignment="Center">
+
+                <!-- Option 1: PDF -->
+                <Border x:Name="PdfCard" Background="#121826" BorderBrush="#00F0FF" BorderThickness="1.5" CornerRadius="8" Padding="12,10" Cursor="Hand">
+                    <Grid ColumnDefinitions="Auto,*,Auto">
+                        <RadioButton x:Name="PdfRadio" Grid.Column="0" IsChecked="True" GroupName="ExportFormat" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
+                            <TextBlock Text="Documento PDF (.pdf)" Foreground="#FFFFFF" FontWeight="Bold" FontSize="12"/>
+                            <TextBlock Text="Informe vectorial técnico con tablas, cabecera y numeración de página." Foreground="#64748B" FontSize="10"/>
+                        </StackPanel>
+                        <Border Grid.Column="2" Background="#1A00F0FF" BorderBrush="#4D00F0FF" BorderThickness="1" CornerRadius="4" Padding="6,2" VerticalAlignment="Center">
+                            <TextBlock Text="RECOMENDADO" Foreground="#00F0FF" FontWeight="Bold" FontSize="9"/>
+                        </Border>
+                    </Grid>
+                </Border>
+
+                <!-- Option 2: HTML -->
+                <Border x:Name="HtmlCard" Background="#121826" BorderBrush="#1E2638" BorderThickness="1" CornerRadius="8" Padding="12,10" Cursor="Hand">
+                    <Grid ColumnDefinitions="Auto,*,Auto">
+                        <RadioButton x:Name="HtmlRadio" Grid.Column="0" GroupName="ExportFormat" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
+                            <TextBlock Text="Página Web HTML (.html)" Foreground="#CBD5E1" FontWeight="Bold" FontSize="12"/>
+                            <TextBlock Text="Visualización interactiva en navegador con tema oscuro y estilos de impresión." Foreground="#64748B" FontSize="10"/>
+                        </StackPanel>
+                        <Border Grid.Column="2" Background="#1A10B981" BorderBrush="#4D10B981" BorderThickness="1" CornerRadius="4" Padding="6,2" VerticalAlignment="Center">
+                            <TextBlock Text="WEB / BROWSER" Foreground="#10B981" FontWeight="Bold" FontSize="9"/>
+                        </Border>
+                    </Grid>
+                </Border>
+
+                <!-- Option 3: Text / Markdown -->
+                <Border x:Name="TextCard" Background="#121826" BorderBrush="#1E2638" BorderThickness="1" CornerRadius="8" Padding="12,10" Cursor="Hand">
+                    <Grid ColumnDefinitions="Auto,*,Auto">
+                        <RadioButton x:Name="TextRadio" Grid.Column="0" GroupName="ExportFormat" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
+                            <TextBlock Text="Texto Plano / Markdown (.txt, .md)" Foreground="#CBD5E1" FontWeight="Bold" FontSize="12"/>
+                            <TextBlock Text="Texto estructurado con tablas ASCII compatible con cualquier editor o script." Foreground="#64748B" FontSize="10"/>
+                        </StackPanel>
+                        <Border Grid.Column="2" Background="#15FFFFFF" BorderBrush="#25FFFFFF" BorderThickness="1" CornerRadius="4" Padding="6,2" VerticalAlignment="Center">
+                            <TextBlock Text="MARKDOWN" Foreground="#94A3B8" FontWeight="Bold" FontSize="9"/>
+                        </Border>
+                    </Grid>
+                </Border>
+
+            </StackPanel>
+
+            <!-- Bottom Actions -->
+            <Grid Grid.Row="2" ColumnDefinitions="*,Auto,Auto" Margin="0,16,0,0">
+                <Button x:Name="CancelBtn" Grid.Column="1" Content="Cancelar"
+                        Background="#1E2638" Foreground="#94A3B8" FontWeight="SemiBold" FontSize="11"
+                        Padding="16,8" CornerRadius="6" Cursor="Hand" Margin="0,0,8,0"/>
+                <Button x:Name="ExportBtn" Grid.Column="2" Content="Continuar con Exportación..."
+                        Background="#00F0FF" Foreground="#000000" FontWeight="Bold" FontSize="11"
+                        Padding="16,8" CornerRadius="6" Cursor="Hand"/>
+            </Grid>
+
+        </Grid>
+    </Border>
+</Window>

@@ -23,6 +23,10 @@ using SoundCalibrator.Core.Operations;
 using SoundCalibrator.Core.Reporting;
 using SoundCalibrator.Core.Serialization;
 using SoundCalibrator.Core.Smoothing;
+using SoundCalibrator.App.Dialogs;
+using Avalonia.Styling;
+using Avalonia.VisualTree;
+using Avalonia.Controls.Primitives;
 
 namespace SoundCalibrator.App;
 
@@ -42,6 +46,10 @@ public partial class MainWindow : Window
     private AlignmentSuggestion? _lastAlignmentSuggestion;
     private DelayMatrixReport? _lastDelayMatrixReport;
     private IReadOnlyList<PeqFilterSuggestion>? _lastPeqSuggestions = [];
+
+    private bool _leftSidebarExpanded = true;
+    private bool _rightSidebarExpanded = true;
+    private bool _isLightMode;
 
     private static readonly string[] TraceColors = ["#A855F7", "#10B981", "#F59E0B", "#EC4899", "#3B82F6", "#00F0FF"];
 
@@ -67,6 +75,7 @@ public partial class MainWindow : Window
         UpdateModeButtons(0); // Transfer Function default
 
         _engine.Start();
+        Loaded += (s, e) => HideFullScreenArrows();
     }
 
     private void WireControls()
@@ -482,34 +491,101 @@ public partial class MainWindow : Window
             }
         };
 
-        HtmlReportBtn.Click += async (s, e) =>
+        // Sidebars Collapse & Expand
+        CollapseLeftBtn.Click += (s, e) => ToggleLeftSidebar(false);
+        ExpandLeftBtn.Click += (s, e) => ToggleLeftSidebar(true);
+        ExpandLeftStripBtn.Click += (s, e) => ToggleLeftSidebar(true);
+
+        CollapseRightBtn.Click += (s, e) => ToggleRightSidebar(false);
+        ExpandRightBtn.Click += (s, e) => ToggleRightSidebar(true);
+        ExpandRightStripBtn.Click += (s, e) => ToggleRightSidebar(true);
+
+        ThemeToggleBtn.Click += (s, e) => ToggleTheme();
+
+        ExportReportBtn.Click += async (s, e) =>
         {
             var topLevel = TopLevel.GetTopLevel(this);
             if (topLevel == null) return;
-            var file = await topLevel.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
+
+            var dialog = new ExportReportDialog();
+            var format = await dialog.ShowDialog<ExportReportFormat?>(this);
+            if (format == null) return;
+
+            var reportData = new CalibrationReportData
             {
-                Title = "Export Acoustic Calibration Technical Report (.md)",
-                DefaultExtension = "md",
-                SuggestedFileName = $"Calibration_Report_{DateTime.Now:yyyyMMdd_HHmmss}.md"
-            });
-            if (file != null)
+                ProjectName = "Acoustic Modern Tech Studio Calibration",
+                EngineerName = "Audio Engineer",
+                SampleRate = (int)_engine.SampleRate,
+                FftSize = _engine.FftSize,
+                DelayCompensationMs = _engine.DelayCompensationMs,
+                Alignment = _lastAlignmentSuggestion,
+                DelayMatrix = _lastDelayMatrixReport,
+                Traces = GraphControl.StoredTraces,
+                PeqFilters = _lastPeqSuggestions
+            };
+
+            switch (format.Value)
             {
-                var reportData = new CalibrationReportData
+                case ExportReportFormat.Pdf:
                 {
-                    ProjectName = "Acoustic Modern Tech Studio Calibration",
-                    EngineerName = "Audio Engineer",
-                    SampleRate = (int)_engine.SampleRate,
-                    FftSize = _engine.FftSize,
-                    DelayCompensationMs = _engine.DelayCompensationMs,
-                    Alignment = _lastAlignmentSuggestion,
-                    DelayMatrix = _lastDelayMatrixReport,
-                    Traces = GraphControl.StoredTraces,
-                    PeqFilters = _lastPeqSuggestions
-                };
-                string report = ReportGenerator.GenerateMarkdown(reportData);
-                await using var stream = await file.OpenWriteAsync();
-                await using var writer = new StreamWriter(stream);
-                await writer.WriteAsync(report);
+                    var file = await topLevel.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
+                    {
+                        Title = "Export Acoustic Calibration Technical Report (.pdf)",
+                        DefaultExtension = "pdf",
+                        SuggestedFileName = $"Calibration_Report_{DateTime.Now:yyyyMMdd_HHmmss}.pdf",
+                        FileTypeChoices = [
+                            new FilePickerFileType("PDF Document (*.pdf)") { Patterns = ["*.pdf"] }
+                        ]
+                    });
+                    if (file != null)
+                    {
+                        byte[] pdfBytes = ReportGenerator.GeneratePdf(reportData);
+                        await using var stream = await file.OpenWriteAsync();
+                        await stream.WriteAsync(pdfBytes);
+                    }
+                    break;
+                }
+                case ExportReportFormat.Html:
+                {
+                    var file = await topLevel.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
+                    {
+                        Title = "Export Acoustic Calibration Technical Report (.html)",
+                        DefaultExtension = "html",
+                        SuggestedFileName = $"Calibration_Report_{DateTime.Now:yyyyMMdd_HHmmss}.html",
+                        FileTypeChoices = [
+                            new FilePickerFileType("HTML Document (*.html;*.htm)") { Patterns = ["*.html", "*.htm"] }
+                        ]
+                    });
+                    if (file != null)
+                    {
+                        string html = ReportGenerator.GenerateHtml(reportData);
+                        await using var stream = await file.OpenWriteAsync();
+                        await using var writer = new StreamWriter(stream, Encoding.UTF8);
+                        await writer.WriteAsync(html);
+                    }
+                    break;
+                }
+                case ExportReportFormat.Text:
+                {
+                    var file = await topLevel.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
+                    {
+                        Title = "Export Acoustic Calibration Technical Report (.txt / .md)",
+                        DefaultExtension = "md",
+                        SuggestedFileName = $"Calibration_Report_{DateTime.Now:yyyyMMdd_HHmmss}.md",
+                        FileTypeChoices = [
+                            new FilePickerFileType("Markdown Report (*.md)") { Patterns = ["*.md"] },
+                            new FilePickerFileType("Plain Text Document (*.txt)") { Patterns = ["*.txt"] }
+                        ]
+                    });
+                    if (file != null)
+                    {
+                        string text = ReportGenerator.GenerateText(reportData);
+                        await using var stream = await file.OpenWriteAsync();
+                        await using var writer = new StreamWriter(stream, Encoding.UTF8);
+                        await writer.WriteAsync(text);
+                    }
+                    break;
+                }
             }
         };
 
@@ -644,7 +720,85 @@ public partial class MainWindow : Window
                 SwitchMode((cur + 1) % 4);
                 e.Handled = true;
                 break;
+            case Key.OemOpenBrackets:
+                ToggleLeftSidebar();
+                e.Handled = true;
+                break;
+            case Key.OemCloseBrackets:
+                ToggleRightSidebar();
+                e.Handled = true;
+                break;
+            case Key.T:
+                ToggleTheme();
+                e.Handled = true;
+                break;
         }
+    }
+
+    private void ToggleTheme(bool? toLight = null)
+    {
+        _isLightMode = toLight ?? !_isLightMode;
+        Application.Current!.RequestedThemeVariant = _isLightMode ? ThemeVariant.Light : ThemeVariant.Dark;
+        GraphControl.IsLightMode = _isLightMode;
+        GraphControl.InvalidateVisual();
+        ThemeToggleBtn.Content = _isLightMode ? "🌙 DARK" : "☀️ LIGHT";
+        ThemeToggleBtn.Foreground = _isLightMode ? SolidColorBrush.Parse("#0284C7") : SolidColorBrush.Parse("#00F0FF");
+    }
+
+    private void ToggleLeftSidebar(bool? expand = null)
+    {
+        _leftSidebarExpanded = expand ?? !_leftSidebarExpanded;
+        WorkspaceGrid.ColumnDefinitions[0].Width = _leftSidebarExpanded ? new GridLength(260) : new GridLength(28);
+        LeftSidebar.IsVisible = _leftSidebarExpanded;
+        LeftCollapsedStrip.IsVisible = !_leftSidebarExpanded;
+    }
+
+    private void ToggleRightSidebar(bool? expand = null)
+    {
+        _rightSidebarExpanded = expand ?? !_rightSidebarExpanded;
+        WorkspaceGrid.ColumnDefinitions[2].Width = _rightSidebarExpanded ? new GridLength(300) : new GridLength(28);
+        RightSidebar.IsVisible = _rightSidebarExpanded;
+        RightCollapsedStrip.IsVisible = !_rightSidebarExpanded;
+    }
+
+    private void OnHeaderPointerPressed(object? sender, PointerPressedEventArgs e)
+    {
+        var point = e.GetCurrentPoint(this);
+        if (point.Properties.IsLeftButtonPressed)
+        {
+            if (e.ClickCount == 2)
+            {
+                WindowState = WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized;
+            }
+            else
+            {
+                BeginMoveDrag(e);
+            }
+        }
+    }
+
+    protected override void OnApplyTemplate(TemplateAppliedEventArgs e)
+    {
+        base.OnApplyTemplate(e);
+        HideFullScreenArrows();
+    }
+
+    private void HideFullScreenArrows()
+    {
+        try
+        {
+            foreach (var btn in this.GetVisualDescendants().OfType<Button>())
+            {
+                if (btn.Name == "PART_FullScreenButton" || btn.Name == "PART_PopoverFullScreenButton" || btn.Name?.Contains("FullScreen") == true)
+                {
+                    btn.IsVisible = false;
+                    btn.Width = 0;
+                    btn.MaxWidth = 0;
+                    btn.Opacity = 0;
+                }
+            }
+        }
+        catch { }
     }
 
     private void RefreshTraceManagerUI()
