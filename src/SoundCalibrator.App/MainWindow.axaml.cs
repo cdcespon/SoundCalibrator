@@ -195,6 +195,10 @@ public partial class MainWindow : Window
                 : Avalonia.Media.SolidColorBrush.Parse("#B0BEC5");
             GraphControl.InvalidateVisual();
         };
+        ResetZoomBtn.Click += (s, e) =>
+        {
+            GraphControl.ResetZoom();
+        };
         ModeCombo.SelectionChanged += OnModeChanged;
         SourceCombo.SelectionChanged += OnSourceChanged;
         FftCombo.SelectionChanged += OnFftOrWindowChanged;
@@ -652,6 +656,10 @@ public partial class MainWindow : Window
                 break;
             case Avalonia.Input.Key.E:
                 SuggestEqBtn.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+                e.Handled = true;
+                break;
+            case Avalonia.Input.Key.Z:
+                ResetZoomBtn.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
                 e.Handled = true;
                 break;
             case Avalonia.Input.Key.D1 or Avalonia.Input.Key.NumPad1:

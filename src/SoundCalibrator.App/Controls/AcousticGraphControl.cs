@@ -30,6 +30,18 @@ public sealed class AcousticGraphControl : Control
     public bool RtaBarMode { get; set; } = false;
     public bool ShowImpulseEtc { get; set; } = false;
     public bool ShowMinimumPhase { get; set; } = false;
+
+    // Rango dinÃƒÂ¡mico y Zoom interactivo
+    public float MinFreq { get; set; } = 20.0f;
+    public float MaxFreq { get; set; } = 20000.0f;
+    public float MinMagDb { get; set; } = -36.0f;
+    public float MaxMagDb { get; set; } = 18.0f;
+    public float MinPhaseDeg { get; set; } = -180.0f;
+    public float MaxPhaseDeg { get; set; } = 180.0f;
+
+    private Point? _dragStart;
+    private float _startMinFreq, _startMaxFreq;
+    private float _startMinDb, _startMaxDb;
     private SpectrogramBuffer? _spectrogramBuffer;
     private WriteableBitmap? _spectrogramBmp;
 
@@ -57,10 +69,90 @@ public sealed class AcousticGraphControl : Control
         InvalidateVisual();
     }
 
+    protected override void OnPointerWheelChanged(PointerWheelEventArgs e)
+    {
+        base.OnPointerWheelChanged(e);
+        if (Bounds.Width <= 10) return;
+
+        var pos = e.GetPosition(this);
+        float mouseFreq = XToFreq(pos.X, Bounds.Width);
+        double zoom = e.Delta.Y > 0 ? 0.8 : 1.25;
+
+        double currentSpanLog = Math.Log10(MaxFreq / MinFreq);
+        double newSpanLog = Math.Clamp(currentSpanLog * zoom, Math.Log10(1.3), Math.Log10(2000.0));
+        double centerLog = Math.Log10(mouseFreq);
+        double ratio = Math.Clamp(pos.X / Bounds.Width, 0.05, 0.95);
+
+        MinFreq = Math.Clamp((float)Math.Pow(10.0, centerLog - ratio * newSpanLog), 10.0f, 15000.0f);
+        MaxFreq = Math.Clamp((float)Math.Pow(10.0, centerLog + (1.0 - ratio) * newSpanLog), MinFreq * 1.2f, 24000.0f);
+
+        InvalidateVisual();
+    }
+
+    protected override void OnPointerPressed(PointerPressedEventArgs e)
+    {
+        base.OnPointerPressed(e);
+        var p = e.GetCurrentPoint(this);
+        if (p.Properties.IsMiddleButtonPressed || (p.Properties.IsLeftButtonPressed && e.KeyModifiers.HasFlag(KeyModifiers.Control)))
+        {
+            ResetZoom();
+            return;
+        }
+
+        if (p.Properties.IsRightButtonPressed)
+        {
+            _dragStart = e.GetPosition(this);
+            _startMinFreq = MinFreq;
+            _startMaxFreq = MaxFreq;
+            _startMinDb = MinMagDb;
+            _startMaxDb = MaxMagDb;
+        }
+    }
+
+    protected override void OnPointerReleased(PointerReleasedEventArgs e)
+    {
+        base.OnPointerReleased(e);
+        _dragStart = null;
+    }
+
+    public void ResetZoom()
+    {
+        MinFreq = 20.0f;
+        MaxFreq = 20000.0f;
+        MinMagDb = -36.0f;
+        MaxMagDb = 18.0f;
+        InvalidateVisual();
+    }
+
     protected override void OnPointerMoved(PointerEventArgs e)
     {
         base.OnPointerMoved(e);
         _mousePosition = e.GetPosition(this);
+
+        if (_dragStart.HasValue)
+        {
+            double dx = e.GetPosition(this).X - _dragStart.Value.X;
+            double dy = e.GetPosition(this).Y - _dragStart.Value.Y;
+
+            // Pan horizontal en frecuencia
+            double logSpan = Math.Log10(_startMaxFreq / _startMinFreq);
+            double deltaLog = -(dx / Bounds.Width) * logSpan;
+            float newMin = (float)Math.Pow(10.0, Math.Log10(_startMinFreq) + deltaLog);
+            float newMax = (float)Math.Pow(10.0, Math.Log10(_startMaxFreq) + deltaLog);
+
+            if (newMin >= 10f && newMax <= 24000f)
+            {
+                MinFreq = newMin;
+                MaxFreq = newMax;
+            }
+
+            // Pan vertical en dB
+            float dbSpan = _startMaxDb - _startMinDb;
+            float deltaDb = (float)(dy / Bounds.Height) * dbSpan;
+            MinMagDb = _startMinDb + deltaDb;
+            MaxMagDb = _startMaxDb + deltaDb;
+        }
+
         InvalidateVisual();
     }
 
@@ -68,6 +160,7 @@ public sealed class AcousticGraphControl : Control
     {
         base.OnPointerExited(e);
         _mousePosition = null;
+        _dragStart = null;
         InvalidateVisual();
     }
 
@@ -631,11 +724,12 @@ public sealed class AcousticGraphControl : Control
 
     private void DrawFrequencyGrid(DrawingContext context, double w, double mainH, double cohTop, double cohH)
     {
-        float[] majorFreqs = [20f, 50f, 100f, 200f, 500f, 1000f, 2000f, 5000f, 10000f, 20000f];
+        float[] allMajorFreqs = [10f, 20f, 30f, 40f, 50f, 60f, 80f, 100f, 200f, 300f, 400f, 500f, 800f, 1000f, 2000f, 3000f, 5000f, 8000f, 10000f, 15000f, 20000f];
         var gridPen = new Pen(new SolidColorBrush(GridColor), 1);
 
-        foreach (float f in majorFreqs)
+        foreach (float f in allMajorFreqs)
         {
+            if (f < MinFreq || f > MaxFreq) continue;
             double x = FreqToX(f, w);
             if (x < 0 || x > w) continue;
 
@@ -658,8 +752,11 @@ public sealed class AcousticGraphControl : Control
     {
         var gridPen = new Pen(new SolidColorBrush(GridColor), 1, DashStyle.Dash);
 
-        for (float db = -36f; db <= 18f; db += 6f)
+        float stepDb = (MaxMagDb - MinMagDb) > 36f ? 12f : 6f;
+        float startDb = MathF.Floor(MinMagDb / stepDb) * stepDb;
+        for (float db = startDb; db <= MaxMagDb; db += stepDb)
         {
+            if (db < MinMagDb || db > MaxMagDb) continue;
             double y = DbToY(db, mainH);
             context.DrawLine(gridPen, new Point(0, y), new Point(w, y));
 
@@ -896,27 +993,25 @@ public sealed class AcousticGraphControl : Control
         context.DrawText(readoutText, new Point(w / 2 - 170, 14));
     }
 
-    private static double FreqToX(float freq, double w)
+    private double FreqToX(float freq, double w)
     {
-        double minLog = Math.Log10(20.0);
-        double maxLog = Math.Log10(20000.0);
-        double fLog = Math.Log10(Math.Clamp(freq, 20f, 20000f));
+        double minLog = Math.Log10(Math.Max(10f, MinFreq));
+        double maxLog = Math.Log10(Math.Max(MinFreq + 10f, MaxFreq));
+        double fLog = Math.Log10(Math.Clamp(freq, MinFreq, MaxFreq));
         return ((fLog - minLog) / (maxLog - minLog)) * w;
     }
 
-    private static float XToFreq(double x, double w)
+    private float XToFreq(double x, double w)
     {
-        double minLog = Math.Log10(20.0);
-        double maxLog = Math.Log10(20000.0);
+        double minLog = Math.Log10(Math.Max(10f, MinFreq));
+        double maxLog = Math.Log10(Math.Max(MinFreq + 10f, MaxFreq));
         double fLog = minLog + (x / w) * (maxLog - minLog);
         return (float)Math.Pow(10.0, fLog);
     }
 
-    private static double DbToY(float db, double mainH)
+    private double DbToY(float db, double mainH)
     {
-        const float maxDb = 18f;
-        const float minDb = -36f;
-        float norm = (Math.Clamp(db, minDb, maxDb) - minDb) / (maxDb - minDb);
+        float norm = (Math.Clamp(db, MinMagDb, MaxMagDb) - MinMagDb) / (MaxMagDb - MinMagDb);
         return mainH * (1.0 - norm);
     }
 
