@@ -126,6 +126,16 @@ public sealed class AcousticGraphControl : Control
         InvalidateVisual();
     }
 
+    public void Zoom(double factor)
+    {
+        double centerLog = (Math.Log10(MinFreq) + Math.Log10(MaxFreq)) / 2.0;
+        double currentSpanLog = Math.Log10(MaxFreq / MinFreq);
+        double newSpanLog = Math.Clamp(currentSpanLog * factor, Math.Log10(1.3), Math.Log10(2000.0));
+        MinFreq = Math.Clamp((float)Math.Pow(10.0, centerLog - 0.5 * newSpanLog), 10.0f, 15000.0f);
+        MaxFreq = Math.Clamp((float)Math.Pow(10.0, centerLog + 0.5 * newSpanLog), MinFreq * 1.2f, 24000.0f);
+        InvalidateVisual();
+    }
+
     protected override void OnPointerMoved(PointerEventArgs e)
     {
         base.OnPointerMoved(e);
