@@ -2,14 +2,14 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:controls="clr-namespace:SoundCalibrator.App.Controls"
         x:Class="SoundCalibrator.App.MainWindow"
-        Title="SoundCalibrator â€” Dual-Channel FFT Acoustic Measurement (Modern Tech UI)"
-        Width="1480" Height="860"
+        Title="SoundCalibrator - Dual-Channel FFT Acoustic Measurement (Modern Tech UI)"
+        Width="1520" Height="880"
         Background="#07090E"
         FontFamily="Inter, Segoe UI, -apple-system, sans-serif">
 
     <Grid RowDefinitions="Auto,Auto,*,Auto">
         
-        <!-- ROW 0: TOP HEADER TELEMETRY (MODERN TECH BRAND & HARDWARE) -->
+        <!-- ROW 0: TOP HEADER TELEMETRY (BRAND & HARDWARE) -->
         <Border Grid.Row="0" Background="#0E121A" BorderBrush="#1E2638" BorderThickness="0,0,0,1" Padding="14,8">
             <Grid ColumnDefinitions="Auto,*,Auto">
                 <!-- Brand & Logo -->
@@ -64,12 +64,14 @@
             </Grid>
         </Border>
 
-        <!-- ROW 1: GLASS CONTROL DOCK (MODULAR ACCENT TOOLBAR) -->
+        <!-- ROW 1: 2-ROW GLASS CONTROL DOCK (ALL CONTROLS FULLY VISIBLE) -->
         <Border Grid.Row="1" Background="#0A0D14" BorderBrush="#1E2638" BorderThickness="0,0,0,1" Padding="8,5">
-            <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
-                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+            <StackPanel Orientation="Vertical">
+                
+                <!-- TIER 1: CONFIGURATION, ENGINE & ACOUSTIC SETTINGS -->
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,4" VerticalAlignment="Center">
                     
-                    <!-- Group 1: Modes -->
+                    <!-- Mode Selector -->
                     <Border Background="#121826" BorderBrush="#1E2638" BorderThickness="1" CornerRadius="6" Padding="4,2" Margin="0,0,8,0">
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                             <TextBlock Text="Mode:" Foreground="#64748B" VerticalAlignment="Center" Margin="2,0,4,0" FontSize="10" FontWeight="Bold"/>
@@ -84,7 +86,7 @@
                         </StackPanel>
                     </Border>
 
-                    <!-- Group 2: Audio Source & Routing -->
+                    <!-- Audio Source & Hardware Routing -->
                     <Border Background="#121826" BorderBrush="#1E2638" BorderThickness="1" CornerRadius="6" Padding="4,2" Margin="0,0,8,0">
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                             <TextBlock Text="Source:" Foreground="#64748B" VerticalAlignment="Center" Margin="2,0,4,0" FontSize="10" FontWeight="Bold"/>
@@ -104,7 +106,7 @@
                         </StackPanel>
                     </Border>
 
-                    <!-- Group 3: FFT & Resolution -->
+                    <!-- FFT Resolution, Windows, Averaging & Smoothing -->
                     <Border Background="#121826" BorderBrush="#1E2638" BorderThickness="1" CornerRadius="6" Padding="4,2" Margin="0,0,8,0">
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                             <TextBlock Text="FFT:" Foreground="#64748B" VerticalAlignment="Center" Margin="2,0,2,0" FontSize="10" FontWeight="Bold"/>
@@ -139,8 +141,8 @@
                         </StackPanel>
                     </Border>
 
-                    <!-- Group 4: Acoustic Pro Features -->
-                    <Border Background="#121826" BorderBrush="#1E2638" BorderThickness="1" CornerRadius="6" Padding="4,2" Margin="0,0,8,0">
+                    <!-- Target & Blanking -->
+                    <Border Background="#121826" BorderBrush="#1E2638" BorderThickness="1" CornerRadius="6" Padding="4,2">
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                             <TextBlock Text="Target:" Foreground="#64748B" VerticalAlignment="Center" Margin="2,0,2,0" FontSize="10" FontWeight="Bold"/>
                             <ComboBox x:Name="TargetCombo" Width="82" SelectedIndex="0" FontSize="10">
@@ -150,53 +152,65 @@
                                 <ComboBoxItem Content="Cinema X"/>
                                 <ComboBoxItem Content="Flat (0dB)"/>
                             </ComboBox>
-                            <Button x:Name="DeltaBtn" Content="Î” TARGET" Background="#1E2638" Foreground="#E040FB" FontWeight="Bold" FontSize="9" Padding="5,3" Margin="3,0,2,0" CornerRadius="4"/>
-                            <Button x:Name="MinPhaseBtn" Content="MIN &#216;" Background="#1E2638" Foreground="#10B981" FontWeight="Bold" FontSize="9" Padding="5,3" Margin="0,0,2,0" CornerRadius="4"/>
-                            <Button x:Name="FdwBtn" Content="FDW (10)" ToolTip.Tip="Toggle Frequency-Dependent Windowing (Quasi-Anechoic)" Background="#1E2638" Foreground="#E040FB" FontWeight="Bold" FontSize="9" Padding="5,3" Margin="0,0,2,0" CornerRadius="4"/>
-                            <Button x:Name="InvertPolarityBtn" Content="INV &#216;" Background="#1E2638" Foreground="#F59E0B" FontWeight="Bold" FontSize="9" Padding="5,3" Margin="0,0,2,0" CornerRadius="4"/>
                             <StackPanel x:Name="BlankingPanel" Orientation="Horizontal" VerticalAlignment="Center">
-                            <TextBlock Text="Blank:" Foreground="#64748B" VerticalAlignment="Center" Margin="4,0,2,0" FontSize="10" FontWeight="Bold"/>
-                            <ComboBox x:Name="BlankingCombo" Width="68" SelectedIndex="0" FontSize="10">
-                                <ComboBoxItem Content="Off"/>
-                                <ComboBoxItem Content="30%"/>
-                                <ComboBoxItem Content="50%"/>
-                                <ComboBoxItem Content="70%"/>
-                            </ComboBox>
-                        </StackPanel>
-                        </StackPanel>
-                    </Border>
-
-                    <!-- Group 5: Delay Compensation & Auto-Align -->
-                    <Border x:Name="AutoDelayBorder" Background="#121826" BorderBrush="#1E2638" BorderThickness="1" CornerRadius="6" Padding="6,2" Margin="0,0,8,0">
-                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                            <StackPanel x:Name="DelayPanel" Orientation="Horizontal" VerticalAlignment="Center">
-                            <TextBlock Text="Delay:" Foreground="#64748B" VerticalAlignment="Center" Margin="0,0,2,0" FontSize="10" FontWeight="Bold"/>
-                            <Slider x:Name="DelaySlider" Width="50" Minimum="0" Maximum="20" Value="0" VerticalAlignment="Center"/>
-                            <TextBlock x:Name="DelayText" Text="0.0 ms" Foreground="#FF9100" FontWeight="Bold" VerticalAlignment="Center" Width="36" FontSize="10" Margin="2,0,4,0"/>
-                        </StackPanel>
-                            
-                            <TextBlock Text="IR: " Foreground="#64748B" FontSize="10" VerticalAlignment="Center"/>
-                            <TextBlock x:Name="DetectedDelayText" Text="0.0 ms" Foreground="#10B981" FontWeight="Bold" FontSize="10" VerticalAlignment="Center" Margin="0,0,4,0"/>
-                            <TextBlock x:Name="Rt60Text" Text="RT60: --" Foreground="#BA68C8" FontSize="10" FontWeight="SemiBold" VerticalAlignment="Center" Margin="2,0,4,0" IsVisible="False"/>
-                            <TextBlock x:Name="StiText" Text="STI: --" Foreground="#80D8FF" FontSize="10" FontWeight="SemiBold" VerticalAlignment="Center" Margin="2,0,4,0" IsVisible="False"/>
-                            <Button x:Name="AutoAlignBtn" Content="âš¡ ALIGN (A)" Background="#E65100" Foreground="White" FontWeight="Bold" FontSize="9" Padding="6,3" CornerRadius="4"/>
-                        </StackPanel>
-                    </Border>
-
-                    <!-- Group 6: Live Capture & Action Buttons -->
-                    <Border Background="#121826" BorderBrush="#1E2638" BorderThickness="1" CornerRadius="6" Padding="4,2">
-                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                            <Button x:Name="CaptureTraceBtn" Content="CAPTURE [Space]" Background="#0284C7" Foreground="White" FontWeight="Bold" FontSize="9" Padding="7,3" Margin="0,0,3,0" CornerRadius="4"/>
-                            <Button x:Name="ClearTracesBtn" Content="CLEAR" Background="#1E2638" Foreground="#94A3B8" FontSize="9" Padding="5,3" Margin="0,0,3,0" CornerRadius="4"/>
-                            <Button x:Name="ResetZoomBtn" Content="RESET (Z)" Background="#1E2638" Foreground="#00F0FF" FontWeight="Bold" FontSize="9" Padding="5,3" Margin="0,0,3,0" CornerRadius="4"/>
-                            <Button x:Name="ToggleTracesPanelBtn" Content="TRACES (T)" Background="#4527A0" Foreground="White" FontWeight="Bold" FontSize="9" Padding="6,3" Margin="0,0,3,0" CornerRadius="4"/>
-                            <Button x:Name="StartStopBtn" Content="PAUSE" Background="#1E2638" Foreground="#F8FAFC" FontSize="9" Padding="6,3" Margin="0,0,3,0" CornerRadius="4"/>
-                            <Button x:Name="ResetBtn" Content="RESET" Background="#1E2638" Foreground="#EF4444" FontSize="9" Padding="6,3" CornerRadius="4"/>
+                                <TextBlock Text="Blank:" Foreground="#64748B" VerticalAlignment="Center" Margin="4,0,2,0" FontSize="10" FontWeight="Bold"/>
+                                <ComboBox x:Name="BlankingCombo" Width="68" SelectedIndex="0" FontSize="10">
+                                    <ComboBoxItem Content="Off"/>
+                                    <ComboBoxItem Content="30%"/>
+                                    <ComboBoxItem Content="50%"/>
+                                    <ComboBoxItem Content="70%"/>
+                                </ComboBox>
+                            </StackPanel>
                         </StackPanel>
                     </Border>
 
                 </StackPanel>
-            </ScrollViewer>
+
+                <!-- TIER 2: TACTICAL PRO BUTTONS, DELAY ALIGNMENT & MAIN ACTIONS -->
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    
+                    <!-- Pro Feature Toggles -->
+                    <Border Background="#121826" BorderBrush="#1E2638" BorderThickness="1" CornerRadius="6" Padding="4,2" Margin="0,0,8,0">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <Button x:Name="DeltaBtn" Content="&#916; TARGET" Background="#1E2638" Foreground="#E040FB" FontWeight="Bold" FontSize="9" Padding="6,3" Margin="0,0,3,0" CornerRadius="4"/>
+                            <Button x:Name="MinPhaseBtn" Content="MIN &#216;" Background="#1E2638" Foreground="#10B981" FontWeight="Bold" FontSize="9" Padding="6,3" Margin="0,0,3,0" CornerRadius="4"/>
+                            <Button x:Name="FdwBtn" Content="FDW (10)" ToolTip.Tip="Toggle Frequency-Dependent Windowing (Quasi-Anechoic)" Background="#1E2638" Foreground="#E040FB" FontWeight="Bold" FontSize="9" Padding="6,3" Margin="0,0,3,0" CornerRadius="4"/>
+                            <Button x:Name="InvertPolarityBtn" Content="INV &#216;" Background="#1E2638" Foreground="#F59E0B" FontWeight="Bold" FontSize="9" Padding="6,3" CornerRadius="4"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Delay Compensation & Auto-Align Section -->
+                    <Border x:Name="AutoDelayBorder" Background="#121826" BorderBrush="#1E2638" BorderThickness="1" CornerRadius="6" Padding="6,2" Margin="0,0,8,0">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <StackPanel x:Name="DelayPanel" Orientation="Horizontal" VerticalAlignment="Center">
+                                <TextBlock Text="Delay:" Foreground="#64748B" VerticalAlignment="Center" Margin="0,0,2,0" FontSize="10" FontWeight="Bold"/>
+                                <Slider x:Name="DelaySlider" Width="55" Minimum="0" Maximum="20" Value="0" VerticalAlignment="Center"/>
+                                <TextBlock x:Name="DelayText" Text="0.0 ms" Foreground="#FF9100" FontWeight="Bold" VerticalAlignment="Center" Width="36" FontSize="10" Margin="2,0,4,0"/>
+                            </StackPanel>
+                            
+                            <TextBlock Text="IR: " Foreground="#64748B" FontSize="10" VerticalAlignment="Center"/>
+                            <TextBlock x:Name="DetectedDelayText" Text="0.0 ms" Foreground="#10B981" FontWeight="Bold" FontSize="10" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                            <TextBlock x:Name="Rt60Text" Text="RT60: --" Foreground="#BA68C8" FontSize="10" FontWeight="SemiBold" VerticalAlignment="Center" Margin="2,0,4,0" IsVisible="False"/>
+                            <TextBlock x:Name="StiText" Text="STI: --" Foreground="#80D8FF" FontSize="10" FontWeight="SemiBold" VerticalAlignment="Center" Margin="2,0,4,0" IsVisible="False"/>
+                            <Button x:Name="AutoAlignBtn" Content="âš¡ ALIGN (A)" Background="#E65100" Foreground="White" FontWeight="Bold" FontSize="9" Padding="7,3" CornerRadius="4"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Main Action Command Buttons -->
+                    <Border Background="#121826" BorderBrush="#1E2638" BorderThickness="1" CornerRadius="6" Padding="4,2">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <Button x:Name="CaptureTraceBtn" Content="â— CAPTURE [Space]" Background="#0284C7" Foreground="White" FontWeight="Bold" FontSize="9" Padding="8,3" Margin="0,0,4,0" CornerRadius="4"/>
+                            <Button x:Name="ClearTracesBtn" Content="CLEAR" Background="#1E2638" Foreground="#94A3B8" FontSize="9" Padding="6,3" Margin="0,0,4,0" CornerRadius="4"/>
+                            <Button x:Name="ResetZoomBtn" Content="RESET (Z)" Background="#1E2638" Foreground="#00F0FF" FontWeight="Bold" FontSize="9" Padding="6,3" Margin="0,0,4,0" CornerRadius="4"/>
+                            <Button x:Name="ToggleTracesPanelBtn" Content="TRACES (T)" Background="#4527A0" Foreground="White" FontWeight="Bold" FontSize="9" Padding="7,3" Margin="0,0,4,0" CornerRadius="4"/>
+                            <Button x:Name="StartStopBtn" Content="PAUSE" Background="#1E2638" Foreground="#F8FAFC" FontSize="9" Padding="7,3" Margin="0,0,4,0" CornerRadius="4"/>
+                            <Button x:Name="ResetBtn" Content="RESET" Background="#1E2638" Foreground="#EF4444" FontSize="9" Padding="7,3" CornerRadius="4"/>
+                        </StackPanel>
+                    </Border>
+
+                </StackPanel>
+
+            </StackPanel>
         </Border>
 
         <!-- ROW 2: MAIN WORKSPACE (CENTER GRAPH + SIDE TRACE DRAWER) -->
@@ -204,7 +218,7 @@
             <controls:AcousticGraphControl x:Name="GraphControl" Grid.Column="0"/>
 
             <!-- PANEL LATERAL GESTOR DE TRAZAS & ASISTENTES (COLLAPSIBLE) -->
-            <Border x:Name="TraceManagerBorder" Grid.Column="1" Width="260" Background="#0E121A" BorderBrush="#1E2638" BorderThickness="1,0,0,0" IsVisible="True">
+            <Border x:Name="TraceManagerBorder" Grid.Column="1" Width="280" Background="#0E121A" BorderBrush="#1E2638" BorderThickness="1,0,0,0" IsVisible="True">
                 <Grid RowDefinitions="Auto,Auto,*,Auto">
                     
                     <!-- Header -->
@@ -214,17 +228,17 @@
                             <Button x:Name="SpatialAvgBtn" Grid.Column="1" Content="AVG" Background="#0284C7" Foreground="White" FontWeight="Bold" FontSize="8" Padding="4,2" Margin="0,0,3,0" CornerRadius="3"/>
                             <Button x:Name="SimulateSumBtn" Grid.Column="2" Content="SUM" Background="#C2185B" Foreground="White" FontWeight="Bold" FontSize="8" Padding="4,2" Margin="0,0,3,0" CornerRadius="3"/>
                             <Button x:Name="DiffTracesBtn" Grid.Column="3" Content="DIFF" Background="#7B1FA2" Foreground="White" FontWeight="Bold" FontSize="8" Padding="4,2" Margin="0,0,3,0" CornerRadius="3"/>
-                            <Button x:Name="CloseTracePanelBtn" Grid.Column="4" Content="âœ•" Background="Transparent" Foreground="#94A3B8" Padding="4,1" FontSize="11"/>
+                            <Button x:Name="CloseTracePanelBtn" Grid.Column="4" Content="&#10005;" Background="Transparent" Foreground="#94A3B8" Padding="4,1" FontSize="11"/>
                         </Grid>
                     </Border>
 
-                    <!-- Session Toolbar Buttons -->
+                    <!-- Session Toolbar Buttons (2x2 Grid for comfortable reading) -->
                     <Border Grid.Row="1" Background="#090C12" Padding="6,4" BorderBrush="#1E2638" BorderThickness="0,0,0,1">
-                        <UniformGrid Columns="4">
-                            <Button x:Name="SaveSessionBtn" Content="SAVE PRJ" Background="#1565C0" Foreground="White" FontWeight="Bold" FontSize="8" Padding="2,3" Margin="1" CornerRadius="3"/>
-                            <Button x:Name="OpenSessionBtn" Content="OPEN PRJ" Background="#0D47A1" Foreground="White" FontWeight="Bold" FontSize="8" Padding="2,3" Margin="1" CornerRadius="3"/>
-                            <Button x:Name="ExportTraceBtn" Content="EXPORT" Background="#00695C" Foreground="White" FontSize="8" Padding="2,3" Margin="1" CornerRadius="3"/>
-                            <Button x:Name="ImportTraceBtn" Content="IMPORT" Background="#2E7D32" Foreground="White" FontSize="8" Padding="2,3" Margin="1" CornerRadius="3"/>
+                        <UniformGrid Columns="2" Rows="2">
+                            <Button x:Name="SaveSessionBtn" Content="SAVE PROJECT" Background="#1565C0" Foreground="White" FontWeight="Bold" FontSize="8" Padding="4,4" Margin="1" CornerRadius="3" HorizontalContentAlignment="Center"/>
+                            <Button x:Name="OpenSessionBtn" Content="OPEN PROJECT" Background="#0D47A1" Foreground="White" FontWeight="Bold" FontSize="8" Padding="4,4" Margin="1" CornerRadius="3" HorizontalContentAlignment="Center"/>
+                            <Button x:Name="ExportTraceBtn" Content="EXPORT CSV" Background="#00695C" Foreground="White" FontSize="8" Padding="4,4" Margin="1" CornerRadius="3" HorizontalContentAlignment="Center"/>
+                            <Button x:Name="ImportTraceBtn" Content="IMPORT CSV" Background="#2E7D32" Foreground="White" FontSize="8" Padding="4,4" Margin="1" CornerRadius="3" HorizontalContentAlignment="Center"/>
                         </UniformGrid>
                     </Border>
 
@@ -247,7 +261,7 @@
                                 </ComboBox>
                                 <Button x:Name="CalculateAlignmentBtn" Content="CALC" Background="#00838F" Foreground="White" FontWeight="Bold" FontSize="9" Padding="6,2" Margin="4,0,0,0" CornerRadius="3"/>
                             </StackPanel>
-                            <TextBlock x:Name="AlignmentResultText" Text="Capture â‰¥2 traces (Sub, Main)" Foreground="#64748B" FontSize="9" TextWrapping="Wrap"/>
+                            <TextBlock x:Name="AlignmentResultText" Text="Capture &gt;= 2 traces (Sub, Main)" Foreground="#64748B" FontSize="9" TextWrapping="Wrap"/>
                             <Button x:Name="ApplyAlignmentBtn" Content="APPLY TO SUB" Background="#2E7D32" Foreground="White" FontWeight="Bold" FontSize="9" Padding="4,2" Margin="0,4,0,0" IsVisible="False" HorizontalAlignment="Stretch" CornerRadius="3"/>
                             
                             <!-- Multi-Zone Delay Matrix -->
@@ -256,7 +270,7 @@
                                 <TextBlock Text="DELAY MATRIX (ZONES)" Foreground="#F59E0B" FontWeight="Bold" FontSize="10" VerticalAlignment="Center"/>
                                 <Button x:Name="CalculateDelayMatrixBtn" Grid.Column="1" Content="CALC" Background="#E65100" Foreground="White" FontWeight="Bold" FontSize="9" Padding="6,2" CornerRadius="3"/>
                             </Grid>
-                            <TextBlock x:Name="DelayMatrixResultText" Text="Capture â‰¥2 traces for zone delays" Foreground="#64748B" FontSize="9" TextWrapping="Wrap"/>
+                            <TextBlock x:Name="DelayMatrixResultText" Text="Capture &gt;= 2 traces for zone delays" Foreground="#64748B" FontSize="9" TextWrapping="Wrap"/>
                         </StackPanel>
                     </Border>
 
@@ -303,7 +317,7 @@
 
                 <!-- Center: Shortcuts Prompt -->
                 <StackPanel Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Center">
-                    <TextBlock Text="[Space] Capture | [A] Align | [Z] Reset Zoom | [W] FDW | [P] Invert Ã˜ | [T] Traces | [M] Mode" Foreground="#64748B" FontSize="10" FontFamily="JetBrains Mono, Segoe UI"/>
+                    <TextBlock Text="[Space] Capture | [A] Align | [Z] Reset Zoom | [W] FDW | [P] Invert &#216; | [T] Traces | [M] Mode" Foreground="#64748B" FontSize="10" FontFamily="JetBrains Mono, Segoe UI"/>
                 </StackPanel>
 
                 <!-- Right: Engine Precision Architecture Tag -->
