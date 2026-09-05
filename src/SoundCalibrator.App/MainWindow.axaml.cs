@@ -199,6 +199,17 @@ public partial class MainWindow : Window
         {
             GraphControl.ResetZoom();
         };
+        FdwBtn.Click += (s, e) =>
+        {
+            GraphControl.ShowFdwQuasiAnechoic = !GraphControl.ShowFdwQuasiAnechoic;
+            FdwBtn.Background = GraphControl.ShowFdwQuasiAnechoic
+                ? Avalonia.Media.SolidColorBrush.Parse("#8E24AA")
+                : Avalonia.Media.SolidColorBrush.Parse("#263238");
+            FdwBtn.Foreground = GraphControl.ShowFdwQuasiAnechoic
+                ? Avalonia.Media.SolidColorBrush.Parse("#FFFFFF")
+                : Avalonia.Media.SolidColorBrush.Parse("#B0BEC5");
+            GraphControl.InvalidateVisual();
+        };
         ModeCombo.SelectionChanged += OnModeChanged;
         SourceCombo.SelectionChanged += OnSourceChanged;
         FftCombo.SelectionChanged += OnFftOrWindowChanged;
@@ -660,6 +671,10 @@ public partial class MainWindow : Window
                 break;
             case Avalonia.Input.Key.Z:
                 ResetZoomBtn.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+                e.Handled = true;
+                break;
+            case Avalonia.Input.Key.W:
+                FdwBtn.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
                 e.Handled = true;
                 break;
             case Avalonia.Input.Key.D1 or Avalonia.Input.Key.NumPad1:
