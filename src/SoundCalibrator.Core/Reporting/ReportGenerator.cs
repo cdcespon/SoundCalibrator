@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Text;
 using SoundCalibrator.Core.Analysis;
@@ -21,6 +21,7 @@ public sealed class CalibrationReportData
     public ReverberationTimeResult? Rt60 { get; set; }
     public StiResult? Sti { get; set; }
     public ThdResult? Thd { get; set; }
+    public ImdResult? Imd { get; set; }
     public EtcResult? Etc { get; set; }
     public AlignmentSuggestion? Alignment { get; set; }
     public DelayMatrixReport? DelayMatrix { get; set; }
@@ -91,6 +92,21 @@ public static class ReportGenerator
             sb.AppendLine($"* **Fundamental:** {t.FundamentalFreqHz:0.#} Hz at {t.FundamentalDb:+0.00;-0.00;0.00} dBFS");
             sb.AppendLine($"* **THD:** {t.ThdPercent:0.00}% ({t.ThdDb:0.0} dB)");
             sb.AppendLine($"* **THD+N:** {t.ThdPlusNPercent:0.00}% ({t.ThdPlusNDb:0.0} dB)");
+            sb.AppendLine();
+        }
+
+        if (data.Imd != null && data.Imd.ImdPercent > 0.001f)
+        {
+            var imd = data.Imd;
+            sb.AppendLine($"## Intermodulation Distortion (IMD - {imd.Standard})");
+            sb.AppendLine($"* **Standard:** {imd.Standard} | **Carrier / Primary:** {imd.PrimaryToneDb:+0.00;-0.00;0.00} dBFS");
+            sb.AppendLine($"* **Total IMD:** {imd.ImdPercent:0.00}% ({imd.ImdDb:0.0} dB)");
+            sb.AppendLine("| Product | Frequency | Level (dBFS) |");
+            sb.AppendLine("| :--- | :--- | :--- |");
+            foreach (var p in imd.Products)
+            {
+                sb.AppendLine($"| {p.Name} | {p.FrequencyHz:0.#} Hz | {p.LevelDb:+0.00;-0.00;0.00} dBFS |");
+            }
             sb.AppendLine();
         }
 

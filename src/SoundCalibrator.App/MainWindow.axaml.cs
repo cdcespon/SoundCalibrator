@@ -30,6 +30,7 @@ public partial class MainWindow : Window
     private System.Collections.Generic.IReadOnlyList<PeqFilterSuggestion>? _lastPeqSuggestions;
     private StiResult? _lastSti;
     private DelayMatrixReport? _lastDelayMatrixReport;
+    private ImdResult? _lastImd;
     private static readonly string[] TraceColors = ["#E040FB", "#76FF03", "#FFD600", "#FF4081", "#00E676", "#448AFF"];
     public MainWindow()
     {
@@ -354,6 +355,7 @@ public partial class MainWindow : Window
                     Thd = _lastSnapshot != null && _lastSnapshot.IsRtaMode 
                         ? ThdCalculator.Calculate(_lastSnapshot.Frequencies, _lastSnapshot.RtaDb) 
                         : null,
+                    Imd = _lastImd,
                     Sti = _lastSti,
                     Alignment = _lastAlignmentSuggestion,
                     DelayMatrix = _lastDelayMatrixReport,
@@ -695,6 +697,20 @@ public partial class MainWindow : Window
                 {
                     ThdBadge.IsVisible = false;
                 }
+
+                if (_syntheticGen != null && (_syntheticGen.SignalType == TestSignalType.SmpteImd || _syntheticGen.SignalType == TestSignalType.CcifImd))
+                {
+                    _lastImd = _syntheticGen.SignalType == TestSignalType.SmpteImd
+                        ? ImdCalculator.CalculateSmpte(snapshot.Frequencies, snapshot.RtaDb)
+                        : ImdCalculator.CalculateCcif(snapshot.Frequencies, snapshot.RtaDb);
+
+                    ImdText.Text = $"{_lastImd.ImdPercent:0.00}% ({_lastImd.ImdDb:0.0}dB)";
+                    ImdBadge.IsVisible = true;
+                }
+                else
+                {
+                    ImdBadge.IsVisible = false;
+                }
                 var spl = _splMeter.CalculateSpl(snapshot.Frequencies, snapshot.RtaDb);
                 SplText.Text = $"{spl.DbA:0.0} dBA | {spl.DbC:0.0} dBC";
                 SplBadge.IsVisible = true;
@@ -787,7 +803,23 @@ public partial class MainWindow : Window
             UpdateStatusDeviceText();
             if (!_isPaused) _engine.Start();
         }
-        else if (idx == 6) // WASAPI
+        else if (idx == 6) // SMPTE IMD
+        {
+            _syntheticGen ??= new SyntheticAudioGenerator(48000, 512);
+            _syntheticGen.SignalType = TestSignalType.SmpteImd;
+            _engine.AttachDevice(_syntheticGen);
+            UpdateStatusDeviceText();
+            if (!_isPaused) _engine.Start();
+        }
+        else if (idx == 7) // CCIF IMD
+        {
+            _syntheticGen ??= new SyntheticAudioGenerator(48000, 512);
+            _syntheticGen.SignalType = TestSignalType.CcifImd;
+            _engine.AttachDevice(_syntheticGen);
+            UpdateStatusDeviceText();
+            if (!_isPaused) _engine.Start();
+        }
+        else if (idx == 8) // WASAPI
         {
             if (OperatingSystem.IsWindows())
             {
@@ -828,6 +860,8 @@ public partial class MainWindow : Window
             3 => "Gated Pink Noise",
             4 => "IEC 60268-1 Program Noise",
             5 => "Polarity Pulse",
+            6 => "SMPTE IMD (60Hz + 7kHz)",
+            7 => "CCIF IMD (19kHz + 20kHz)",
             _ => "Audio Device"
         };
         StatusDeviceText.Text = $"Synthetic: {srcName} ({_engine.SampleRate} Hz, FFT: {_engine.FftSize})";
