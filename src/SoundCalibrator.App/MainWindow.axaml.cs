@@ -344,7 +344,7 @@ public partial class MainWindow : Window
             var visibleTraces = System.Linq.Enumerable.ToList(System.Linq.Enumerable.Where(GraphControl.StoredTraces, t => t.IsVisible));
             if (visibleTraces.Count < 2)
             {
-                DelayMatrixResultText.Text = "Requires â‰¥2 visible traces with detected delay.";
+                DelayMatrixResultText.Text = "Requires >= 2 visible traces with detected delay.";
                 DelayMatrixResultText.Foreground = Avalonia.Media.SolidColorBrush.Parse("#FF5252");
                 return;
             }
@@ -359,7 +359,7 @@ public partial class MainWindow : Window
             {
                 var a = report.Alignments[i];
                 string sign = a.RequiredDelayOffsetMs >= 0 ? "+" : "";
-                sb.AppendLine($"â€¢ {a.Name}: {sign}{a.RequiredDelayOffsetMs:0.0} ms ({sign}{a.RelativeDistanceMeters:0.00} m)");
+                sb.AppendLine($"- {a.Name}: {sign}{a.RequiredDelayOffsetMs:0.0} ms ({sign}{a.RelativeDistanceMeters:0.00} m)");
             }
 
             DelayMatrixResultText.Text = sb.ToString().TrimEnd();

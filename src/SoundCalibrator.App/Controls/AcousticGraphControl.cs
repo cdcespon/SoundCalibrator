@@ -746,7 +746,10 @@ public sealed class AcousticGraphControl : Control
                 11,
                 new SolidColorBrush(TextColor));
 
-            context.DrawText(formattedText, new Point(x + 3, cohTop - 15));
+            if (x < w - 48)
+            {
+                context.DrawText(formattedText, new Point(x + 3, cohTop - 15));
+            }
         }
     }
 
@@ -762,14 +765,17 @@ public sealed class AcousticGraphControl : Control
             double y = DbToY(db, mainH);
             context.DrawLine(gridPen, new Point(0, y), new Point(w, y));
 
-            var label = new FormattedText(
-                $"{db:+0;-0;0} dB",
-                CultureInfo.InvariantCulture,
-                FlowDirection.LeftToRight,
-                LabelFont,
-                10,
-                new SolidColorBrush(Color.Parse("#00E5FF")));
-            context.DrawText(label, new Point(5, y - 12));
+            if (y < mainH - 12)
+            {
+                var label = new FormattedText(
+                    $"{db:+0;-0;0} dB",
+                    CultureInfo.InvariantCulture,
+                    FlowDirection.LeftToRight,
+                    LabelFont,
+                    10,
+                    new SolidColorBrush(Color.Parse("#00F0FF")));
+                context.DrawText(label, new Point(6, y - 12));
+            }
         }
 
         float[] phaseTicks = [180f, 90f, 0f, -90f, -180f];
