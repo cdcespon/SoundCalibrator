@@ -158,6 +158,72 @@ public partial class MainWindow : Window
             GraphControl.ActiveTargetCurve = preset == TargetCurvePreset.None ? null : TargetCurve.CreatePreset(preset);
             GraphControl.InvalidateVisual();
         };
+        SaveSessionBtn.Click += async (s, e) =>
+        {
+            var topLevel = TopLevel.GetTopLevel(this);
+            if (topLevel == null) return;
+            var file = await topLevel.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
+            {
+                Title = "Save SoundCalibrator Session Project (.scproj)",
+                DefaultExtension = "scproj",
+                SuggestedFileName = $"Session_{DateTime.Now:yyyyMMdd_HHmmss}.scproj"
+            });
+            if (file != null)
+            {
+                var session = new ProjectSession
+                {
+                    ProjectName = "SoundCalibrator Live Tuning",
+                    SampleRate = (int)_engine.SampleRate,
+                    FftSize = _engine.FftSize,
+                    WindowType = (WindowCombo.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? "Hann",
+                    AveragingType = _engine.Averaging.ToString(),
+                    DelayCompensationMs = _engine.DelayCompensationMs,
+                    InvertPolarity = _engine.InvertPolarity,
+                    SplOffsetDb = _splMeter.SplOffsetDb,
+                    TargetCurvePresetName = GraphControl.ActiveTargetCurve?.Name,
+                    StoredTraces = System.Linq.Enumerable.ToList(System.Linq.Enumerable.Select(GraphControl.StoredTraces, AcousticTraceDto.FromModel))
+                };
+                string json = SessionSerializer.Serialize(session);
+                await using var stream = await file.OpenWriteAsync();
+                await using var writer = new System.IO.StreamWriter(stream);
+                await writer.WriteAsync(json);
+                StatusDeviceText.Text = $"Session Saved: {file.Name} ({session.StoredTraces.Count} traces)";
+            }
+        };
+
+        OpenSessionBtn.Click += async (s, e) =>
+        {
+            var topLevel = TopLevel.GetTopLevel(this);
+            if (topLevel == null) return;
+            var files = await topLevel.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+            {
+                Title = "Open SoundCalibrator Session Project (.scproj, .json)",
+                AllowMultiple = false
+            });
+            if (files.Count > 0)
+            {
+                var file = files[0];
+                await using var stream = await file.OpenReadAsync();
+                using var reader = new System.IO.StreamReader(stream);
+                string json = await reader.ReadToEndAsync();
+                var session = SessionSerializer.Deserialize(json);
+                if (session != null)
+                {
+                    GraphControl.StoredTraces.Clear();
+                    foreach (var dto in session.StoredTraces)
+                    {
+                        GraphControl.StoredTraces.Add(dto.ToModel());
+                    }
+                    _engine.DelayCompensationMs = session.DelayCompensationMs;
+                    _engine.InvertPolarity = session.InvertPolarity;
+                    TracesCountText.Text = $"Captured Traces: {GraphControl.StoredTraces.Count}";
+                    RefreshTraceManagerUI();
+                    GraphControl.InvalidateVisual();
+                    StatusDeviceText.Text = $"Session Loaded: {file.Name} ({session.StoredTraces.Count} traces restored)";
+                }
+            }
+        };
+
         ExportTraceBtn.Click += async (s, e) =>
         {
             if (GraphControl.StoredTraces.Count == 0 && _lastSnapshot == null) return;
