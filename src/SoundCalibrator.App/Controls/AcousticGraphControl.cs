@@ -28,6 +28,7 @@ public sealed class AcousticGraphControl : Control
     public bool IsSpectrogramMode { get; set; } = false;
     public bool ShowGroupDelay { get; set; } = false;
     public bool RtaBarMode { get; set; } = false;
+    public bool ShowImpulseEtc { get; set; } = false;
     private SpectrogramBuffer? _spectrogramBuffer;
     private WriteableBitmap? _spectrogramBmp;
 
@@ -77,6 +78,16 @@ public sealed class AcousticGraphControl : Control
         if (w <= 10 || h <= 10) return;
 
         context.FillRectangle(new SolidColorBrush(BgColor), bounds);
+
+        if (ShowImpulseEtc && _currentSnapshot != null && _currentSnapshot.ImpulseResponse.Length > 0)
+        {
+            DrawImpulseAndEtc(context, w, h, _currentSnapshot);
+            if (_mousePosition.HasValue)
+            {
+                DrawEtcCrosshair(context, w, h, _mousePosition.Value, _currentSnapshot);
+            }
+            return;
+        }
 
         if (IsSpectrogramMode && _spectrogramBuffer != null && _currentSnapshot != null)
         {
@@ -889,5 +900,132 @@ public sealed class AcousticGraphControl : Control
     {
         float clamped = Math.Clamp(ms, -10f, 30f);
         return mainH * (1.0 - (clamped + 10f) / 40f);
+    }
+
+    private static double EtcDbToY(float db, double h)
+    {
+        const float maxDb = 0f;
+        const float minDb = -80f;
+        float norm = (Math.Clamp(db, minDb, maxDb) - minDb) / (maxDb - minDb);
+        return (h * 0.9) * (1.0 - norm) + (h * 0.05);
+    }
+
+    private void DrawImpulseAndEtc(DrawingContext context, double w, double h, MeasurementSnapshot snapshot)
+    {
+        var etc = EtcCalculator.Calculate(snapshot.ImpulseResponse, (int)snapshot.SampleRate, minDb: -80f, reflectionThresholdDb: -30f);
+        if (etc.TimeMs.Length == 0) return;
+
+        float maxTimeMs = Math.Min(60.0f, etc.TimeMs[^1]);
+        if (maxTimeMs <= 0f) maxTimeMs = 50.0f;
+
+        var gridPen = new Pen(new SolidColorBrush(GridColor), 1, DashStyle.Dash);
+        var textBrush = new SolidColorBrush(TextColor);
+
+        // 1. Grid temporal (cada 5 ms)
+        for (float t = 0f; t <= maxTimeMs; t += 5f)
+        {
+            double x = (t / maxTimeMs) * w;
+            context.DrawLine(gridPen, new Point(x, 0), new Point(x, h));
+
+            var lbl = new FormattedText($"{t:0} ms", CultureInfo.InvariantCulture, FlowDirection.LeftToRight, LabelFont, 10, textBrush);
+            context.DrawText(lbl, new Point(x + 3, h - 16));
+        }
+
+        // 2. Grid de amplitud dB (0 dB a -80 dB, paso 10 dB)
+        for (float db = -80f; db <= 0f; db += 10f)
+        {
+            double y = EtcDbToY(db, h);
+            context.DrawLine(gridPen, new Point(0, y), new Point(w, y));
+
+            var lbl = new FormattedText($"{db:0} dB", CultureInfo.InvariantCulture, FlowDirection.LeftToRight, LabelFont, 10, textBrush);
+            context.DrawText(lbl, new Point(8, y - 6));
+        }
+
+        // 3. Curva de respuesta impulsional lineal normalizada (h(t)) en fondo atenuado
+        float maxIr = 1e-12f;
+        for (int i = 0; i < snapshot.ImpulseResponse.Length; i++)
+        {
+            float abs = MathF.Abs(snapshot.ImpulseResponse[i]);
+            if (abs > maxIr) maxIr = abs;
+        }
+
+        var irGeom = new StreamGeometry();
+        using (var sgc = irGeom.Open())
+        {
+            bool first = true;
+            double baselineY = EtcDbToY(-80f, h);
+            for (int i = 0; i < snapshot.ImpulseResponse.Length; i++)
+            {
+                float t = etc.TimeMs[i];
+                if (t > maxTimeMs) break;
+                double x = (t / maxTimeMs) * w;
+                float normIr = snapshot.ImpulseResponse[i] / maxIr;
+                double y = baselineY - (Math.Max(0f, normIr) * (h * 0.4));
+                if (first) { sgc.BeginFigure(new Point(x, y), false); first = false; }
+                else { sgc.LineTo(new Point(x, y)); }
+            }
+        }
+        context.DrawGeometry(null, new Pen(new SolidColorBrush(Color.Parse("#334155")), 1), irGeom);
+
+        // 4. Curva de EnergÃ­a-Tiempo (ETC dB) en Cyan brillante
+        var etcGeom = new StreamGeometry();
+        using (var sgc = etcGeom.Open())
+        {
+            bool first = true;
+            for (int i = 0; i < etc.TimeMs.Length; i++)
+            {
+                float t = etc.TimeMs[i];
+                if (t > maxTimeMs) break;
+                double x = (t / maxTimeMs) * w;
+                double y = EtcDbToY(etc.EnvelopeDb[i], h);
+                if (first) { sgc.BeginFigure(new Point(x, y), false); first = false; }
+                else { sgc.LineTo(new Point(x, y)); }
+            }
+        }
+        context.DrawGeometry(null, new Pen(new SolidColorBrush(MagLineColor), 2), etcGeom);
+
+        // 5. Marcador de Sonido Directo
+        double directX = (etc.DirectSoundTimeMs / maxTimeMs) * w;
+        context.DrawLine(new Pen(new SolidColorBrush(CohLineColor), 1.5, DashStyle.Dash), new Point(directX, 0), new Point(directX, h));
+        var directLbl = new FormattedText($"DIRECT ({etc.DirectSoundTimeMs:0.0}ms)", CultureInfo.InvariantCulture, FlowDirection.LeftToRight, LabelFont, 10, new SolidColorBrush(CohLineColor));
+        context.DrawText(directLbl, new Point(directX + 4, 18));
+
+        // 6. Marcadores de Reflexiones Tempranas
+        var reflPen = new Pen(new SolidColorBrush(Color.Parse("#FFD600")), 1, DashStyle.Dash);
+        for (int i = 0; i < etc.Reflections.Count; i++)
+        {
+            var r = etc.Reflections[i];
+            if (r.TimeMs > maxTimeMs) continue;
+            double rx = (r.TimeMs / maxTimeMs) * w;
+            double ry = EtcDbToY(r.LevelDb, h);
+
+            context.DrawLine(reflPen, new Point(rx, ry), new Point(rx, h));
+            context.DrawEllipse(new SolidColorBrush(Color.Parse("#FFD600")), null, new Point(rx, ry), 3.5, 3.5);
+
+            var rLbl = new FormattedText($"R{i + 1}: +{r.RelativeDelayMs:0.0}ms ({r.LevelDb:0.0}dB, +{r.PathDifferenceMeters:0.00}m)",
+                CultureInfo.InvariantCulture, FlowDirection.LeftToRight, LabelFont, 9, new SolidColorBrush(Color.Parse("#FFD600")));
+            context.DrawText(rLbl, new Point(rx + 4, ry - 14));
+        }
+    }
+
+    private void DrawEtcCrosshair(DrawingContext context, double w, double h, Point mouse, MeasurementSnapshot snapshot)
+    {
+        var crosshairPen = new Pen(new SolidColorBrush(CrosshairColor), 1, DashStyle.Dash);
+        context.DrawLine(crosshairPen, new Point(mouse.X, 0), new Point(mouse.X, h));
+        context.DrawLine(crosshairPen, new Point(0, mouse.Y), new Point(w, mouse.Y));
+
+        float maxTimeMs = 60.0f;
+        float curTimeMs = (float)(mouse.X / w) * maxTimeMs;
+        float normY = (float)((mouse.Y - (h * 0.05)) / (h * 0.9));
+        float curDb = Math.Clamp(-normY * 80.0f, -80f, 0f);
+        float distM = curTimeMs * 0.001f * 343.0f;
+
+        string readout = $"Time: {curTimeMs:0.00} ms  |  ETC: {curDb:0.0} dB  |  Path Dist: {distM:0.00} m";
+        var readoutText = new FormattedText(readout, CultureInfo.InvariantCulture, FlowDirection.LeftToRight, LabelFont, 12, new SolidColorBrush(Color.Parse("#E0E6ED")));
+
+        var badgeRect = new Rect(w / 2 - 160, 10, 320, 26);
+        context.FillRectangle(new SolidColorBrush(Color.Parse("#CC1A202C")), badgeRect, 4);
+        context.DrawRectangle(new Pen(new SolidColorBrush(Color.Parse("#3A4556")), 1), badgeRect, 4);
+        context.DrawText(readoutText, new Point(w / 2 - 150, 14));
     }
 }
