@@ -533,18 +533,20 @@ public partial class MainWindow : Window
         bool isRta = mode == 1;
         bool isSpectro = mode == 2;
         bool isGroupDelay = mode == 3;
+        bool isImpulseEtc = mode == 4;
 
         _engine.IsRtaMode = isRta;
         GraphControl.IsSpectrogramMode = isSpectro;
         GraphControl.ShowGroupDelay = isGroupDelay;
+        GraphControl.ShowImpulseEtc = isImpulseEtc;
         ToggleRtaBarsBtn.IsVisible = isRta;
 
         bool showControls = isTf || isGroupDelay;
         BlankingPanel.IsVisible = showControls;
-        DelayPanel.IsVisible = showControls;
-        AutoDelayBorder.IsVisible = showControls;
+        DelayPanel.IsVisible = showControls || isImpulseEtc;
+        AutoDelayBorder.IsVisible = showControls || isImpulseEtc;
         DeltaBtn.IsVisible = showControls;
-        InvertPolarityBtn.IsVisible = showControls;
+        InvertPolarityBtn.IsVisible = showControls || isImpulseEtc;
         GraphControl.InvalidateVisual();
     }
     private void OnFftOrWindowChanged(object? sender, SelectionChangedEventArgs e)
