@@ -164,11 +164,12 @@
             <Border x:Name="TraceManagerBorder" Grid.Column="1" Width="240" Background="#131720" BorderBrush="#1F2530" BorderThickness="1,0,0,0" IsVisible="True">
                 <Grid RowDefinitions="Auto,*,Auto">
                     <Border Grid.Row="0" Background="#181D28" Padding="10,8" BorderBrush="#1F2530" BorderThickness="0,0,0,1">
-                        <Grid ColumnDefinitions="*,Auto,Auto,Auto">
+                        <Grid ColumnDefinitions="*,Auto,Auto,Auto,Auto">
                             <TextBlock Text="STORED TRACES" Foreground="#E0E6ED" FontWeight="Bold" FontSize="11" VerticalAlignment="Center"/>
                             <Button x:Name="SpatialAvgBtn" Grid.Column="1" Content="AVG MICS" Background="#0277BD" Foreground="White" FontWeight="Bold" FontSize="9" Padding="4,2" Margin="0,0,4,0"/>
-                            <Button x:Name="SimulateSumBtn" Grid.Column="2" Content="SUM (Î£)" Background="#C2185B" Foreground="White" FontWeight="Bold" FontSize="9" Padding="4,2" Margin="0,0,4,0"/>
-                            <Button x:Name="CloseTracePanelBtn" Grid.Column="3" Content="✕" Background="Transparent" Foreground="#7E8B9B" Padding="4,1" FontSize="11"/>
+                            <Button x:Name="SimulateSumBtn" Grid.Column="2" Content="SUM" Background="#C2185B" Foreground="White" FontWeight="Bold" FontSize="9" Padding="4,2" Margin="0,0,3,0"/>
+                            <Button x:Name="DiffTracesBtn" Grid.Column="3" Content="DIFF (A/B)" Background="#7B1FA2" Foreground="White" FontWeight="Bold" FontSize="9" Padding="4,2" Margin="0,0,3,0"/>
+                            <Button x:Name="CloseTracePanelBtn" Grid.Column="4" Content="âœ•" Background="Transparent" Foreground="#7E8B9B" Padding="4,1" FontSize="11"/>
                         </Grid>
                     </Border>
 
