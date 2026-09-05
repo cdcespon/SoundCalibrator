@@ -327,6 +327,25 @@ public partial class MainWindow : Window
             }
         };
 
+        DiffTracesBtn.Click += (s, e) =>
+        {
+            var visibleTraces = System.Linq.Enumerable.ToList(System.Linq.Enumerable.Where(GraphControl.StoredTraces, t => t.IsVisible && !t.IsRtaTrace));
+            if (visibleTraces.Count >= 2)
+            {
+                var diffTrace = SoundCalibrator.Core.Operations.TraceMath.DivideTraces(
+                    visibleTraces[0],
+                    visibleTraces[1],
+                    $"Diff ({visibleTraces[0].Name} / {visibleTraces[1].Name})",
+                    "#E040FB");
+                if (diffTrace != null)
+                {
+                    GraphControl.StoredTraces.Add(diffTrace);
+                    RefreshTraceManagerUI();
+                    GraphControl.InvalidateVisual();
+                }
+            }
+        };
+
         SpatialAvgBtn.Click += (s, e) =>
         {
             var visibleTraces = System.Linq.Enumerable.ToList(System.Linq.Enumerable.Where(GraphControl.StoredTraces, t => t.IsVisible));
