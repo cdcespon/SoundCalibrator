@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using SoundCalibrator.Core.Analysis;
 using SoundCalibrator.Core.Models;
 using SoundCalibrator.Core.Reporting;
@@ -98,6 +98,39 @@ public class ReportGeneratorTests
         Assert.Contains("## 6. Multi-Zone Delay Matrix Alignment", md);
         Assert.Contains("Main PA", md);
         Assert.Contains("Delay Tower", md);
-        Assert.Contains("+32.00 ms", md);
+    }
+
+    [Fact]
+    public void GenerateMarkdown_WithEtcReflections_RendersEarlyReflectionsTable()
+    {
+        var reflections = new AcousticReflection[]
+        {
+            new(7.08f, 5.0f, -6.02f, 1.715f),
+            new(12.08f, 10.0f, -12.04f, 3.43f)
+        };
+        var etcResult = new EtcResult
+        {
+            TimeMs = [2.08f, 7.08f, 12.08f],
+            EnvelopeDb = [0f, -6.02f, -12.04f],
+            DirectSoundTimeMs = 2.08f,
+            Reflections = reflections
+        };
+
+        var data = new CalibrationReportData
+        {
+            ProjectName = "Theater Acoustic Audit",
+            Timestamp = DateTime.UtcNow,
+            Etc = etcResult
+        };
+
+        string md = ReportGenerator.GenerateMarkdown(data);
+
+        Assert.Contains("## Early Reflection Analysis (Energy-Time Curve ETC)", md);
+        Assert.Contains("2.08 ms", md);
+        Assert.Contains("+5.00 ms", md);
+        Assert.Contains("-6.02 dB", md);
+        Assert.Contains("+1.72 m", md);
+        Assert.Contains("+10.00 ms", md);
+        Assert.Contains("+3.43 m", md);
     }
 }

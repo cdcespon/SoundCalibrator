@@ -271,6 +271,9 @@ public partial class MainWindow : Window
                     Rt60 = _lastSnapshot != null && !_lastSnapshot.IsRtaMode && _lastSnapshot.ImpulseResponse.Length > 0 
                         ? ReverberationTimeCalculator.Calculate(_lastSnapshot.ImpulseResponse, (int)_lastSnapshot.SampleRate) 
                         : null,
+                    Etc = _lastSnapshot != null && !_lastSnapshot.IsRtaMode && _lastSnapshot.ImpulseResponse.Length > 0
+                        ? EtcCalculator.Calculate(_lastSnapshot.ImpulseResponse, (int)_lastSnapshot.SampleRate)
+                        : null,
                     Thd = _lastSnapshot != null && _lastSnapshot.IsRtaMode 
                         ? ThdCalculator.Calculate(_lastSnapshot.Frequencies, _lastSnapshot.RtaDb) 
                         : null,

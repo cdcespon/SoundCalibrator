@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Text;
 using SoundCalibrator.Core.Analysis;
@@ -21,6 +21,7 @@ public sealed class CalibrationReportData
     public ReverberationTimeResult? Rt60 { get; set; }
     public StiResult? Sti { get; set; }
     public ThdResult? Thd { get; set; }
+    public EtcResult? Etc { get; set; }
     public AlignmentSuggestion? Alignment { get; set; }
     public DelayMatrixReport? DelayMatrix { get; set; }
     public IReadOnlyList<AcousticTrace> Traces { get; set; } = [];
@@ -64,6 +65,21 @@ public static class ReportGenerator
                 var s = data.Sti.Value;
                 sb.AppendLine($"| **STI** | {s.Sti:0.00} ({s.Rating}) | Speech Transmission Index (IEC 60268-16) |");
                 sb.AppendLine($"| **%ALCons** | {s.AlConsPercent:0.0}% | Articulation Loss of Consonants (Farah/Peutz) |");
+            }
+            sb.AppendLine();
+        }
+
+        if (data.Etc != null && data.Etc.Reflections.Count > 0)
+        {
+            var etc = data.Etc;
+            sb.AppendLine("## Early Reflection Analysis (Energy-Time Curve ETC)");
+            sb.AppendLine($"* **Direct Sound Arrival:** {etc.DirectSoundTimeMs:0.00} ms");
+            sb.AppendLine("| # | Arrival Time | Relative Delay (\u0394t) | Relative Level | Path Difference (\u0394d) |");
+            sb.AppendLine("| :-: | :--- | :--- | :--- | :--- |");
+            for (int i = 0; i < etc.Reflections.Count; i++)
+            {
+                var refl = etc.Reflections[i];
+                sb.AppendLine($"| {i + 1} | {refl.TimeMs:0.00} ms | +{refl.RelativeDelayMs:0.00} ms | {refl.LevelDb:+0.00;-0.00;0.00} dB | +{refl.PathDifferenceMeters:0.00} m |");
             }
             sb.AppendLine();
         }
@@ -139,10 +155,6 @@ public static class ReportGenerator
 
     public static string GenerateHtml(CalibrationReportData data)
     {
-        string mdBody = GenerateMarkdown(data)
-            .Replace("\r", "")
-            .Replace("\n\n", "<br/><br/>");
-
         return $@"<!DOCTYPE html>
 <html lang=""en"">
 <head>
