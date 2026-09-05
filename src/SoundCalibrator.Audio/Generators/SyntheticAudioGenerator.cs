@@ -11,7 +11,9 @@ public enum TestSignalType
     SineSweep,
     GatedPinkNoise,
     IecNoise,
-    PolarityPulse
+    PolarityPulse,
+    SmpteImd,
+    CcifImd
 }
 
 /// <summary>
@@ -225,6 +227,22 @@ public sealed class SyntheticAudioGenerator : IAudioCaptureDevice
                 return 0.85f * MathF.Sin(MathF.PI * t / pulseWidthSec);
             }
             return 0f;
+        }
+
+        if (SignalType == TestSignalType.SmpteImd)
+        {
+            float s60 = MathF.Sin(2.0f * MathF.PI * 60f * _gateTimeSeconds);
+            float s7k = MathF.Sin(2.0f * MathF.PI * 7000f * _gateTimeSeconds);
+            _gateTimeSeconds += 1.0f / _sampleRate;
+            return (0.8f * s60 + 0.2f * s7k) * 0.9f;
+        }
+
+        if (SignalType == TestSignalType.CcifImd)
+        {
+            float s19k = MathF.Sin(2.0f * MathF.PI * 19000f * _gateTimeSeconds);
+            float s20k = MathF.Sin(2.0f * MathF.PI * 20000f * _gateTimeSeconds);
+            _gateTimeSeconds += 1.0f / _sampleRate;
+            return (s19k + s20k) * 0.45f;
         }
 
         return white;

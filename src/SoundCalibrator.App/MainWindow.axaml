@@ -39,6 +39,8 @@
                         <ComboBoxItem Content="Gated Pink Noise (Burst)"/>
                         <ComboBoxItem Content="IEC 60268-1 Program Noise"/>
                         <ComboBoxItem Content="Polarity Pulse (Click)"/>
+                        <ComboBoxItem Content="SMPTE IMD (60Hz + 7kHz)"/>
+                        <ComboBoxItem Content="CCIF IMD (19k + 20k)"/>
                         <ComboBoxItem Content="WASAPI Audio Device"/>
                     </ComboBox>
                 </StackPanel>
@@ -230,6 +232,12 @@
 
                     <TextBlock x:Name="TracesCountText" Text="Captured Traces: 0" Foreground="#BA68C8" FontSize="11" FontWeight="SemiBold" Margin="0,0,14,0"/>
 
+                    <Border x:Name="ImdBadge" Background="#281A32" CornerRadius="3" Padding="5,1" Margin="0,0,14,0" VerticalAlignment="Center" IsVisible="False">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="IMD: " Foreground="#CE93D8" FontSize="11" FontWeight="SemiBold"/>
+                            <TextBlock x:Name="ImdText" Text="N/A" Foreground="#FF80AB" FontSize="11" FontWeight="Bold"/>
+                        </StackPanel>
+                    </Border>
                     <Border x:Name="ThdBadge" Background="#1B2636" CornerRadius="3" Padding="5,1" Margin="0,0,14,0" VerticalAlignment="Center" IsVisible="False">
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Text="THD: " Foreground="#8C9BAE" FontSize="11" FontWeight="SemiBold"/>
