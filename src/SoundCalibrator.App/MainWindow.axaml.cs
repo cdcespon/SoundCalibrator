@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
@@ -31,18 +31,17 @@ public partial class MainWindow : Window
     private readonly AcousticMeasurementEngine _engine;
     private readonly SplMeter _splMeter = new();
     private SyntheticAudioGenerator? _syntheticGen;
-
     private IDisposable? _wasapiOutputDevice;
 
     private MeasurementSnapshot? _lastSnapshot;
-    private float _lastDetectedDelayMs;
+    private float _lastDetectedDelayMs = 4.18f;
     private bool _isAligned;
+    private bool _isPaused;
     private bool _isDacOutputActive;
     private bool _channelsSwapped;
     private AlignmentSuggestion? _lastAlignmentSuggestion;
-    private IReadOnlyList<PeqFilterSuggestion>? _lastPeqSuggestions = [];
     private DelayMatrixReport? _lastDelayMatrixReport;
-
+    private IReadOnlyList<PeqFilterSuggestion>? _lastPeqSuggestions = [];
 
     private static readonly string[] TraceColors = ["#A855F7", "#10B981", "#F59E0B", "#EC4899", "#3B82F6", "#00F0FF"];
 
@@ -78,30 +77,109 @@ public partial class MainWindow : Window
         ModeEtcBtn.Click += (s, e) => SwitchMode(2);
         ModeSpecBtn.Click += (s, e) => SwitchMode(3);
 
-        // 2. Resolution & DSP Flyout Items
-        Fft512Item.Click += (s, e) => SetFft(512, "FFT: 512  93.8 Hz");
-        Fft1024Item.Click += (s, e) => SetFft(1024, "FFT: 1k  46.9 Hz");
-        Fft2048Item.Click += (s, e) => SetFft(2048, "FFT: 2k  23.4 Hz");
-        Fft4096Item.Click += (s, e) => SetFft(4096, "FFT: 4k  11.7 Hz");
-        Fft16kItem.Click += (s, e) => SetFft(16384, "FFT: 16k  2.9 Hz");
+        // 2. Source Combo
+        SourceCombo.SelectionChanged += (s, e) =>
+        {
+            if (_syntheticGen == null) return;
+            int idx = SourceCombo.SelectedIndex;
+            _syntheticGen.SignalType = idx switch
+            {
+                0 => TestSignalType.PinkNoise,
+                1 => TestSignalType.SineWave,
+                2 => TestSignalType.SineSweep,
+                3 => TestSignalType.GatedPinkNoise,
+                4 => TestSignalType.IecNoise,
+                5 => TestSignalType.PolarityPulse,
+                6 => TestSignalType.SmpteImd,
+                7 => TestSignalType.CcifImd,
+                _ => TestSignalType.PinkNoise
+            };
+            string name = ((ComboBoxItem)SourceCombo.SelectedItem!).Content?.ToString() ?? "Synthetic";
+            StatusDeviceText.Text = $"Source: {name}";
+        };
 
-        WinHannItem.Click += (s, e) => SetWindow(WindowType.Hann, "WINDOW: Hann");
-        WinBlackmanItem.Click += (s, e) => SetWindow(WindowType.BlackmanHarris, "WINDOW: Blackman-H");
-        WinRectItem.Click += (s, e) => SetWindow(WindowType.Rectangular, "WINDOW: Rect");
+        // 3. DSP Dropdowns (FFT, Window, Smoothing, Averaging)
+        FftCombo.SelectionChanged += (s, e) =>
+        {
+            int size = FftCombo.SelectedIndex switch
+            {
+                0 => 512,
+                1 => 1024,
+                2 => 2048,
+                3 => 4096,
+                4 => 16384,
+                _ => 1024
+            };
+            _engine.ReconfigureFft(size, _engine.WindowType);
+        };
 
-        SmoothNoneItem.Click += (s, e) => SetSmoothing(OctaveSmoothingType.None, "SMOOTH: None");
-        Smooth1_3Item.Click += (s, e) => SetSmoothing(OctaveSmoothingType.Octave1_3, "SMOOTH: 1/3 Oct");
-        Smooth1_6Item.Click += (s, e) => SetSmoothing(OctaveSmoothingType.Octave1_6, "SMOOTH: 1/6 Oct");
-        Smooth1_12Item.Click += (s, e) => SetSmoothing(OctaveSmoothingType.Octave1_12, "SMOOTH: 1/12 Oct");
-        Smooth1_24Item.Click += (s, e) => SetSmoothing(OctaveSmoothingType.Octave1_24, "SMOOTH: 1/24 Oct");
+        WindowCombo.SelectionChanged += (s, e) =>
+        {
+            var win = WindowCombo.SelectedIndex switch
+            {
+                0 => WindowType.Hann,
+                1 => WindowType.BlackmanHarris,
+                2 => WindowType.Rectangular,
+                _ => WindowType.Hann
+            };
+            _engine.ReconfigureFft(_engine.FftSize, win);
+        };
 
-        AvgNoneItem.Click += (s, e) => SetAveraging(AveragingType.None, "AVG: None");
-        AvgFastItem.Click += (s, e) => SetAveraging(AveragingType.ExponentialFast, "AVG: Fast (Exp)");
-        AvgSlowItem.Click += (s, e) => SetAveraging(AveragingType.ExponentialSlow, "AVG: Slow (Exp)");
-        AvgLinearItem.Click += (s, e) => SetAveraging(AveragingType.Linear16, "AVG: Linear 16");
-        AvgInfiniteItem.Click += (s, e) => SetAveraging(AveragingType.Infinite, "AVG: Infinite");
+        SmoothingCombo.SelectionChanged += (s, e) =>
+        {
+            _engine.Smoothing = SmoothingCombo.SelectedIndex switch
+            {
+                0 => OctaveSmoothingType.None,
+                1 => OctaveSmoothingType.Octave1_3,
+                2 => OctaveSmoothingType.Octave1_6,
+                3 => OctaveSmoothingType.Octave1_12,
+                4 => OctaveSmoothingType.Octave1_24,
+                _ => OctaveSmoothingType.None
+            };
+        };
 
-        // 3. Pro Tools
+        AveragingCombo.SelectionChanged += (s, e) =>
+        {
+            _engine.Averaging = AveragingCombo.SelectedIndex switch
+            {
+                0 => AveragingType.None,
+                1 => AveragingType.ExponentialFast,
+                2 => AveragingType.ExponentialSlow,
+                3 => AveragingType.Linear16,
+                4 => AveragingType.Infinite,
+                _ => AveragingType.ExponentialFast
+            };
+        };
+
+        // 4. Target & Blanking
+        TargetCombo.SelectionChanged += (s, e) =>
+        {
+            var preset = TargetCombo.SelectedIndex switch
+            {
+                1 => TargetCurvePreset.HarmanTarget,
+                2 => TargetCurvePreset.BruelKjaer1974,
+                3 => TargetCurvePreset.CinemaXCurve,
+                4 => TargetCurvePreset.Flat,
+                _ => TargetCurvePreset.None
+            };
+            GraphControl.ActiveTargetCurve = preset == TargetCurvePreset.None ? null : TargetCurve.CreatePreset(preset);
+            GraphControl.InvalidateVisual();
+        };
+
+        BlankingCombo.SelectionChanged += (s, e) =>
+        {
+            GraphControl.CoherenceThreshold = BlankingCombo.SelectedIndex switch
+            {
+                0 => 0.0f,
+                1 => 0.3f,
+                2 => 0.5f,
+                3 => 0.7f,
+                _ => 0.3f
+            };
+            GraphControl.InvalidateVisual();
+        };
+
+        // 5. Pro Tools
         MinPhaseBtn.Click += (s, e) =>
         {
             GraphControl.ShowMinimumPhase = !GraphControl.ShowMinimumPhase;
@@ -126,10 +204,18 @@ public partial class MainWindow : Window
             GraphControl.InvalidateVisual();
         };
 
+        InvertPolarityBtn.Click += (s, e) =>
+        {
+            _engine.InvertPolarity = !_engine.InvertPolarity;
+            InvertPolarityBtn.Classes.Clear();
+            InvertPolarityBtn.Classes.Add(_engine.InvertPolarity ? "dock-pill-active" : "dock-pill");
+            GraphControl.InvalidateVisual();
+        };
+
         SwapChannelsBtn.Click += (s, e) =>
         {
             _channelsSwapped = !_channelsSwapped;
-            SwapChannelsBtn.Content = _channelsSwapped ? "SWAP (2:1)" : "SWAP (1:2)";
+            SwapChannelsBtn.Content = _channelsSwapped ? "CH 2:1" : "CH 1:2";
             SwapChannelsBtn.Classes.Clear();
             SwapChannelsBtn.Classes.Add(_channelsSwapped ? "dock-pill-active" : "dock-pill");
             StatusRoutingText.Text = _channelsSwapped ? "REF: CH 2  |  MEAS: CH 1" : "REF: CH 1  |  MEAS: CH 2";
@@ -150,7 +236,7 @@ public partial class MainWindow : Window
                         outDev.Start(_syntheticGen);
                         _wasapiOutputDevice = outDev;
                         _isDacOutputActive = true;
-                        GenOutputBtn.Content = "DAC OUT: ON";
+                        GenOutputBtn.Content = "DAC: ON";
                         GenOutputBtn.Classes.Clear();
                         GenOutputBtn.Classes.Add("dock-pill-red");
                     }
@@ -160,7 +246,7 @@ public partial class MainWindow : Window
                     _wasapiOutputDevice?.Dispose();
                     _wasapiOutputDevice = null;
                     _isDacOutputActive = false;
-                    GenOutputBtn.Content = "DAC OUT: OFF";
+                    GenOutputBtn.Content = "DAC: OFF";
                     GenOutputBtn.Classes.Clear();
                     GenOutputBtn.Classes.Add("dock-pill");
                 }
@@ -169,7 +255,27 @@ public partial class MainWindow : Window
 #pragma warning restore CA1416
         };
 
-        // 4. Live Actions
+        // 6. DELAY MODULE (Slider, +/- Buttons, Auto-Align)
+        DelaySlider.PropertyChanged += (s, e) =>
+        {
+            if (e.Property.Name == nameof(Slider.Value) && _syntheticGen != null)
+            {
+                float val = (float)DelaySlider.Value;
+                _syntheticGen.DelayMs = val;
+                DelayText.Text = $"{val:0.0} ms";
+            }
+        };
+
+        DelayMinusBtn.Click += (s, e) =>
+        {
+            DelaySlider.Value = Math.Max(0.0, DelaySlider.Value - 0.1);
+        };
+
+        DelayPlusBtn.Click += (s, e) =>
+        {
+            DelaySlider.Value = Math.Min(50.0, DelaySlider.Value + 0.1);
+        };
+
         AutoAlignBtn.Click += (s, e) =>
         {
             if (!_isAligned)
@@ -184,12 +290,13 @@ public partial class MainWindow : Window
             {
                 _engine.DelayCompensationMs = 0f;
                 _isAligned = false;
-                AutoAlignBtn.Content = $"⚡ ALIGN (+{_lastDetectedDelayMs:0.0} ms)";
+                AutoAlignBtn.Content = $"⚡ ALIGN (+{_lastDetectedDelayMs:0.1} ms)";
                 AutoAlignBtn.Background = SolidColorBrush.Parse("#26F59E0B");
                 AutoAlignBtn.Foreground = SolidColorBrush.Parse("#F59E0B");
             }
         };
 
+        // 7. Live Action Buttons
         CaptureTraceBtn.Click += (s, e) =>
         {
             if (_lastSnapshot != null)
@@ -211,7 +318,6 @@ public partial class MainWindow : Window
             }
         };
 
-        NewTraceBtn.Click += (s, e) => CaptureTraceBtn.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         ClearTracesBtn.Click += (s, e) =>
         {
             GraphControl.StoredTraces.Clear();
@@ -220,12 +326,31 @@ public partial class MainWindow : Window
             RefreshTraceManagerUI();
         };
 
-        // 5. Zoom Controls
+        BottomClearBtn.Click += (s, e) => ClearTracesBtn.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        NewTraceBtn.Click += (s, e) => CaptureTraceBtn.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+
+        ResetZoomBtn.Click += (s, e) => GraphControl.ResetZoom();
+        GraphResetZoomBtn.Click += (s, e) => GraphControl.ResetZoom();
         ZoomInBtn.Click += (s, e) => GraphControl.Zoom(0.8);
         ZoomOutBtn.Click += (s, e) => GraphControl.Zoom(1.25);
-        ResetZoomBtn.Click += (s, e) => GraphControl.ResetZoom();
 
-        // 6. Trace Math
+        StartStopBtn.Click += (s, e) =>
+        {
+            if (_isPaused)
+            {
+                _engine.Start();
+                StartStopBtn.Content = "PAUSE";
+                _isPaused = false;
+            }
+            else
+            {
+                _engine.Stop();
+                StartStopBtn.Content = "RESUME";
+                _isPaused = true;
+            }
+        };
+
+        // 8. Trace Math
         SpatialAvgBtn.Click += (s, e) =>
         {
             var visibleTraces = GraphControl.StoredTraces.Where(t => t.IsVisible).ToList();
@@ -271,7 +396,7 @@ public partial class MainWindow : Window
             }
         };
 
-        // 7. Crossover & Matrix
+        // 9. Crossover & Delay Matrix
         CalculateAlignmentBtn.Click += (s, e) =>
         {
             if (GraphControl.StoredTraces.Count < 2)
@@ -330,7 +455,7 @@ public partial class MainWindow : Window
             DelayMatrixResultText.Foreground = SolidColorBrush.Parse("#FFB300");
         };
 
-        // 8. Export Biquads & Reports
+        // 10. Export Biquads & Reports
         ExportBiquadsBtn.Click += async (s, e) =>
         {
             var topLevel = TopLevel.GetTopLevel(this);
@@ -432,30 +557,6 @@ public partial class MainWindow : Window
         }
     }
 
-    private void SetFft(int size, string label)
-    {
-        _engine.ReconfigureFft(size, _engine.WindowType);
-        FftPillBtn.Content = label;
-    }
-
-    private void SetWindow(WindowType win, string label)
-    {
-        _engine.ReconfigureFft(_engine.FftSize, win);
-        WindowPillBtn.Content = label;
-    }
-
-    private void SetSmoothing(OctaveSmoothingType smooth, string label)
-    {
-        _engine.Smoothing = smooth;
-        SmoothPillBtn.Content = label;
-    }
-
-    private void SetAveraging(AveragingType avg, string label)
-    {
-        _engine.Averaging = avg;
-        AvgPillBtn.Content = label;
-    }
-
     private void InitPrepopulatedTraces()
     {
         // Populate the exact 4 demo traces shown in the Modern Tech prototype
@@ -494,7 +595,7 @@ public partial class MainWindow : Window
             _lastDetectedDelayMs = snapshot.Delay.DelayMs;
             GraphControl.UpdateSnapshot(snapshot);
 
-            DetectedDelayText.Text = $"Delay: +{snapshot.Delay.DelayMs:0.00} ms";
+            DetectedDelayText.Text = $"+{snapshot.Delay.DelayMs:0.00} ms";
             if (!_isAligned)
             {
                 AutoAlignBtn.Content = $"⚡ ALIGN (+{snapshot.Delay.DelayMs:0.1} ms)";
@@ -559,7 +660,6 @@ public partial class MainWindow : Window
 #pragma warning disable CA1416
         try
         {
-            
             _wasapiOutputDevice?.Dispose();
         }
         catch { }
