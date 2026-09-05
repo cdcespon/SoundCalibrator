@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using SoundCalibrator.Core.Analysis;
 
@@ -13,6 +13,13 @@ public sealed class BiquadFilter
     private readonly float _b0, _b1, _b2;
     private readonly float _a1, _a2;
     private readonly float _sampleRate;
+
+    public float B0 => _b0;
+    public float B1 => _b1;
+    public float B2 => _b2;
+    public float A1 => _a1;
+    public float A2 => _a2;
+    public float SampleRate => _sampleRate;
 
     public BiquadFilter(float b0, float b1, float b2, float a0, float a1, float a2, float sampleRate)
     {
@@ -60,33 +67,31 @@ public sealed class BiquadFilter
         return 10f * MathF.Log10(MathF.Max(1e-12f, nPwr / dPwr));
     }
 
-    public void Evaluate(ReadOnlySpan<float> frequencies, Span<float> outGainDb)
-    {
-        int count = Math.Min(frequencies.Length, outGainDb.Length);
-        for (int i = 0; i < count; i++)
-        {
-            outGainDb[i] = EvaluateDb(frequencies[i]);
-        }
-    }
-
     public static void EvaluateCascade(
         IReadOnlyList<PeqFilterSuggestion> filters,
         ReadOnlySpan<float> frequencies,
-        Span<float> outTotalGainDb,
+        Span<float> outputDb,
         float sampleRate)
     {
-        int count = Math.Min(frequencies.Length, outTotalGainDb.Length);
-        outTotalGainDb.Slice(0, count).Clear();
+        outputDb.Clear();
+        if (filters.Count == 0) return;
 
-        if (filters == null || filters.Count == 0) return;
-
+        var biquads = new List<BiquadFilter>(filters.Count);
         foreach (var f in filters)
         {
-            var biquad = CreatePeq(f.FrequencyHz, f.GainDb, f.Q, sampleRate);
-            for (int i = 0; i < count; i++)
+            biquads.Add(CreatePeq(f.FrequencyHz, f.GainDb, f.Q, sampleRate));
+        }
+
+        int count = Math.Min(frequencies.Length, outputDb.Length);
+        for (int i = 0; i < count; i++)
+        {
+            float f = frequencies[i];
+            float sumDb = 0f;
+            foreach (var b in biquads)
             {
-                outTotalGainDb[i] += biquad.EvaluateDb(frequencies[i]);
+                sumDb += b.EvaluateDb(f);
             }
+            outputDb[i] = sumDb;
         }
     }
 }
