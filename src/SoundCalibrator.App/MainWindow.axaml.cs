@@ -22,6 +22,8 @@ public partial class MainWindow : Window
     private readonly SplMeter _splMeter = new();
     private SyntheticAudioGenerator? _syntheticGen;
     private IDisposable? _wasapiDevice;
+    private IDisposable? _wasapiOutputDevice;
+    private bool _isDacOutputActive;
     private bool _isPaused;
     private bool _channelsSwapped;
     private float _lastDetectedDelayMs;
@@ -108,6 +110,49 @@ public partial class MainWindow : Window
                 DelayText.Text = $"{val:0.0} ms";
             }
         };
+        GenOutputBtn.Click += (s, e) =>
+        {
+            if (!OperatingSystem.IsWindows() || _syntheticGen == null) return;
+#pragma warning disable CA1416
+            try
+            {
+                if (!_isDacOutputActive)
+                {
+                    var defaultOut = WasapiAudioOutputDevice.GetDefaultPlaybackDevice();
+                    if (defaultOut != null)
+                    {
+                        var outDev = new WasapiAudioOutputDevice(defaultOut);
+                        outDev.Start(_syntheticGen);
+                        _wasapiOutputDevice = outDev;
+                        _isDacOutputActive = true;
+                        GenOutputBtn.Content = "DAC OUT: ON";
+                        GenOutputBtn.Background = Avalonia.Media.SolidColorBrush.Parse("#2E7D32");
+                        GenOutputBtn.Foreground = Avalonia.Media.SolidColorBrush.Parse("#FFFFFF");
+                        StatusDeviceText.Text = $"DAC Streaming: {defaultOut.FriendlyName}";
+                    }
+                    else
+                    {
+                        StatusDeviceText.Text = "DAC: No default output audio device found";
+                    }
+                }
+                else
+                {
+                    _wasapiOutputDevice?.Dispose();
+                    _wasapiOutputDevice = null;
+                    _isDacOutputActive = false;
+                    GenOutputBtn.Content = "DAC OUT: OFF";
+                    GenOutputBtn.Background = Avalonia.Media.SolidColorBrush.Parse("#263238");
+                    GenOutputBtn.Foreground = Avalonia.Media.SolidColorBrush.Parse("#B0BEC5");
+                    StatusDeviceText.Text = "DAC Output Muted";
+                }
+            }
+            catch (Exception ex)
+            {
+                StatusDeviceText.Text = $"DAC Error: {ex.Message}";
+            }
+#pragma warning restore CA1416
+        };
+
         SwapChannelsBtn.Click += (s, e) =>
         {
             _channelsSwapped = !_channelsSwapped;
@@ -930,6 +975,7 @@ public partial class MainWindow : Window
         _engine.Dispose();
         _syntheticGen?.Dispose();
         _wasapiDevice?.Dispose();
+        _wasapiOutputDevice?.Dispose();
     }
     private void RefreshTraceManagerUI()
     {
