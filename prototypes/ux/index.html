@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SoundCalibrator — Portal Comparativo de Prototipos UX</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #07090e;
+            --bg-surface: #0e121a;
+            --border: #1e2638;
+            --cyan: #00f0ff;
+            --amber: #f59e0b;
+            --purple: #a855f7;
+            --blue: #3b82f6;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background: var(--bg-dark);
+            color: var(--text-main);
+            font-family: 'Inter', sans-serif;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* Top Navigation Header */
+        header {
+            height: 60px;
+            background: rgba(14, 18, 26, 0.95);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 24px;
+            z-index: 100;
+        }
+
+        .logo-area {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-box {
+            width: 34px;
+            height: 34px;
+            background: linear-gradient(135deg, var(--cyan), var(--purple));
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            color: #000;
+        }
+
+        .logo-text h1 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .logo-text span {
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        /* Perspective Switcher Tabs */
+        .perspective-tabs {
+            display: flex;
+            background: rgba(0,0,0,0.5);
+            border: 1px solid var(--border);
+            border-radius: 30px;
+            padding: 3px;
+            gap: 4px;
+        }
+
+        .tab-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            font-family: 'Inter', sans-serif;
+            font-size: 12px;
+            font-weight: 600;
+            padding: 8px 18px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .tab-btn:hover {
+            color: #fff;
+        }
+
+        .tab-btn.active-1 {
+            background: var(--cyan);
+            color: #000;
+            box-shadow: 0 0 16px rgba(0, 240, 255, 0.4);
+        }
+
+        .tab-btn.active-2 {
+            background: var(--amber);
+            color: #000;
+            box-shadow: 0 0 16px rgba(245, 158, 11, 0.4);
+        }
+
+        .tab-btn.active-3 {
+            background: var(--blue);
+            color: #fff;
+            box-shadow: 0 0 16px rgba(59, 130, 246, 0.4);
+        }
+
+        .open-direct-btn {
+            background: rgba(255,255,255,0.06);
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            font-size: 11px;
+            font-weight: 600;
+            padding: 7px 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .open-direct-btn:hover {
+            background: rgba(255,255,255,0.12);
+            border-color: #fff;
+        }
+
+        /* Preview Frame Area */
+        .frame-container {
+            flex: 1;
+            position: relative;
+            background: #000;
+        }
+
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            display: block;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo-area">
+            <div class="logo-box">SC</div>
+            <div class="logo-text">
+                <h1>SoundCalibrator UX Lab</h1>
+                <span>Comparador Interactivo de Prototipos de Experiencia de Usuario</span>
+            </div>
+        </div>
+
+        <div class="perspective-tabs">
+            <button class="tab-btn active-1" onclick="switchTab(1, this, 'active-1')">
+                <span>01</span> Perspectiva Moderna / Cyber-Tech
+            </button>
+            <button class="tab-btn" onclick="switchTab(2, this, 'active-2')">
+                <span>02</span> Consola de Sonido & DAW
+            </button>
+            <button class="tab-btn" onclick="switchTab(3, this, 'active-3')">
+                <span>03</span> Precisión Live Arena (Criterio Experto)
+            </button>
+        </div>
+
+        <div>
+            <a href="ux_option1_modern_tech.html" target="_blank" class="open-direct-btn" id="btnOpenDirect">
+                Abrir en Pestaña Independiente ↗
+            </a>
+        </div>
+    </header>
+
+    <div class="frame-container">
+        <iframe id="previewIframe" src="ux_option1_modern_tech.html"></iframe>
+    </div>
+
+    <script>
+        const urls = {
+            1: 'ux_option1_modern_tech.html',
+            2: 'ux_option2_audio_engineer_console.html',
+            3: 'ux_option3_studio_precision.html'
+        };
+
+        function switchTab(option, btn, activeClass) {
+            document.querySelectorAll('.tab-btn').forEach(b => {
+                b.className = 'tab-btn';
+            });
+            btn.classList.add(activeClass);
+
+            const iframe = document.getElementById('previewIframe');
+            iframe.src = urls[option];
+
+            const directBtn = document.getElementById('btnOpenDirect');
+            directBtn.href = urls[option];
+        }
+    </script>
+</body>
+</html>

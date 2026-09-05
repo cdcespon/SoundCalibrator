@@ -1,0 +1,942 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SoundCalibrator — Perspectiva 1: Modern Tech UI</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-base: #07090e;
+            --bg-surface: #0e121a;
+            --bg-card: rgba(18, 24, 38, 0.7);
+            --bg-card-hover: rgba(26, 34, 52, 0.85);
+            --border-glow: rgba(0, 240, 255, 0.2);
+            --border-subtle: #1e2638;
+            --cyan-glow: #00f0ff;
+            --cyan-dim: rgba(0, 240, 255, 0.15);
+            --purple-neon: #a855f7;
+            --purple-dim: rgba(168, 85, 247, 0.15);
+            --green-pulse: #10b981;
+            --amber-warn: #f59e0b;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --font-sans: 'Inter', -apple-system, sans-serif;
+            --font-display: 'Outfit', sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+        }
+
+        body {
+            background-color: var(--bg-base);
+            color: var(--text-primary);
+            font-family: var(--font-sans);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            background-image: 
+                radial-gradient(circle at 15% 15%, rgba(0, 240, 255, 0.05) 0%, transparent 40%),
+                radial-gradient(circle at 85% 85%, rgba(168, 85, 247, 0.05) 0%, transparent 40%);
+        }
+
+        /* Top Header Telemetry */
+        header {
+            height: 54px;
+            background: rgba(14, 18, 26, 0.85);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border-subtle);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            z-index: 50;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .brand-logo {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, var(--cyan-glow), var(--purple-neon));
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 16px rgba(0, 240, 255, 0.35);
+        }
+
+        .brand-logo svg {
+            width: 18px;
+            height: 18px;
+            fill: #000;
+        }
+
+        .brand-title {
+            font-family: var(--font-display);
+            font-size: 18px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            background: linear-gradient(90deg, #fff 0%, #cbd5e1 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .tag-perspective {
+            background: rgba(0, 240, 255, 0.1);
+            color: var(--cyan-glow);
+            border: 1px solid rgba(0, 240, 255, 0.3);
+            font-size: 10px;
+            font-weight: 600;
+            padding: 2px 8px;
+            border-radius: 20px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .top-telemetry {
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            font-family: var(--font-mono);
+            font-size: 11px;
+        }
+
+        .telemetry-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--text-secondary);
+        }
+
+        .telemetry-badge {
+            background: rgba(255,255,255,0.05);
+            padding: 3px 8px;
+            border-radius: 4px;
+            color: #fff;
+            font-weight: 600;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--green-pulse);
+            box-shadow: 0 0 8px var(--green-pulse);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(0.85); }
+        }
+
+        /* Glass Toolbar */
+        .glass-dock {
+            height: 48px;
+            background: rgba(14, 18, 26, 0.6);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            display: flex;
+            align-items: center;
+            padding: 0 16px;
+            gap: 10px;
+            overflow-x: auto;
+        }
+
+        .dock-group {
+            display: flex;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.35);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 8px;
+            padding: 2px;
+            gap: 2px;
+        }
+
+        .dock-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            font-family: var(--font-sans);
+            font-size: 11px;
+            font-weight: 600;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .dock-btn:hover {
+            color: #fff;
+            background: rgba(255, 255, 255, 0.06);
+        }
+
+        .dock-btn.active {
+            color: #000;
+            background: var(--cyan-glow);
+            box-shadow: 0 0 12px rgba(0, 240, 255, 0.4);
+        }
+
+        .dock-btn.purple-active {
+            color: #fff;
+            background: var(--purple-neon);
+            box-shadow: 0 0 12px rgba(168, 85, 247, 0.4);
+        }
+
+        .dock-btn.red-active {
+            color: #fff;
+            background: #ef4444;
+            box-shadow: 0 0 12px rgba(239, 68, 68, 0.4);
+        }
+
+        .btn-badge {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 1px 5px;
+            border-radius: 4px;
+            font-size: 9px;
+            font-family: var(--font-mono);
+        }
+
+        /* Main Workspace Layout */
+        .workspace {
+            flex: 1;
+            display: flex;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Left Side Mini-Tray (Traces & Multi-Zone) */
+        .trace-sidebar {
+            width: 260px;
+            background: rgba(14, 18, 26, 0.7);
+            backdrop-filter: blur(8px);
+            border-right: 1px solid var(--border-subtle);
+            display: flex;
+            flex-direction: column;
+            transition: all 0.3s ease;
+            z-index: 20;
+        }
+
+        .sidebar-header {
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .sidebar-title {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: var(--text-secondary);
+        }
+
+        .trace-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .trace-card {
+            background: var(--bg-card);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-left: 3px solid var(--cyan-glow);
+            border-radius: 6px;
+            padding: 10px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .trace-card:hover {
+            background: var(--bg-card-hover);
+            border-color: rgba(0, 240, 255, 0.3);
+            transform: translateX(2px);
+        }
+
+        .trace-card.active-trace {
+            background: rgba(0, 240, 255, 0.08);
+            border-color: var(--cyan-glow);
+        }
+
+        .trace-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+        }
+
+        .trace-name {
+            font-size: 12px;
+            font-weight: 600;
+            color: #fff;
+        }
+
+        .trace-meta {
+            font-family: var(--font-mono);
+            font-size: 10px;
+            color: var(--text-muted);
+            display: flex;
+            justify-content: space-between;
+        }
+
+        /* Center Canvas Graph Area */
+        .viewport-center {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            background: #090c12;
+        }
+
+        .graph-container {
+            flex: 1;
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Floating HUD Glass Badge */
+        .floating-hud {
+            position: absolute;
+            top: 14px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(14, 18, 26, 0.85);
+            border: 1px solid rgba(0, 240, 255, 0.3);
+            backdrop-filter: blur(16px);
+            border-radius: 30px;
+            padding: 6px 18px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            font-family: var(--font-mono);
+            font-size: 11px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .hud-val {
+            font-weight: 700;
+            color: var(--cyan-glow);
+        }
+
+        .hud-val.orange { color: #ff9100; }
+        .hud-val.green { color: #10b981; }
+
+        /* Zoom Control Overlay */
+        .zoom-overlay {
+            position: absolute;
+            bottom: 14px;
+            right: 14px;
+            display: flex;
+            gap: 6px;
+            z-index: 10;
+        }
+
+        .zoom-btn {
+            background: rgba(14, 18, 26, 0.85);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--text-secondary);
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            transition: all 0.2s;
+        }
+
+        .zoom-btn:hover {
+            color: #fff;
+            border-color: var(--cyan-glow);
+            background: rgba(0, 240, 255, 0.1);
+        }
+
+        /* Right Drawer Inspector (PEQ / Matrix / Comp) */
+        .right-drawer {
+            width: 300px;
+            background: rgba(14, 18, 26, 0.85);
+            backdrop-filter: blur(12px);
+            border-left: 1px solid var(--border-subtle);
+            display: flex;
+            flex-direction: column;
+            z-index: 20;
+        }
+
+        .drawer-tabs {
+            display: flex;
+            border-bottom: 1px solid var(--border-subtle);
+        }
+
+        .drawer-tab {
+            flex: 1;
+            padding: 10px 0;
+            text-align: center;
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .drawer-tab.active {
+            color: var(--cyan-glow);
+            border-bottom-color: var(--cyan-glow);
+            background: rgba(0, 240, 255, 0.05);
+        }
+
+        .drawer-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .inspector-section {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            padding: 12px;
+        }
+
+        .section-title {
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: var(--text-muted);
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .filter-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-family: var(--font-mono);
+            font-size: 11px;
+            padding: 6px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+        }
+
+        .filter-row:last-child { border-bottom: none; }
+
+        .filter-chip {
+            background: rgba(0, 240, 255, 0.1);
+            color: var(--cyan-glow);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 700;
+            font-size: 10px;
+        }
+
+        /* Bottom Status Bar */
+        footer {
+            height: 32px;
+            background: #090c12;
+            border-top: 1px solid var(--border-subtle);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 16px;
+            font-size: 11px;
+            color: var(--text-muted);
+            font-family: var(--font-mono);
+        }
+
+        .footer-metrics {
+            display: flex;
+            gap: 16px;
+        }
+
+        .metric-highlight {
+            color: var(--text-secondary);
+        }
+
+        .metric-highlight span {
+            color: var(--cyan-glow);
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header Telemetry -->
+    <header>
+        <div class="brand">
+            <div class="brand-logo">
+                <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/></svg>
+            </div>
+            <div class="brand-title">SoundCalibrator</div>
+            <span class="tag-perspective">Perspective 1: Cyber-Acoustic Tech</span>
+        </div>
+
+        <div class="top-telemetry">
+            <div class="telemetry-item">
+                <div class="status-dot"></div>
+                <span>ENGINE:</span>
+                <span class="telemetry-badge">LIVE 60 FPS</span>
+            </div>
+            <div class="telemetry-item">
+                <span>DEVICE:</span>
+                <span class="telemetry-badge">WASAPI 48kHz / 32-bit</span>
+            </div>
+            <div class="telemetry-item">
+                <span>ROUTING:</span>
+                <span class="telemetry-badge" style="color: var(--cyan-glow)">REF: CH 1  |  MEAS: CH 2</span>
+            </div>
+            <div class="telemetry-item">
+                <span>SPL Leq:</span>
+                <span class="telemetry-badge" style="color: var(--green-pulse)">88.4 dBA</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Glass Control Dock -->
+    <div class="glass-dock">
+        <!-- Modes -->
+        <div class="dock-group">
+            <button class="dock-btn active" id="btnModeTf">TRANSFER FN</button>
+            <button class="dock-btn" id="btnModeRta">RTA 1/3 OCT</button>
+            <button class="dock-btn" id="btnModeEtc">IMPULSE / ETC</button>
+            <button class="dock-btn" id="btnModeSpec">SPECTROGRAM</button>
+        </div>
+
+        <!-- FFT & Resolution -->
+        <div class="dock-group">
+            <button class="dock-btn">FFT: 16k <span class="btn-badge">2.9 Hz</span></button>
+            <button class="dock-btn">WINDOW: Hann</button>
+            <button class="dock-btn">SMOOTH: 1/12 Oct</button>
+            <button class="dock-btn">AVG: Fast (Exp)</button>
+        </div>
+
+        <!-- Pro Tools -->
+        <div class="dock-group">
+            <button class="dock-btn" id="btnMinPhase">MIN Ø</button>
+            <button class="dock-btn" id="btnFdw">FDW (10 cyc)</button>
+            <button class="dock-btn purple-active" id="btnDelta">Δ TARGET</button>
+            <button class="dock-btn" id="btnSwapCh">SWAP (1:2)</button>
+            <button class="dock-btn red-active" id="btnDacOut">DAC OUT: ON</button>
+        </div>
+
+        <!-- Live Actions -->
+        <div class="dock-group" style="margin-left: auto;">
+            <button class="dock-btn" id="btnAutoAlign" style="background: rgba(245, 158, 11, 0.15); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.3);">
+                ⚡ ALIGN (+4.2 ms)
+            </button>
+            <button class="dock-btn active" id="btnCapture">CAPTURE [Space]</button>
+        </div>
+    </div>
+
+    <!-- Main Workspace -->
+    <div class="workspace">
+        
+        <!-- Left Drawer (Trace Manager) -->
+        <div class="trace-sidebar">
+            <div class="sidebar-header">
+                <span class="sidebar-title">Acoustic Traces (5)</span>
+                <button class="dock-btn" style="padding: 2px 6px; font-size: 10px;">+ NEW</button>
+            </div>
+            <div class="trace-list">
+                <div class="trace-card active-trace">
+                    <div class="trace-header">
+                        <span class="trace-name">Live Measurement</span>
+                        <span class="tag-perspective" style="font-size: 8px;">LIVE</span>
+                    </div>
+                    <div class="trace-meta">
+                        <span>Delay: +4.18 ms</span>
+                        <span>Coh: 94%</span>
+                    </div>
+                </div>
+
+                <div class="trace-card" style="border-left-color: #a855f7;">
+                    <div class="trace-header">
+                        <span class="trace-name">Main L - Ground Plane</span>
+                        <span style="color: var(--text-muted); font-size: 10px;">👁️ ON</span>
+                    </div>
+                    <div class="trace-meta">
+                        <span>Delay: +3.82 ms</span>
+                        <span>Captured</span>
+                    </div>
+                </div>
+
+                <div class="trace-card" style="border-left-color: #10b981;">
+                    <div class="trace-header">
+                        <span class="trace-name">Subwoofer Center</span>
+                        <span style="color: var(--text-muted); font-size: 10px;">👁️ ON</span>
+                    </div>
+                    <div class="trace-meta">
+                        <span>Delay: +12.40 ms</span>
+                        <span>Captured</span>
+                    </div>
+                </div>
+
+                <div class="trace-card" style="border-left-color: #f59e0b;">
+                    <div class="trace-header">
+                        <span class="trace-name">Balcony Delay Tower</span>
+                        <span style="color: var(--text-muted); font-size: 10px;">👁️ ON</span>
+                    </div>
+                    <div class="trace-meta">
+                        <span>Delay: +28.15 ms</span>
+                        <span>Offset: +24.3ms</span>
+                    </div>
+                </div>
+
+                <div class="trace-card" style="border-left-color: #ec4899;">
+                    <div class="trace-header">
+                        <span class="trace-name">Simulated Crossover Sum</span>
+                        <span style="color: var(--text-muted); font-size: 10px;">∑ SUM</span>
+                    </div>
+                    <div class="trace-meta">
+                        <span>Main + Sub aligned</span>
+                        <span>Δ = 0° at 85Hz</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Center Canvas -->
+        <div class="viewport-center">
+            <!-- Floating HUD -->
+            <div class="floating-hud">
+                <span>FREQ: <span class="hud-val" id="hudFreq">1000.0 Hz</span></span>
+                <span>MAG: <span class="hud-val" id="hudMag">+2.4 dB</span></span>
+                <span>PHASE: <span class="hud-val orange" id="hudPhase">-45.2°</span></span>
+                <span>COH: <span class="hud-val green" id="hudCoh">98.2%</span></span>
+                <span>GD: <span class="hud-val" id="hudGd">0.12 ms</span></span>
+            </div>
+
+            <!-- Canvas Viewport -->
+            <div class="graph-container">
+                <canvas id="acousticCanvas"></canvas>
+            </div>
+
+            <!-- Interactive Zoom Controls -->
+            <div class="zoom-overlay">
+                <div class="zoom-btn" title="Zoom In" id="btnZoomIn">+</div>
+                <div class="zoom-btn" title="Zoom Out" id="btnZoomOut">−</div>
+                <div class="zoom-btn" title="Reset Zoom (Z)" id="btnResetZoom">Z</div>
+            </div>
+        </div>
+
+        <!-- Right Drawer (Inspector & Tools) -->
+        <div class="right-drawer">
+            <div class="drawer-tabs">
+                <div class="drawer-tab active">AUTO PEQ</div>
+                <div class="drawer-tab">DELAY MATRIX</div>
+                <div class="drawer-tab">DISTORTION</div>
+            </div>
+
+            <div class="drawer-body">
+                <!-- Auto PEQ Synthesizer -->
+                <div class="inspector-section">
+                    <div class="section-title">
+                        <span>Target: Harman Acoustic</span>
+                        <span style="color: var(--cyan-glow);">RMS Err: 1.1dB</span>
+                    </div>
+                    
+                    <div class="filter-row">
+                        <span class="filter-chip">PK 1</span>
+                        <span>62.5 Hz</span>
+                        <span style="color: #ef4444;">-4.2 dB</span>
+                        <span>Q: 3.4</span>
+                    </div>
+                    <div class="filter-row">
+                        <span class="filter-chip">PK 2</span>
+                        <span>145.0 Hz</span>
+                        <span style="color: #10b981;">+2.8 dB</span>
+                        <span>Q: 2.1</span>
+                    </div>
+                    <div class="filter-row">
+                        <span class="filter-chip">PK 3</span>
+                        <span>520.0 Hz</span>
+                        <span style="color: #ef4444;">-3.1 dB</span>
+                        <span>Q: 4.8</span>
+                    </div>
+                    <div class="filter-row">
+                        <span class="filter-chip">PK 4</span>
+                        <span>2840.0 Hz</span>
+                        <span style="color: #ef4444;">-1.9 dB</span>
+                        <span>Q: 1.8</span>
+                    </div>
+
+                    <button class="dock-btn active" style="width: 100%; justify-content: center; margin-top: 12px;">
+                        EXPORT MINIDSP BIQUADS
+                    </button>
+                </div>
+
+                <!-- Live Distortion Radar -->
+                <div class="inspector-section">
+                    <div class="section-title">
+                        <span>Electroacoustic Purity</span>
+                        <span style="color: var(--green-pulse);">THD: 0.14%</span>
+                    </div>
+                    <div style="font-size: 11px; font-family: var(--font-mono); color: var(--text-secondary); display: flex; flex-direction: column; gap: 4px;">
+                        <div style="display: flex; justify-content: space-between;">
+                            <span>2nd Harmonic (H2):</span>
+                            <span>-62.4 dBc</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between;">
+                            <span>3rd Harmonic (H3):</span>
+                            <span>-68.1 dBc</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between;">
+                            <span>SMPTE IMD (60+7k):</span>
+                            <span style="color: var(--green-pulse);">0.22%</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between;">
+                            <span>Thermal Compression:</span>
+                            <span style="color: #f59e0b;">-0.3 dB</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="inspector-section">
+                    <div class="section-title">Reports & Export</div>
+                    <div style="display: flex; gap: 8px;">
+                        <button class="dock-btn" style="flex: 1; justify-content: center;">HTML REPORT</button>
+                        <button class="dock-btn" style="flex: 1; justify-content: center;">CSV TRACE</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Bottom Telemetry Footer -->
+    <footer>
+        <div class="footer-metrics">
+            <div class="metric-highlight">BUFFER: <span>LOCK-FREE FIFO 0.8ms</span></div>
+            <div class="metric-highlight">IFFT DELAY: <span>4.18 ms (1.43 m)</span></div>
+            <div class="metric-highlight">RT60: <span>T30 = 0.48 s</span></div>
+            <div class="metric-highlight">STI: <span>0.81 (Excellent)</span></div>
+        </div>
+        <div>
+            <span>SoundCalibrator Core .NET 10 | Uncle Bob Clean Architecture</span>
+        </div>
+    </footer>
+
+    <!-- Interactive Canvas Engine Simulation -->
+    <script>
+        const canvas = document.getElementById('acousticCanvas');
+        const ctx = canvas.getContext('2d');
+
+        let minFreq = 20, maxFreq = 20000;
+        let minDb = -36, maxDb = 18;
+        let showFdw = false;
+        let showMinPhase = false;
+        let mode = 'tf'; // tf, rta, etc, spec
+
+        function resize() {
+            canvas.width = canvas.parentElement.clientWidth * window.devicePixelRatio;
+            canvas.height = canvas.parentElement.clientHeight * window.devicePixelRatio;
+            render();
+        }
+        window.addEventListener('resize', resize);
+
+        function freqToX(f, w) {
+            const minLog = Math.log10(minFreq);
+            const maxLog = Math.log10(maxFreq);
+            return ((Math.log10(f) - minLog) / (maxLog - minLog)) * w;
+        }
+
+        function dbToY(db, h) {
+            const norm = (db - minDb) / (maxDb - minDb);
+            return h * (1.0 - norm);
+        }
+
+        function phaseToY(deg, h) {
+            const norm = (deg + 180) / 360;
+            return h * (1.0 - norm);
+        }
+
+        let time = 0;
+        function render() {
+            const w = canvas.width;
+            const h = canvas.height;
+            const mainH = h * 0.72;
+            const cohH = h * 0.28;
+            const cohTop = mainH;
+
+            ctx.clearRect(0, 0, w, h);
+
+            // 1. Grid Background
+            ctx.strokeStyle = '#151c28';
+            ctx.lineWidth = 1;
+
+            const majorFreqs = [20, 50, 100, 200, 500, 1000, 2000, 5000, 10000, 20000];
+            ctx.fillStyle = '#64748b';
+            ctx.font = `${10 * window.devicePixelRatio}px JetBrains Mono`;
+
+            majorFreqs.forEach(f => {
+                if (f < minFreq || f > maxFreq) return;
+                const x = freqToX(f, w);
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, h);
+                ctx.stroke();
+
+                const label = f >= 1000 ? `${f/1000}k` : `${f}`;
+                ctx.fillText(label, x + 4, cohTop - 8);
+            });
+
+            // dB Grid
+            for (let db = -36; db <= 18; db += 6) {
+                const y = dbToY(db, mainH);
+                ctx.strokeStyle = db === 0 ? '#263449' : '#151c28';
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(w, y);
+                ctx.stroke();
+
+                ctx.fillStyle = '#00f0ff';
+                ctx.fillText(`${db > 0 ? '+' : ''}${db} dB`, 8, y - 4);
+            }
+
+            // Phase Grid Right
+            [-180, -90, 0, 90, 180].forEach(deg => {
+                const y = phaseToY(deg, mainH);
+                ctx.fillStyle = '#ff9100';
+                ctx.fillText(`${deg}°`, w - (32 * window.devicePixelRatio), y - 4);
+            });
+
+            // Coherence Grid
+            ctx.strokeStyle = '#1e293b';
+            ctx.beginPath();
+            ctx.moveTo(0, cohTop);
+            ctx.lineTo(w, cohTop);
+            ctx.stroke();
+
+            ctx.fillStyle = '#10b981';
+            ctx.fillText('1.0 γ²', 8, cohTop + (16 * window.devicePixelRatio));
+            ctx.fillText('0.5 γ²', 8, cohTop + (cohH * 0.5));
+
+            // 2. Draw Simulated Transfer Function Curve (Cyan)
+            ctx.beginPath();
+            ctx.strokeStyle = '#00f0ff';
+            ctx.lineWidth = 2.4 * window.devicePixelRatio;
+            ctx.shadowColor = 'rgba(0, 240, 255, 0.4)';
+            ctx.shadowBlur = 10;
+
+            const steps = 400;
+            for (let i = 0; i <= steps; i++) {
+                const f = minFreq * Math.pow(maxFreq / minFreq, i / steps);
+                const x = freqToX(f, w);
+
+                // Simulated loudspeaker response with crossover bump
+                let mag = -2.0 + Math.sin(Math.log10(f) * 6 + time * 0.5) * 1.5;
+                if (f < 60) mag -= (60 - f) * 0.5; // low cut
+                if (f > 15000) mag -= (f - 15000) * 0.003; // high rolloff
+
+                // Small reflection comb filter
+                if (!showFdw) {
+                    mag += Math.sin(f * 0.04) * 2.2;
+                }
+
+                const y = dbToY(mag, mainH);
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            }
+            ctx.stroke();
+            ctx.shadowBlur = 0;
+
+            // 3. Draw Phase Curve (Orange)
+            ctx.beginPath();
+            ctx.strokeStyle = '#ff9100';
+            ctx.lineWidth = 1.6 * window.devicePixelRatio;
+
+            for (let i = 0; i <= steps; i++) {
+                const f = minFreq * Math.pow(maxFreq / minFreq, i / steps);
+                const x = freqToX(f, w);
+                let phase = ((f * 0.08 + time * 20) % 360) - 180;
+                const y = phaseToY(phase, mainH);
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            }
+            ctx.stroke();
+
+            // 4. Draw Coherence Curve (Green)
+            ctx.beginPath();
+            ctx.strokeStyle = '#10b981';
+            ctx.lineWidth = 1.8 * window.devicePixelRatio;
+
+            for (let i = 0; i <= steps; i++) {
+                const f = minFreq * Math.pow(maxFreq / minFreq, i / steps);
+                const x = freqToX(f, w);
+                let coh = 0.95 - Math.abs(Math.sin(f * 0.02)) * 0.2;
+                if (f < 40) coh = 0.4 + (f / 40) * 0.5;
+                const y = cohTop + cohH * (1.0 - coh);
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            }
+            ctx.stroke();
+
+            time += 0.01;
+            requestAnimationFrame(render);
+        }
+
+        setTimeout(resize, 100);
+
+        // Interactive Button Wiring
+        document.getElementById('btnFdw').addEventListener('click', (e) => {
+            showFdw = !showFdw;
+            e.currentTarget.classList.toggle('active');
+        });
+
+        document.getElementById('btnResetZoom').addEventListener('click', () => {
+            minFreq = 20; maxFreq = 20000;
+            minDb = -36; maxDb = 18;
+        });
+
+        // Mouse hover tracking for HUD readout
+        canvas.addEventListener('mousemove', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const mouseX = (e.clientX - rect.left) * window.devicePixelRatio;
+            const logRatio = mouseX / canvas.width;
+            const f = minFreq * Math.pow(maxFreq / minFreq, logRatio);
+            
+            document.getElementById('hudFreq').innerText = `${f >= 1000 ? (f/1000).toFixed(2) + ' k' : f.toFixed(1)} Hz`;
+            document.getElementById('hudMag').innerText = `${(-1.5 + Math.sin(f * 0.01) * 3).toFixed(1)} dB`;
+            document.getElementById('hudPhase').innerText = `${(((f * 0.08) % 360) - 180).toFixed(0)}°`;
+            document.getElementById('hudCoh').innerText = `${(92 + Math.sin(f * 0.05) * 6).toFixed(1)}%`;
+        });
+    </script>
+</body>
+</html>
