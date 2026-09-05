@@ -14,7 +14,7 @@
             <Grid ColumnDefinitions="Auto,*,Auto">
                 <!-- Brand & Logo -->
                 <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-                    <Border Width="28" Height="28" CornerRadius="6" Margin="0,0,10,0" BoxShadow="0 0 12px #3300F0FF">
+                    <Border Width="28" Height="28" CornerRadius="6" Margin="0,0,10,0" BoxShadow="0 0 12 0 #3300F0FF">
                         <Border.Background>
                             <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
                                 <GradientStop Color="#00F0FF" Offset="0.0"/>
