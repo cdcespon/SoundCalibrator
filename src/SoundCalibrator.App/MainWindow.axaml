@@ -1,20 +1,50 @@
-﻿<Window xmlns="https://github.com/avaloniaui"
+<Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:controls="clr-namespace:SoundCalibrator.App.Controls"
         mc:Ignorable="d" d:DesignWidth="1440" d:DesignHeight="880"
         x:Class="SoundCalibrator.App.MainWindow"
-        Title="SoundCalibrator — Perspective 1: Cyber-Acoustic Tech"
-        Background="#07090E"
+        Title="Sound Calibrator"
+        Icon="/Assets/icon.ico"
+        Background="{DynamicResource AppWindowBg}"
+        ExtendClientAreaToDecorationsHint="True"
+        ExtendClientAreaTitleBarHeightHint="-1"
+        CanResize="True"
         Width="1440" Height="880"
         WindowStartupLocation="CenterScreen">
 
     <Window.Styles>
+        <!-- Hide Full Screen Button (the two diagonal arrows) in window titlebar -->
+        <Style Selector="Button#PART_FullScreenButton">
+            <Setter Property="IsVisible" Value="False"/>
+            <Setter Property="Width" Value="0"/>
+            <Setter Property="MaxWidth" Value="0"/>
+            <Setter Property="Opacity" Value="0"/>
+        </Style>
+        <Style Selector="Button#PART_PopoverFullScreenButton">
+            <Setter Property="IsVisible" Value="False"/>
+            <Setter Property="Width" Value="0"/>
+            <Setter Property="MaxWidth" Value="0"/>
+            <Setter Property="Opacity" Value="0"/>
+        </Style>
+        <Style Selector=":is(Window) Button#PART_FullScreenButton">
+            <Setter Property="IsVisible" Value="False"/>
+            <Setter Property="Width" Value="0"/>
+            <Setter Property="MaxWidth" Value="0"/>
+            <Setter Property="Opacity" Value="0"/>
+        </Style>
+        <Style Selector=":is(Window) Button#PART_PopoverFullScreenButton">
+            <Setter Property="IsVisible" Value="False"/>
+            <Setter Property="Width" Value="0"/>
+            <Setter Property="MaxWidth" Value="0"/>
+            <Setter Property="Opacity" Value="0"/>
+        </Style>
+
         <!-- Modern Tech Cyber-Acoustic Styling -->
         <Style Selector="Button.dock-pill">
             <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="Foreground" Value="#94A3B8"/>
+            <Setter Property="Foreground" Value="{DynamicResource AppTextSecondary}"/>
             <Setter Property="FontSize" Value="10"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
             <Setter Property="Padding" Value="8,4"/>
@@ -55,11 +85,11 @@
             <Setter Property="BorderThickness" Value="0"/>
         </Style>
 
-        <!-- Dark Cyber ComboBoxes -->
+        <!-- Dark / Light Adaptive ComboBoxes -->
         <Style Selector="ComboBox">
-            <Setter Property="Background" Value="#0A0D14"/>
-            <Setter Property="Foreground" Value="#F8FAFC"/>
-            <Setter Property="BorderBrush" Value="#1E2638"/>
+            <Setter Property="Background" Value="{DynamicResource AppCardBg}"/>
+            <Setter Property="Foreground" Value="{DynamicResource AppTextPrimary}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource AppBorderBrush}"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="CornerRadius" Value="4"/>
             <Setter Property="FontSize" Value="10"/>
@@ -74,7 +104,7 @@
         <Style Selector="TabItem">
             <Setter Property="FontSize" Value="11"/>
             <Setter Property="FontWeight" Value="Bold"/>
-            <Setter Property="Foreground" Value="#94A3B8"/>
+            <Setter Property="Foreground" Value="{DynamicResource AppTextSecondary}"/>
             <Setter Property="Padding" Value="14,8"/>
             <Setter Property="Margin" Value="0"/>
             <Setter Property="BorderThickness" Value="0,0,0,2"/>
@@ -88,10 +118,10 @@
 
         <!-- Zoom overlay buttons -->
         <Style Selector="Button.zoom-btn">
-            <Setter Property="Background" Value="#D90E121A"/>
-            <Setter Property="BorderBrush" Value="#1AFFFFFF"/>
+            <Setter Property="Background" Value="{DynamicResource AppCardBg}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource AppBorderBrush}"/>
             <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="Foreground" Value="#94A3B8"/>
+            <Setter Property="Foreground" Value="{DynamicResource AppTextSecondary}"/>
             <Setter Property="FontWeight" Value="Bold"/>
             <Setter Property="FontSize" Value="13"/>
             <Setter Property="Width" Value="32"/>
@@ -108,12 +138,12 @@
         </Style>
     </Window.Styles>
 
-    <Grid RowDefinitions="50,Auto,*,32">
+    <Grid RowDefinitions="48,Auto,*,32">
 
         <!-- ================================================================= -->
         <!-- ROW 0: TOP HEADER TELEMETRY                                       -->
         <!-- ================================================================= -->
-        <Border Grid.Row="0" Background="#D90E121A" BorderBrush="#1E2638" BorderThickness="0,0,0,1" Padding="18,0">
+        <Border Grid.Row="0" Background="{DynamicResource AppHeaderBg}" BorderBrush="{DynamicResource AppBorderBrush}" BorderThickness="0,0,0,1" Padding="18,0,150,0" PointerPressed="OnHeaderPointerPressed">
             <Grid ColumnDefinitions="Auto,*,Auto">
                 
                 <!-- Left: Brand Logo & Title -->
@@ -129,11 +159,7 @@
                               Fill="#000000" Stretch="Uniform" Width="15" Height="15" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Border>
                     
-                    <TextBlock Text="SoundCalibrator" Foreground="#FFFFFF" FontSize="17" FontWeight="Bold" VerticalAlignment="Center"/>
-
-                    <Border Background="#1A00F0FF" BorderBrush="#4D00F0FF" BorderThickness="1" CornerRadius="20" Padding="8,2" VerticalAlignment="Center">
-                        <TextBlock Text="PERSPECTIVE 1: CYBER-ACOUSTIC TECH" Foreground="#00F0FF" FontSize="10" FontWeight="SemiBold"/>
-                    </Border>
+                    <TextBlock Text="Sound Calibrator" Foreground="{DynamicResource AppTextPrimary}" FontSize="17" FontWeight="Bold" VerticalAlignment="Center"/>
                 </StackPanel>
 
                 <!-- Right: Telemetry in 1 line -->
@@ -166,22 +192,29 @@
                             <TextBlock x:Name="SplText" Text="88.4 dBA" Foreground="#10B981" FontWeight="Bold" FontSize="10" FontFamily="JetBrains Mono, Consolas"/>
                         </Border>
                     </StackPanel>
+
+                    <!-- Theme Toggle Switch -->
+                    <Button x:Name="ThemeToggleBtn" Content="☀️ LIGHT" Classes="dock-pill"
+                            Background="{DynamicResource AppBadgeBg}" BorderBrush="{DynamicResource AppBorderBrush}" BorderThickness="1"
+                            Foreground="#00F0FF" FontWeight="Bold" FontSize="10" Padding="8,4"
+                            Cursor="Hand"
+                            ToolTip.Tip="Toggle Dark / Light Mode (T)"/>
                 </StackPanel>
 
             </Grid>
         </Border>
 
         <!-- ================================================================= -->
-        <!-- ROW 1: GLASS CONTROL DOCK (2-Tier Modular Cyber-Acoustic Ribbon) -->
+        <!-- ROW 1: GLASS CONTROL DOCK (2-Tier Modular Ribbon)                 -->
         <!-- ================================================================= -->
-        <Border Grid.Row="1" Background="#B30E121A" BorderBrush="#1E2638" BorderThickness="0,0,0,1" Padding="14,6">
+        <Border Grid.Row="1" Background="{DynamicResource AppRibbonBg}" BorderBrush="{DynamicResource AppBorderBrush}" BorderThickness="0,0,0,1" Padding="14,6">
             <StackPanel Spacing="6">
                 
                 <!-- TIER 1: MODES, SIGNAL SOURCE, DSP RESOLUTION, TARGET & BLANKING -->
                 <Grid ColumnDefinitions="Auto,Auto,Auto,Auto,*">
                     
                     <!-- Group 1: Modes Segmented Pills -->
-                    <Border Grid.Column="0" Background="#121826" BorderBrush="#1E2638" BorderThickness="1" CornerRadius="6" Padding="3" Margin="0,0,8,0">
+                    <Border Grid.Column="0" Background="{DynamicResource AppCardBg}" BorderBrush="{DynamicResource AppBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="3" Margin="0,0,8,0">
                         <StackPanel Orientation="Horizontal" Spacing="2">
                             <Button x:Name="ModeTfBtn" Content="TRANSFER FN" Classes="dock-pill-active"/>
                             <Button x:Name="ModeRtaBtn" Content="RTA 1/3 OCT" Classes="dock-pill"/>
@@ -191,7 +224,7 @@
                     </Border>
 
                     <!-- Group 2: Signal Source & Routing -->
-                    <Border Grid.Column="1" Background="#121826" BorderBrush="#1E2638" BorderThickness="1" CornerRadius="6" Padding="6,3" Margin="0,0,8,0">
+                    <Border Grid.Column="1" Background="{DynamicResource AppCardBg}" BorderBrush="{DynamicResource AppBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="6,3" Margin="0,0,8,0">
                         <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
                             <TextBlock Text="Source:" Foreground="#64748B" FontSize="10" FontWeight="Bold" VerticalAlignment="Center"/>
                             <ComboBox x:Name="SourceCombo" Width="145" SelectedIndex="0">
@@ -211,7 +244,7 @@
                     </Border>
 
                     <!-- Group 3: DSP Resolution (FFT, Window, Smoothing, Averaging) -->
-                    <Border Grid.Column="2" Background="#121826" BorderBrush="#1E2638" BorderThickness="1" CornerRadius="6" Padding="6,3" Margin="0,0,8,0">
+                    <Border Grid.Column="2" Background="{DynamicResource AppCardBg}" BorderBrush="{DynamicResource AppBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="6,3" Margin="0,0,8,0">
                         <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
                             <TextBlock Text="FFT:" Foreground="#64748B" FontSize="10" FontWeight="Bold" VerticalAlignment="Center"/>
                             <ComboBox x:Name="FftCombo" Width="72" SelectedIndex="1">
@@ -250,7 +283,7 @@
                     </Border>
 
                     <!-- Group 4: Target Curve & Coherence Blanking -->
-                    <Border Grid.Column="3" Background="#121826" BorderBrush="#1E2638" BorderThickness="1" CornerRadius="6" Padding="6,3">
+                    <Border Grid.Column="3" Background="{DynamicResource AppCardBg}" BorderBrush="{DynamicResource AppBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="6,3">
                         <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
                             <TextBlock Text="Target:" Foreground="#64748B" FontSize="10" FontWeight="Bold" VerticalAlignment="Center"/>
                             <ComboBox x:Name="TargetCombo" Width="95" SelectedIndex="1">
@@ -277,7 +310,7 @@
                 <Grid ColumnDefinitions="Auto,Auto,*,Auto">
                     
                     <!-- Pro Tools Group (Min Phase, FDW, Delta Target, Invert Phase) -->
-                    <Border Grid.Column="0" Background="#121826" BorderBrush="#1E2638" BorderThickness="1" CornerRadius="6" Padding="4,2" Margin="0,0,8,0">
+                    <Border Grid.Column="0" Background="{DynamicResource AppCardBg}" BorderBrush="{DynamicResource AppBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="4,2" Margin="0,0,8,0">
                         <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
                             <Button x:Name="MinPhaseBtn" Content="MIN &#216;" Classes="dock-pill" Foreground="#10B981" FontWeight="Bold"/>
                             <Button x:Name="FdwBtn" Content="FDW (10 cyc)" Classes="dock-pill" Foreground="#E040FB" FontWeight="Bold" ToolTip.Tip="Toggle Frequency-Dependent Windowing (Quasi-Anechoic)"/>
@@ -289,7 +322,7 @@
                     <!-- ===================================================== -->
                     <!-- PROMINENT DELAY & ACOUSTIC ALIGNMENT CAPSULE (FIXED) -->
                     <!-- ===================================================== -->
-                    <Border Grid.Column="1" Background="#121826" BorderBrush="#33FF9100" BorderThickness="1" CornerRadius="6" Padding="8,3" Margin="0,0,8,0">
+                    <Border Grid.Column="1" Background="{DynamicResource AppCardBg}" BorderBrush="#33FF9100" BorderThickness="1" CornerRadius="6" Padding="8,3" Margin="0,0,8,0">
                         <Grid ColumnDefinitions="Auto,Auto,85,Auto,54,1,Auto,66,120" VerticalAlignment="Center">
                             
                             <TextBlock Grid.Column="0" Text="DELAY:" Foreground="#FF9100" FontSize="10" FontWeight="Bold" VerticalAlignment="Center" Margin="0,0,6,0"/>
@@ -345,18 +378,20 @@
         <!-- Column 0: Left Trace Manager (260px)                              -->
         <!-- Column 1: Center Graph Canvas + HUD Capsule (*)                   -->
         <!-- Column 2: Right Inspector Drawer (300px)                          -->
-        <!-- ================================================================= -->
-        <Grid Grid.Row="2" ColumnDefinitions="260,*,300">
+        <Grid Grid.Row="2" x:Name="WorkspaceGrid" ColumnDefinitions="260,*,300">
             
-            <!-- COLUMN 0: TRACE MANAGER SIDEBAR -->
-            <Border Grid.Column="0" Background="#B30E121A" BorderBrush="#1E2638" BorderThickness="0,0,1,0">
+            <!-- COLUMN 0: TRACE MANAGER SIDEBAR & COLLAPSED STRIP -->
+            <Grid Grid.Column="0">
+                <!-- Expanded Sidebar -->
+                <Border x:Name="LeftSidebar" Background="{DynamicResource AppSidebarBg}" BorderBrush="{DynamicResource AppBorderBrush}" BorderThickness="0,0,1,0">
                 <Grid RowDefinitions="Auto,*,Auto">
                     
                     <!-- Sidebar Header -->
-                    <Border Grid.Row="0" Padding="14,10" BorderBrush="#1E2638" BorderThickness="0,0,0,1">
-                        <Grid ColumnDefinitions="*,Auto">
+                    <Border Grid.Row="0" Padding="14,10" BorderBrush="{DynamicResource AppBorderBrush}" BorderThickness="0,0,0,1">
+                        <Grid ColumnDefinitions="*,Auto,Auto">
                             <TextBlock x:Name="TracesCountText" Text="ACOUSTIC TRACES (5)" Foreground="#94A3B8" FontWeight="Bold" FontSize="11" VerticalAlignment="Center"/>
-                            <Button x:Name="NewTraceBtn" Grid.Column="1" Content="+ NEW" Classes="dock-pill" Padding="6,2" FontSize="10"/>
+                            <Button x:Name="NewTraceBtn" Grid.Column="1" Content="+ NEW" Classes="dock-pill" Padding="6,2" FontSize="10" Margin="0,0,4,0"/>
+                            <Button x:Name="CollapseLeftBtn" Grid.Column="2" Content="◀" Classes="dock-pill" Padding="6,2" FontSize="10" ToolTip.Tip="Collapse Traces Panel"/>
                         </Grid>
                     </Border>
 
@@ -365,7 +400,7 @@
                         <StackPanel x:Name="TraceListStack" Margin="10" Spacing="8">
                             
                             <!-- Card 1: Live Measurement -->
-                            <Border Background="#B3121826" BorderBrush="#00F0FF" BorderThickness="3,1,1,1" CornerRadius="6" Padding="10">
+                            <Border Background="{DynamicResource AppCardSubBg}" BorderBrush="#00F0FF" BorderThickness="3,1,1,1" CornerRadius="6" Padding="10">
                                 <StackPanel Spacing="6">
                                     <Grid ColumnDefinitions="*,Auto">
                                         <TextBlock Text="Live Measurement" Foreground="#FFFFFF" FontWeight="SemiBold" FontSize="12" VerticalAlignment="Center"/>
@@ -381,7 +416,7 @@
                             </Border>
 
                             <!-- Card 2: Main L - Ground Plane -->
-                            <Border Background="#B3121826" BorderBrush="#A855F7" BorderThickness="3,1,1,1" CornerRadius="6" Padding="10">
+                            <Border Background="{DynamicResource AppCardSubBg}" BorderBrush="#A855F7" BorderThickness="3,1,1,1" CornerRadius="6" Padding="10">
                                 <StackPanel Spacing="6">
                                     <Grid ColumnDefinitions="*,Auto">
                                         <TextBlock Text="Main L - Ground Plane" Foreground="#FFFFFF" FontWeight="SemiBold" FontSize="12" VerticalAlignment="Center"/>
@@ -395,7 +430,7 @@
                             </Border>
 
                             <!-- Card 3: Subwoofer Center -->
-                            <Border Background="#B3121826" BorderBrush="#10B981" BorderThickness="3,1,1,1" CornerRadius="6" Padding="10">
+                            <Border Background="{DynamicResource AppCardSubBg}" BorderBrush="#10B981" BorderThickness="3,1,1,1" CornerRadius="6" Padding="10">
                                 <StackPanel Spacing="6">
                                     <Grid ColumnDefinitions="*,Auto">
                                         <TextBlock Text="Subwoofer Center" Foreground="#FFFFFF" FontWeight="SemiBold" FontSize="12" VerticalAlignment="Center"/>
@@ -409,7 +444,7 @@
                             </Border>
 
                             <!-- Card 4: Balcony Delay Tower -->
-                            <Border Background="#B3121826" BorderBrush="#F59E0B" BorderThickness="3,1,1,1" CornerRadius="6" Padding="10">
+                            <Border Background="{DynamicResource AppCardSubBg}" BorderBrush="#F59E0B" BorderThickness="3,1,1,1" CornerRadius="6" Padding="10">
                                 <StackPanel Spacing="6">
                                     <Grid ColumnDefinitions="*,Auto">
                                         <TextBlock Text="Balcony Delay Tower" Foreground="#FFFFFF" FontWeight="SemiBold" FontSize="12" VerticalAlignment="Center"/>
@@ -423,7 +458,7 @@
                             </Border>
 
                             <!-- Card 5: Simulated Crossover Sum -->
-                            <Border Background="#B3121826" BorderBrush="#EC4899" BorderThickness="3,1,1,1" CornerRadius="6" Padding="10">
+                            <Border Background="{DynamicResource AppCardSubBg}" BorderBrush="#EC4899" BorderThickness="3,1,1,1" CornerRadius="6" Padding="10">
                                 <StackPanel Spacing="6">
                                     <Grid ColumnDefinitions="*,Auto">
                                         <TextBlock Text="Simulated Crossover Sum" Foreground="#FFFFFF" FontWeight="SemiBold" FontSize="12" VerticalAlignment="Center"/>
@@ -440,7 +475,7 @@
                     </ScrollViewer>
 
                     <!-- Sidebar Bottom Quick Actions (AVG, SUM, DIFF, SAVE, LOAD) -->
-                    <Border Grid.Row="2" Background="#090C12" Padding="8,6" BorderBrush="#1E2638" BorderThickness="0,1,0,0">
+                    <Border Grid.Row="2" Background="{DynamicResource AppSubPanelBg}" Padding="8,6" BorderBrush="{DynamicResource AppBorderBrush}" BorderThickness="0,1,0,0">
                         <UniformGrid Columns="4">
                             <Button x:Name="SpatialAvgBtn" Content="AVG" Classes="dock-pill" FontSize="9" Padding="4,4" HorizontalContentAlignment="Center"/>
                             <Button x:Name="SimulateSumBtn" Content="SUM" Classes="dock-pill" FontSize="9" Padding="4,4" HorizontalContentAlignment="Center"/>
@@ -452,16 +487,40 @@
                 </Grid>
             </Border>
 
-            <!-- COLUMN 1: CENTER GRAPH VIEWPORT + FLOATING HUD & ZOOM -->
-            <Grid Grid.Column="1" ClipToBounds="True" Background="#090C12">
-                
-                <!-- Main SkiaSharp Canvas -->
-                <controls:AcousticGraphControl x:Name="GraphControl"/>
+            <!-- Collapsed Slim Strip (28px) -->
+            <Border x:Name="LeftCollapsedStrip" Background="{DynamicResource AppSlimStripBg}" BorderBrush="{DynamicResource AppBorderBrush}" BorderThickness="0,0,1,0"
+                    IsVisible="False" Width="28" HorizontalAlignment="Stretch">
+                <Grid RowDefinitions="Auto,*">
+                    <Button x:Name="ExpandLeftBtn" Grid.Row="0" Content="▶" Classes="dock-pill"
+                            Width="26" Height="26" Padding="0" Margin="1,6,1,0"
+                            Foreground="#00F0FF" FontWeight="Bold" FontSize="10"
+                            HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                            ToolTip.Tip="Expand Acoustic Traces Panel"/>
+                    <Button x:Name="ExpandLeftStripBtn" Grid.Row="1" Background="Transparent" BorderThickness="0"
+                            HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Padding="0" Cursor="Hand"
+                            ToolTip.Tip="Click to expand Acoustic Traces">
+                        <LayoutTransformControl HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <LayoutTransformControl.LayoutTransform>
+                                <RotateTransform Angle="-90"/>
+                            </LayoutTransformControl.LayoutTransform>
+                            <TextBlock Text="ACOUSTIC TRACES" Foreground="#94A3B8" FontWeight="Bold" FontSize="9"
+                                       LetterSpacing="1"/>
+                        </LayoutTransformControl>
+                    </Button>
+                </Grid>
+            </Border>
+        </Grid>
+
+        <!-- COLUMN 1: CENTER GRAPH VIEWPORT + FLOATING HUD & ZOOM -->
+        <Grid Grid.Column="1" ClipToBounds="True" Background="{DynamicResource AppCanvasBg}">
+            
+            <!-- Main SkiaSharp Canvas -->
+            <controls:AcousticGraphControl x:Name="GraphControl"/>
 
                 <!-- Floating HUD Glass Capsule (Top Center - Rock Solid Fixed Width 590px) -->
                 <Border HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,14,0,0"
                         Width="590" Height="36"
-                        Background="#D90E121A" BorderBrush="#4D00F0FF" BorderThickness="1" CornerRadius="18"
+                        Background="{DynamicResource AppHudBg}" BorderBrush="{DynamicResource AppBorderBrush}" BorderThickness="1" CornerRadius="18"
                         BoxShadow="0 8 32 0 #80000000" IsHitTestVisible="False">
                     <Grid ColumnDefinitions="*,*,*,*,*" VerticalAlignment="Center" Margin="12,0">
                         
@@ -507,9 +566,19 @@
 
             </Grid>
 
-            <!-- COLUMN 2: RIGHT DRAWER INSPECTOR (AUTO PEQ / MATRIX / DISTORTION) -->
-            <Border Grid.Column="2" Background="#D90E121A" BorderBrush="#1E2638" BorderThickness="1,0,0,0">
-                <TabControl Background="Transparent">
+            <!-- COLUMN 2: RIGHT DRAWER INSPECTOR & COLLAPSED STRIP -->
+            <Grid Grid.Column="2">
+                <!-- Expanded Sidebar -->
+                <Border x:Name="RightSidebar" Background="{DynamicResource AppRightDrawerBg}" BorderBrush="{DynamicResource AppBorderBrush}" BorderThickness="1,0,0,0">
+                <Grid RowDefinitions="Auto,*">
+                    <!-- Inspector Header Bar with Collapse Button -->
+                    <Border Grid.Row="0" Padding="12,6" BorderBrush="{DynamicResource AppBorderBrush}" BorderThickness="0,0,0,1">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <TextBlock Text="ACOUSTIC INSPECTOR" Foreground="#64748B" FontWeight="Bold" FontSize="10" VerticalAlignment="Center"/>
+                            <Button x:Name="CollapseRightBtn" Grid.Column="1" Content="▶" Classes="dock-pill" Padding="6,2" FontSize="10" ToolTip.Tip="Collapse Inspector Panel"/>
+                        </Grid>
+                    </Border>
+                    <TabControl Grid.Row="1" Background="Transparent">
                     
                     <!-- TAB 1: AUTO PEQ -->
                     <TabItem Header="AUTO PEQ">
@@ -517,7 +586,7 @@
                             <StackPanel Margin="16" Spacing="14">
                                 
                                 <!-- Auto PEQ Synthesizer Card -->
-                                <Border Background="#05FFFFFF" BorderBrush="#0DFFFFFF" BorderThickness="1" CornerRadius="8" Padding="12">
+                                <Border Background="{DynamicResource AppCardInnerBg}" BorderBrush="{DynamicResource AppCardInnerBorder}" BorderThickness="1" CornerRadius="8" Padding="12">
                                     <StackPanel Spacing="10">
                                         <Grid ColumnDefinitions="*,Auto">
                                             <TextBlock Text="Target: Harman Acoustic" Foreground="#F8FAFC" FontWeight="Bold" FontSize="10"/>
@@ -571,7 +640,7 @@
                                 </Border>
 
                                 <!-- Electroacoustic Purity Card -->
-                                <Border Background="#05FFFFFF" BorderBrush="#0DFFFFFF" BorderThickness="1" CornerRadius="8" Padding="12">
+                                <Border Background="{DynamicResource AppCardInnerBg}" BorderBrush="{DynamicResource AppCardInnerBorder}" BorderThickness="1" CornerRadius="8" Padding="12">
                                     <StackPanel Spacing="8">
                                         <Grid ColumnDefinitions="*,Auto">
                                             <TextBlock Text="Electroacoustic Purity" Foreground="#00F0FF" FontWeight="Bold" FontSize="10"/>
@@ -600,13 +669,15 @@
                                 </Border>
 
                                 <!-- Reports & Export Section -->
-                                <Border Background="#05FFFFFF" BorderBrush="#0DFFFFFF" BorderThickness="1" CornerRadius="8" Padding="12">
+                                <Border Background="{DynamicResource AppCardInnerBg}" BorderBrush="{DynamicResource AppCardInnerBorder}" BorderThickness="1" CornerRadius="8" Padding="12">
                                     <StackPanel Spacing="8">
                                         <TextBlock Text="REPORTS &amp; EXPORT" Foreground="#64748B" FontWeight="Bold" FontSize="10"/>
                                         <Grid ColumnDefinitions="*,8,*">
-                                            <Button x:Name="HtmlReportBtn" Content="HTML REPORT" Classes="dock-pill"
-                                                    Background="#0DFFFFFF" BorderBrush="#15FFFFFF" BorderThickness="1"
-                                                    HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Padding="0,8"/>
+                                            <Button x:Name="ExportReportBtn" Content="EXPORT REPORT..." Classes="dock-pill"
+                                                    Background="#1A00F0FF" BorderBrush="#4D00F0FF" BorderThickness="1"
+                                                    Foreground="#00F0FF" FontWeight="Bold"
+                                                    HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Padding="0,8"
+                                                    ToolTip.Tip="Export session report to PDF, HTML, or Text"/>
                                             <Button x:Name="CsvReportBtn" Grid.Column="2" Content="CSV TRACE" Classes="dock-pill"
                                                     Background="#0DFFFFFF" BorderBrush="#15FFFFFF" BorderThickness="1"
                                                     HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Padding="0,8"/>
@@ -624,7 +695,7 @@
                             <StackPanel Margin="16" Spacing="14">
                                 
                                 <!-- Crossover Phase Alignment -->
-                                <Border Background="#05FFFFFF" BorderBrush="#0DFFFFFF" BorderThickness="1" CornerRadius="8" Padding="12">
+                                <Border Background="{DynamicResource AppCardInnerBg}" BorderBrush="{DynamicResource AppCardInnerBorder}" BorderThickness="1" CornerRadius="8" Padding="12">
                                     <StackPanel Spacing="8">
                                         <Grid ColumnDefinitions="*,Auto">
                                             <TextBlock Text="CROSSOVER ALIGNMENT" Foreground="#00F0FF" FontWeight="Bold" FontSize="10"/>
@@ -645,7 +716,7 @@
                                 </Border>
 
                                 <!-- Multi-Zone Delay Matrix -->
-                                <Border Background="#05FFFFFF" BorderBrush="#0DFFFFFF" BorderThickness="1" CornerRadius="8" Padding="12">
+                                <Border Background="{DynamicResource AppCardInnerBg}" BorderBrush="{DynamicResource AppCardInnerBorder}" BorderThickness="1" CornerRadius="8" Padding="12">
                                     <StackPanel Spacing="8">
                                         <Grid ColumnDefinitions="*,Auto">
                                             <TextBlock Text="MULTI-ZONE MATRIX (20&#176;C)" Foreground="#F59E0B" FontWeight="Bold" FontSize="10"/>
@@ -664,7 +735,7 @@
                         <ScrollViewer VerticalScrollBarVisibility="Auto">
                             <StackPanel Margin="16" Spacing="14">
                                 
-                                <Border Background="#05FFFFFF" BorderBrush="#0DFFFFFF" BorderThickness="1" CornerRadius="8" Padding="12">
+                                <Border Background="{DynamicResource AppCardInnerBg}" BorderBrush="{DynamicResource AppCardInnerBorder}" BorderThickness="1" CornerRadius="8" Padding="12">
                                     <StackPanel Spacing="8">
                                         <TextBlock Text="ROOM ACOUSTICS (ISO 3382)" Foreground="#A855F7" FontWeight="Bold" FontSize="10"/>
                                         <Grid ColumnDefinitions="*,Auto">
@@ -678,7 +749,7 @@
                                     </StackPanel>
                                 </Border>
 
-                                <Border Background="#05FFFFFF" BorderBrush="#0DFFFFFF" BorderThickness="1" CornerRadius="8" Padding="12">
+                                <Border Background="{DynamicResource AppCardInnerBg}" BorderBrush="{DynamicResource AppCardInnerBorder}" BorderThickness="1" CornerRadius="8" Padding="12">
                                     <StackPanel Spacing="8">
                                         <TextBlock Text="FEEDBACK HUNTER" Foreground="#EF4444" FontWeight="Bold" FontSize="10"/>
                                         <Grid ColumnDefinitions="*,Auto">
@@ -693,14 +764,39 @@
                     </TabItem>
 
                 </TabControl>
+                </Grid>
             </Border>
+
+            <!-- Collapsed Slim Strip (28px) -->
+            <Border x:Name="RightCollapsedStrip" Background="{DynamicResource AppSlimStripBg}" BorderBrush="{DynamicResource AppBorderBrush}" BorderThickness="1,0,0,0"
+                    IsVisible="False" Width="28" HorizontalAlignment="Stretch">
+                <Grid RowDefinitions="Auto,*">
+                    <Button x:Name="ExpandRightBtn" Grid.Row="0" Content="◀" Classes="dock-pill"
+                            Width="26" Height="26" Padding="0" Margin="1,6,1,0"
+                            Foreground="#00F0FF" FontWeight="Bold" FontSize="10"
+                            HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                            ToolTip.Tip="Expand Inspector Panel"/>
+                    <Button x:Name="ExpandRightStripBtn" Grid.Row="1" Background="Transparent" BorderThickness="0"
+                            HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Padding="0" Cursor="Hand"
+                            ToolTip.Tip="Click to expand Inspector">
+                        <LayoutTransformControl HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <LayoutTransformControl.LayoutTransform>
+                                <RotateTransform Angle="90"/>
+                            </LayoutTransformControl.LayoutTransform>
+                            <TextBlock Text="ACOUSTIC INSPECTOR" Foreground="#94A3B8" FontWeight="Bold" FontSize="9"
+                                       LetterSpacing="1"/>
+                        </LayoutTransformControl>
+                    </Button>
+                </Grid>
+            </Border>
+        </Grid>
 
         </Grid>
 
         <!-- ================================================================= -->
         <!-- ROW 3: TELEMETRY STATUS FOOTER                                    -->
         <!-- ================================================================= -->
-        <Border Grid.Row="3" Background="#090C12" BorderBrush="#1E2638" BorderThickness="0,1,0,0" Padding="16,0">
+        <Border Grid.Row="3" Background="{DynamicResource AppFooterBg}" BorderBrush="{DynamicResource AppBorderBrush}" BorderThickness="0,1,0,0" Padding="16,0">
             <Grid ColumnDefinitions="Auto,*,Auto">
                 
                 <!-- Left Telemetry Metrics -->
@@ -713,7 +809,7 @@
 
                 <!-- Center Shortcuts -->
                 <StackPanel Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Center">
-                    <TextBlock Text="[Space] Capture | [A] Align | [Z] Reset Zoom | [W] FDW | [P] Invert &#216; | [M] Mode" Foreground="#64748B" FontSize="10" FontFamily="JetBrains Mono, Consolas"/>
+                    <TextBlock Text="[Space] Capture | [A] Align | [Z] Zoom | [M] Mode | [T] Theme | [ / ] Panels" Foreground="#64748B" FontSize="10" FontFamily="JetBrains Mono, Consolas"/>
                 </StackPanel>
 
                 <!-- Right Brand Signature -->

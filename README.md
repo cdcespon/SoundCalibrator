@@ -1,4 +1,4 @@
-# SoundCalibrator 🎛️⚡
+# Sound Calibrator 🎛️⚡
 
 > **Software profesional de calibración acústica y medición en tiempo real de doble canal (Dual-Channel FFT Transfer Function Analyzer).**  
 > Inspirado en la arquitectura y capacidades de **Open Sound Meter**, **Smaart v9** y **REW**, desarrollado íntegramente bajo la disciplina de **SwarmForge** (Uncle Bob Clean Architecture & Software Craftsmanship) sobre **.NET 10**, **Avalonia UI** y **SkiaSharp**.

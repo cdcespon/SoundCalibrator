@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Text;
 using SoundCalibrator.Core.Analysis;
@@ -169,12 +169,24 @@ public static class ReportGenerator
         return sb.ToString();
     }
 
+    public static string GenerateText(CalibrationReportData data)
+    {
+        return GenerateMarkdown(data);
+    }
+
+    public static byte[] GeneratePdf(CalibrationReportData data)
+    {
+        var pdfGenerator = new PdfReportGenerator();
+        return pdfGenerator.Generate(data);
+    }
+
     public static string GenerateHtml(CalibrationReportData data)
     {
         return $@"<!DOCTYPE html>
 <html lang=""en"">
 <head>
     <meta charset=""UTF-8""/>
+    <meta name=""viewport"" content=""width=device-width, initial-scale=1.0""/>
     <title>SoundCalibrator Report - {data.ProjectName}</title>
     <style>
         body {{
@@ -210,3 +222,4 @@ public static class ReportGenerator
 </html>";
     }
 }
+
