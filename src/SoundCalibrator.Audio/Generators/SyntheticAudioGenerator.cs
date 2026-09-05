@@ -64,6 +64,7 @@ public sealed class SyntheticAudioGenerator : IAudioCaptureDevice, ISampleProvid
 
     public TestSignalType SignalType { get; set; } = TestSignalType.PinkNoise;
     public float SineFrequency { get; set; } = 1000f;
+    public bool SimulateAcousticRoom { get; set; } = false;
 
     public float GainDb
     {
@@ -122,7 +123,15 @@ public sealed class SyntheticAudioGenerator : IAudioCaptureDevice, ISampleProvid
             int readIdx = _delayWriteIdx - _delaySamples;
             if (readIdx < 0) readIdx += _delayBuffer.Length;
 
-            measBlock[i] = _delayBuffer[readIdx] * _gainFactor;
+                        float meas = _delayBuffer[readIdx];
+            if (SimulateAcousticRoom && SignalType == TestSignalType.PinkNoise)
+            {
+                int reflSamples = (int)(1.8f * _sampleRate / 1000f);
+                int reflIdx = readIdx - reflSamples;
+                if (reflIdx < 0) reflIdx += _delayBuffer.Length;
+                meas = meas * 0.85f + _delayBuffer[reflIdx] * 0.28f;
+            }
+            measBlock[i] = meas * _gainFactor;
 
             _delayWriteIdx = (_delayWriteIdx + 1) % _delayBuffer.Length;
         }
