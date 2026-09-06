@@ -75,7 +75,18 @@ public partial class MainWindow : Window
         UpdateModeButtons(0); // Transfer Function default
 
         _engine.Start();
-        Loaded += (s, e) => HideFullScreenArrows();
+        Loaded += (s, e) =>
+        {
+            HideFullScreenArrows();
+            if (OperatingSystem.IsWindows())
+            {
+                var handle = TryGetPlatformHandle()?.Handle;
+                if (handle != null && handle != IntPtr.Zero)
+                {
+                    SetWindowTextW(handle.Value, "Sound Calibrator");
+                }
+            }
+        };
     }
 
     private void WireControls()
@@ -797,9 +808,23 @@ public partial class MainWindow : Window
                     btn.Opacity = 0;
                 }
             }
+
+            foreach (var tb in this.GetVisualDescendants().OfType<TextBlock>())
+            {
+                if (tb != BrandTitleText && (tb.Name == "PART_Title" || tb.Text == "Sound Calibrator" || tb.Text == "SoundCalibrator"))
+                {
+                    tb.IsVisible = false;
+                    tb.Width = 0;
+                    tb.Height = 0;
+                    tb.Opacity = 0;
+                }
+            }
         }
         catch { }
     }
+
+    [System.Runtime.InteropServices.DllImport("user32.dll", EntryPoint = "SetWindowTextW", CharSet = System.Runtime.InteropServices.CharSet.Unicode)]
+    private static extern bool SetWindowTextW(IntPtr hWnd, string lpString);
 
     private void RefreshTraceManagerUI()
     {
