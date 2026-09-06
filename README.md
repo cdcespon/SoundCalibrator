@@ -17,6 +17,26 @@
 
 ---
 
+## 🎬 Video Demostrativo Oficial (Feature Showcase)
+
+> **Ver o descargar el video en alta definición con locución técnica en inglés y banda sonora ambiental tecnológica:**  
+> 🎥 [Sound_Calibrator_Showcase.mp4](docs/Sound_Calibrator_Showcase.mp4) *(44s, 2K 60 FPS, Audio AAC 320 kbps con locución neural y banda sonora tecnológica)*
+
+### 📝 Guión Técnico de Locución y Storyboard (English Script & Timeline)
+
+| Tiempo | Módulo / Escena | Visual en Pantalla | Locución Técnica en Inglés (Voiceover) |
+| :---: | :--- | :--- | :--- |
+| **00:00 - 00:07** | **Dual-Channel Transfer Function** | Medición FFT en tiempo real, magnitud dB, fase y coherencia con curva Harman Target. | *"Sound Calibrator: real-time dual-channel acoustic measurement and transfer function analysis."* |
+| **00:08 - 00:14** | **Fractional RTA & SPL** | Analizador de 1/3 de octava (ISO 266), Max-Hold y monitoreo Leq en dB(A). | *"Inspect live spectra with fractional one-third octave RTA and calibrated SPL Leq monitoring."* |
+| **00:15 - 00:17** | **Impulse Response & Delay** | Síntesis IFFT, retardo del arribo directo y auto-alineación submilisegundo. | *"Impulse response synthesis with instant delay tracking."* |
+| **00:18 - 00:24** | **2D Spectrogram Waterfall** | Cascada espectral a 60 FPS acelerada por GPU mostrando disipación de energía. | *"High-speed GPU waterfall spectrogram mapping acoustic decay at sixty FPS."* |
+| **00:25 - 00:35** | **Light Theme & Adaptive UI** | Conmutación instantánea a modo claro de alto contraste y paneles laterales colapsables. | *"Engineered for studio and outdoor calibration, featuring high-contrast light mode and collapsible sidebars."* |
+| **00:36 - 00:44** | **Auto PEQ & System Tuning** | Generador de filtros paramétricos, matriz de retardos multi-zona y exportación. | *"Automated parametric EQ, delay matrices, and PDF reports. Sound Calibrator: precision sound craftsmanship."* |
+
+*Documentación completa de producción audiovisual:* [Guión de Locución](docs/video_demo/voiceover_script.md) | [Storyboard](docs/video_demo/storyboard.md) | [Instrucciones de Edición y EDL](docs/video_demo/editing_instructions.md)
+
+---
+
 ## 🌟 Capacidades y Módulos del Sistema
 
 ### 🔬 Motor Matemático DSP (Clean Architecture / Cero Alocaciones en Hot Loop)
