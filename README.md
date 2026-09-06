@@ -5,6 +5,18 @@
 
 ---
 
+## 📸 Interfaz de Usuario y Capturas de Pantalla
+
+| Vista | Descripción y Características |
+| :--- | :--- |
+| ![Función de Transferencia - Modo Oscuro](docs/screenshots/01_transfer_function_dark.png) | **Función de Transferencia Dual-Channel (Modo Oscuro):**<br>Medición FFT de doble canal en tiempo real con motor gráfico SkiaSharp a 60 FPS. Muestra simultáneamente la magnitud acústica ($+18\text{ dB}$ a $-36\text{ dB}$), fase continua y coherencia ($\gamma^2$) con blanking configurable, trazado de curva objetivo Harman Target, panel gestor de trazas acústicas múltiples con controles de visibilidad y ecualizador paramétrico automático (Auto PEQ). |
+| ![RTA Tercios de Octava](docs/screenshots/02_rta_octave_dark.png) | **Analizador de Espectro en Tiempo Real (RTA 1/3 de Octava):**<br>Análisis de energía acústica fraccional bajo estándar internacional ISO 266, función Max-Hold histórica, barra inferior de telemetría acústica y sonómetro integrador en decibelios ($L_{\text{eq}}$ ponderación A/C/Z con calibración acústica). |
+| ![Respuesta al Impulso y ETC](docs/screenshots/03_impulse_etc_dark.png) | **Respuesta al Impulso (IR) y Cazador de Reflexiones Tempranas (ETC):**<br>Síntesis por IFFT con detección automática del tiempo de vuelo ($t_0$) y detección algorítmica de reflexiones de sala etiquetadas en tiempo real (R1 a R4) indicando retardo en milisegundos, nivel relativo en dB y diferencia física de recorrido en metros ($\Delta d$). |
+| ![Modo Claro](docs/screenshots/04_transfer_function_light.png) | **Modo Claro de Alta Visibilidad (Light Theme):**<br>Esquema de color dinámico de alto contraste conmutado al instante mediante la barra superior. Diseñado especialmente para calibraciones y ajustes acústicos en exteriores bajo radiación solar directa o en recintos fuertemente iluminados. |
+| ![Espectrograma y Cascada](docs/screenshots/05_spectrogram_waterfall.png) | **Espectrograma 2D en Cascada (Waterfall Heatmap):**<br>Mapa de densidad espectral continua a 60 FPS acelerado por GPU que ilustra la disipación temporal de energía y facilita la identificación inmediata de resonancias de sala, modos propios y acoples acústicos. |
+
+---
+
 ## 🌟 Capacidades y Módulos del Sistema
 
 ### 🔬 Motor Matemático DSP (Clean Architecture / Cero Alocaciones en Hot Loop)
@@ -89,7 +101,7 @@ SoundCalibrator/
 │       └── MainWindow.axaml          (UI oscura profesional, toolbar, atajos y modales)
 │
 └── tests/
-    └── SoundCalibrator.Core.Tests/   --> [101 Pruebas Unitarias TDD xUnit]
+    └── SoundCalibrator.Core.Tests/   --> [103 Pruebas Unitarias TDD xUnit]
 ```
 
 ---
@@ -100,7 +112,7 @@ SoundCalibrator/
 ```powershell
 dotnet test
 ```
-* **101 pruebas unitarias automatizadas pasando al 100% en ~200 ms.**
+* **103 pruebas unitarias automatizadas pasando al 100% en ~200 ms.**
 * Cero advertencias (`0 Warning(s)`) y cero errores (`0 Error(s)`).
 
 ### Lanzar la Aplicación:

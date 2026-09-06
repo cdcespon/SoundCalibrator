@@ -5,7 +5,7 @@
         xmlns:controls="clr-namespace:SoundCalibrator.App.Controls"
         mc:Ignorable="d" d:DesignWidth="1440" d:DesignHeight="880"
         x:Class="SoundCalibrator.App.MainWindow"
-        Title="Sound Calibrator"
+        Title=""
         Icon="/Assets/icon.ico"
         Background="{DynamicResource AppWindowBg}"
         ExtendClientAreaToDecorationsHint="True"
@@ -159,7 +159,7 @@
                               Fill="#000000" Stretch="Uniform" Width="15" Height="15" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Border>
                     
-                    <TextBlock Text="Sound Calibrator" Foreground="{DynamicResource AppTextPrimary}" FontSize="17" FontWeight="Bold" VerticalAlignment="Center"/>
+                    <TextBlock x:Name="BrandTitleText" Text="Sound Calibrator" Foreground="{DynamicResource AppTextPrimary}" FontSize="17" FontWeight="Bold" VerticalAlignment="Center"/>
                 </StackPanel>
 
                 <!-- Right: Telemetry in 1 line -->
